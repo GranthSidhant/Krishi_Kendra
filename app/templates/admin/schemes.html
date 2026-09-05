@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Government Schemes - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-light border"><i class="fas fa-arrow-left"></i></a>
+    <h3 class="fw-bold text-warning mb-0"><i class="fas fa-landmark me-2"></i> Government Schemes & Announcements Board</h3>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Publish Scheme Form -->
+    <div class="col-lg-5">
+      <div class="k-card p-4 h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-bullhorn text-warning me-2"></i> Publish Scheme / Notice</h5>
+        
+        <form method="POST" action="{{ url_for('admin.schemes') }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scheme Title (English) *</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. Pradhan Mantri Kisan Samman Nidhi" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scheme Title (Hindi)</label>
+            <input type="text" name="hindi_title" class="form-control" placeholder="e.g. पीएम किसान सम्मान निधि">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Category</label>
+            <select name="category" class="form-select">
+              <option value="Subsidy & Financial Assistance">Subsidy & Financial Assistance</option>
+              <option value="Crop Insurance">Crop Insurance (PMFBY)</option>
+              <option value="Credit & Loans">Credit & Loans (KCC)</option>
+              <option value="Solar & Irrigation">Solar & Irrigation (PM-KUSUM)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea name="description" class="form-control" rows="2" placeholder="Brief summary of the scheme..." required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Eligibility Summary</label>
+            <input type="text" name="eligibility_summary" class="form-control" placeholder="e.g. Small & marginal farmers">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Benefits Summary</label>
+            <input type="text" name="benefits_summary" class="form-control" placeholder="e.g. ₹6,000 per year direct transfer">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Official Portal Link</label>
+            <input type="url" name="application_link" class="form-control" placeholder="https://pmkisan.gov.in/">
+          </div>
+          <button type="submit" class="btn btn-warning text-dark fw-bold w-100"><i class="fas fa-paper-plane me-1"></i> Publish on Farmer Board</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Schemes List -->
+    <div class="col-lg-7">
+      <div class="k-card p-4 h-100">
+        <h5 class="fw-bold text-dark mb-3">Published Schemes ({{ schemes|length }})</h5>
+        
+        <div class="d-flex flex-column gap-3">
+          {% for s in schemes %}
+          <div class="p-3 bg-light rounded-3 border">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <h6 class="fw-bold text-primary mb-0">{{ s.title }}</h6>
+              <span class="badge bg-success">Active</span>
+            </div>
+            <div class="text-muted small mb-2">{{ s.hindi_title }} | <em>{{ s.category }}</em></div>
+            <p class="small text-dark mb-2">{{ s.description }}</p>
+            <div class="small"><strong>Benefits:</strong> {{ s.benefits_summary }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Visiting Card - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="text-center mb-4 no-print">
+    <h3 class="fw-bold text-success mb-1"><i class="fas fa-id-card me-2"></i> Farmer Digital Visiting Card</h3>
+    <p class="text-muted small">Share your verified digital card with potential buyers, FPOs, and traders</p>
+    
+    <div class="d-flex justify-content-center gap-2 mt-3">
+      <button onclick="window.print()" class="btn btn-outline-success fw-bold">
+        <i class="fas fa-print me-1"></i> Print / Save as PDF
+      </button>
+      <button onclick="navigator.clipboard.writeText(window.location.origin + '{{ url_for('main.public_visiting_card', custom_id=user.custom_id) }}'); alert('Visiting Card link copied to clipboard!');" class="btn btn-success fw-bold">
+        <i class="fas fa-share-alt me-1"></i> Copy Shareable Link
+      </button>
+    </div>
+  </div>
+
+  <!-- The Visiting Card -->
+  <div class="visiting-card-container">
+    <div class="visiting-card farmer-theme-card">
+      
+      <!-- Top Branding -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fas fa-leaf text-success fs-4"></i>
+          <span class="fw-bold text-success">KRISHI KENDRA</span>
+        </div>
+        {% if user.is_verified %}
+          <span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified Farmer</span>
+        {% else %}
+          <span class="badge bg-secondary">Registered Farmer</span>
+        {% endif %}
+      </div>
+
+      <!-- Farmer Info -->
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <img src="{% if user.profile_image and user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ user.name }}&background=1b5e20&color=fff{% endif %}" alt="Avatar" class="visiting-card-avatar">
+        <div>
+          <h4 class="fw-extrabold mb-0 text-dark">{{ user.name }}</h4>
+          <div class="text-success fw-bold small">ID: {{ user.custom_id }}</div>
+          <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Nashik' }}, {{ profile.state if profile else 'Maharashtra' }}</div>
+        </div>
+      </div>
+
+      <!-- Farm & Crops Spec -->
+      <div class="p-3 bg-light rounded-3 mb-3">
+        <div class="mb-2">
+          <small class="text-muted d-block">Primary Crops Grown:</small>
+          <strong class="text-dark">{{ profile.crops_grown if profile else 'Wheat, Onion, Tomato' }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <div>
+            <small class="text-muted d-block">Farm Size:</small>
+            <strong>{{ profile.farm_size_acres if profile else 3.5 }} Acres</strong>
+          </div>
+          <div>
+            <small class="text-muted d-block">Rating:</small>
+            <strong class="text-warning">★ {{ profile.rating if profile else 4.8 }}/5</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info (Strict Privacy) -->
+      <div class="border-top pt-2 d-flex justify-content-between align-items-center">
+        <div>
+          {% if profile and profile.share_phone_consent %}
+            <div class="fw-bold text-dark"><i class="fas fa-phone-alt text-success me-1"></i> {{ user.phone }}</div>
+          {% else %}
+            <div class="text-muted small"><i class="fas fa-lock text-secondary me-1"></i> Contact via in-app chat</div>
+          {% endif %}
+        </div>
+        <div class="text-end">
+          <small class="text-muted d-block">Platform Verified</small>
+          <small class="fw-bold text-success">sih.krishikendra.gov.in</small>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

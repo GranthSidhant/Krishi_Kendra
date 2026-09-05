@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Messages & Offers - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1"><i class="fas fa-comments text-primary me-2"></i> Trade Conversations & Negotiations</h3>
+      <p class="text-muted small mb-0">Direct communication with farmers and buyers with integrated transaction cards</p>
+    </div>
+  </div>
+
+  <div class="k-card p-0 overflow-hidden shadow-sm">
+    {% if threads %}
+      <div class="list-group list-group-flush">
+        {% for t in threads %}
+          {% set other = t.buyer if user.id == t.farmer_id else t.farmer %}
+          {% set other_prof = other.buyer_profile if other.role == 'buyer' else other.farmer_profile %}
+          <a href="{{ url_for('chat.view_thread', thread_id=t.id) }}" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <img src="https://ui-avatars.com/api/?name={{ other.name }}&background={% if other.role == 'farmer' %}2e7d32{% else %}e65100{% endif %}&color=fff" alt="Avatar" class="rounded-circle" width="48" height="48">
+              <div>
+                <h6 class="fw-bold mb-0 text-dark">
+                  {{ other.name }}
+                  {% if other.is_verified %}
+                    <i class="fas fa-check-circle text-success small ms-1"></i>
+                  {% endif %}
+                </h6>
+                <small class="text-muted d-block">{{ other.custom_id }} | {{ other_prof.district if other_prof else 'Location' }}</small>
+                <small class="text-primary fw-semibold">{{ t.subject_product }}</small>
+              </div>
+            </div>
+            <div class="text-end">
+              <small class="text-muted d-block">{{ t.last_message_at.strftime('%d %b, %I:%M %p') }}</small>
+              <span class="btn btn-sm btn-outline-primary mt-1">Open Chat <i class="fas fa-chevron-right ms-1"></i></span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-comments fa-3x opacity-50 mb-3"></i>
+        <h5>No active conversation threads.</h5>
+        <p class="text-muted">Start an inquiry from the browse produce page or send an offer to begin chatting!</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

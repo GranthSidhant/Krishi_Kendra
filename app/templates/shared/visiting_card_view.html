@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ card_user.name }} - Krishi Kendra Digital Card{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-4 no-print">
+    <span class="badge bg-success-subtle text-success p-2 px-3 rounded-pill fw-bold mb-2">
+      <i class="fas fa-check-circle me-1"></i> Official Krishi Kendra Verified Card
+    </span>
+    <h3 class="fw-bold">{{ card_user.name }}'s Digital Profile</h3>
+  </div>
+
+  <div class="visiting-card-container">
+    <div class="visiting-card {% if card_user.role == 'farmer' %}farmer-theme-card{% else %}buyer-theme-card{% endif %} shadow-lg">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fas fa-leaf {% if card_user.role == 'farmer' %}text-success{% else %}text-warning{% endif %} fs-4"></i>
+          <span class="fw-bold {% if card_user.role == 'farmer' %}text-success{% else %}text-warning{% endif %}">KRISHI KENDRA</span>
+        </div>
+        {% if card_user.is_verified %}
+          <span class="badge {% if card_user.role == 'farmer' %}badge-verified{% else %}badge-verified-buyer{% endif %}"><i class="fas fa-check-circle"></i> Verified {{ card_user.role.capitalize() }}</span>
+        {% else %}
+          <span class="badge bg-secondary">Registered Member</span>
+        {% endif %}
+      </div>
+
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <img src="{% if card_user.profile_image and card_user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + card_user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ card_user.name }}&background=2e7d32&color=fff{% endif %}" alt="Avatar" class="visiting-card-avatar">
+        <div>
+          <h4 class="fw-bold mb-0 text-dark">{{ card_user.name }}</h4>
+          <div class="fw-bold small {% if card_user.role == 'farmer' %}text-success{% else %}text-warning{% endif %}">ID: {{ card_user.custom_id }}</div>
+          <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Nashik' }}, {{ profile.state if profile else 'Maharashtra' }}</div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-light rounded-3 mb-3">
+        {% if card_user.role == 'farmer' %}
+          <div class="mb-2">
+            <small class="text-muted d-block">Primary Crops Grown:</small>
+            <strong class="text-dark">{{ profile.crops_grown if profile else 'Wheat, Onion, Tomato' }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <div>
+              <small class="text-muted d-block">Farm Size:</small>
+              <strong>{{ profile.farm_size_acres if profile else 3.5 }} Acres</strong>
+            </div>
+            <div>
+              <small class="text-muted d-block">Rating:</small>
+              <strong class="text-warning">★ {{ profile.rating if profile else 4.8 }}/5</strong>
+            </div>
+          </div>
+        {% else %}
+          <div class="mb-2">
+            <small class="text-muted d-block">Business Name:</small>
+            <strong class="text-dark">{{ profile.business_name if profile else 'Agri Traders' }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <div>
+              <small class="text-muted d-block">Category:</small>
+              <strong>{{ profile.business_type if profile else 'Wholesale Trader' }}</strong>
+            </div>
+            <div>
+              <small class="text-muted d-block">Rating:</small>
+              <strong class="text-warning">★ {{ profile.rating if profile else 4.9 }}/5</strong>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="border-top pt-2 d-flex justify-content-between align-items-center">
+        <div>
+          {% if profile and profile.share_phone_consent %}
+            <a href="tel:{{ card_user.phone }}" class="btn btn-sm btn-success"><i class="fas fa-phone-alt me-1"></i> Call {{ card_user.phone }}</a>
+          {% else %}
+            <span class="text-muted small"><i class="fas fa-lock text-secondary me-1"></i> Phone Private</span>
+          {% endif %}
+        </div>
+        <div class="text-end">
+          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary">Trade with {{ card_user.name.split()[0] }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

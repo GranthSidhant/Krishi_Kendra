@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Cold Storage Network - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-info mb-1"><i class="fas fa-snowflake me-2"></i> Cold Storage Facilities & Preservation Network</h3>
+      <p class="text-muted small mb-0">Discover temperature-controlled warehouses to prevent harvest distress sales and preserve perishable produce</p>
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="k-card p-3 mb-4">
+    <form method="GET" action="{{ url_for('cold_storage.index') }}" class="row g-3 align-items-center">
+      <div class="col-md-9">
+        <select name="district" class="form-select">
+          <option value="All">All Districts</option>
+          {% for d in districts %}
+            <option value="{{ d }}" {% if selected_district == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-info text-white fw-bold w-100">
+          <i class="fas fa-search me-1"></i> Filter Facilities
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Facilities Grid -->
+  <div class="row g-4 mb-5">
+    {% for s in storages %}
+    <div class="col-lg-4 col-md-6">
+      <div class="k-card h-100 p-4 d-flex flex-column justify-content-between border-start border-4 border-info">
+        <div>
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="fw-bold text-dark mb-0">{{ s.name }}</h5>
+            <span class="badge bg-info text-white">Verified</span>
+          </div>
+
+          <small class="text-muted d-block mb-3">
+            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ s.address }}, {{ s.district }}, {{ s.state }}
+          </small>
+
+          <div class="p-3 bg-light rounded-3 mb-3 small">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Available Space:</span>
+              <strong class="text-success fs-6">{{ s.available_capacity_mt }} / {{ s.total_capacity_mt }} MT</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Storage Fee:</span>
+              <strong class="text-dark">₹{{ s.approx_charge_per_month_per_quintal }} / quintal / month</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Temperature:</span>
+              <span>{{ s.temp_range_celsius }}</span>
+            </div>
+            <div class="mt-2 pt-2 border-top">
+              <span class="text-muted d-block">Supported Produce:</span>
+              <strong>{{ s.supported_produce }}</strong>
+            </div>
+          </div>
+
+          <div class="small text-muted mb-3">
+            <i class="fas fa-tools me-1 text-secondary"></i> {{ s.facilities }}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 pt-2 border-top">
+          <a href="{{ url_for('cold_storage.book', storage_id=s.id) }}" class="btn btn-info text-white fw-bold flex-grow-1">
+            <i class="fas fa-calendar-check me-1"></i> Request Storage
+          </a>
+          <a href="tel:{{ s.contact_phone }}" class="btn btn-outline-secondary" title="Call Operator">
+            <i class="fas fa-phone"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- My Cold Storage Bookings (For Farmers) -->
+  {% if my_bookings %}
+    <div class="k-card p-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fas fa-clipboard-list text-info me-2"></i> My Storage Booking Requests</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Facility</th>
+              <th>Produce</th>
+              <th>Quantity</th>
+              <th>Duration</th>
+              <th>Est. Cost</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in my_bookings %}
+            <tr>
+              <td><strong>{{ b.facility.name }}</strong> ({{ b.facility.district }})</td>
+              <td>{{ b.produce_name }}</td>
+              <td>{{ b.quantity_quintals }} Quintals</td>
+              <td>{{ b.duration_months }} Months</td>
+              <td class="fw-bold text-success">₹{{ b.estimated_total_cost }}</td>
+              <td>
+                <span class="badge {% if b.status == 'approved' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                  {{ b.status.capitalize() }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

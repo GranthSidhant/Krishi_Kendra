@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Buyer Orders & Fulfilment - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1"><i class="fas fa-shopping-cart text-warning me-2"></i> Buyer Orders & Trade Records</h3>
+      <p class="text-muted small mb-0">Track active shipments, verify delivery, and view historical transaction spend</p>
+    </div>
+
+    <!-- Rule 16: Historical Spend Banner located inside Order History -->
+    <div class="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center gap-3">
+      <div class="p-2 rounded-circle bg-success-subtle text-success">
+        <i class="fas fa-receipt fa-2x"></i>
+      </div>
+      <div>
+        <small class="text-muted d-block fw-semibold">Total Historical Spend (Completed Orders):</small>
+        <strong class="fs-4 text-success">₹{{ total_historical_spend }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Tabs -->
+  <ul class="nav nav-pills mb-4" id="buyerOrderTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active fw-bold" id="orders-tab" data-bs-toggle="pill" data-bs-target="#buyerOrdersTabContent">
+        <i class="fas fa-box me-1"></i> Active & Completed Orders ({{ orders|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold" id="offers-tab" data-bs-toggle="pill" data-bs-target="#buyerOffersTabContent">
+        <i class="fas fa-paper-plane me-1"></i> Sent Purchase Offers ({{ offers|length }})
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Confirmed Orders Tab -->
+    <div class="tab-pane fade show active" id="buyerOrdersTabContent">
+      {% if orders %}
+        <div class="table-responsive k-card p-3 shadow-sm">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Order Code</th>
+                <th>Produce</th>
+                <th>Quantity</th>
+                <th>Total Value</th>
+                <th>Farmer Supplier</th>
+                <th>Delivery Status</th>
+                <th>Payment Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for o in orders %}
+              <tr>
+                <td><strong>#{{ o.order_code }}</strong></td>
+                <td>{{ o.product_name }}</td>
+                <td>{{ o.quantity }} {{ o.unit }}</td>
+                <td class="fw-bold text-success">₹{{ o.total_amount }}</td>
+                <td>
+                  <a href="#" class="text-decoration-none trigger-profile-popup fw-semibold text-dark" data-user-id="{{ o.farmer.id }}">
+                    {{ o.farmer.name }}
+                  </a>
+                  {% if o.farmer.is_verified %}
+                    <i class="fas fa-check-circle text-success small ms-1" title="Verified Farmer"></i>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if o.status == 'completed' or o.status == 'delivered' %}bg-success{% elif o.status == 'in_transit' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                    {{ o.status.replace('_', ' ').capitalize() }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge {% if o.payment_status == 'completed' or o.payment_status == 'released' %}bg-success{% else %}bg-info text-dark{% endif %}">
+                    <i class="fas fa-shield-alt me-1"></i> {{ o.payment_status.replace('_', ' ').capitalize() }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="{{ url_for('orders.view_order', order_id=o.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-truck me-1"></i> Track & Invoice
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="k-card text-center py-5">
+          <i class="fas fa-shopping-bag fa-3x text-muted opacity-50 mb-3"></i>
+          <h5>No orders placed yet.</h5>
+          <p class="text-muted">Browse fresh produce or post an open requirement to start buying directly from farmers.</p>
+          <a href="{{ url_for('buyer.browse') }}" class="btn btn-warning text-dark fw-bold">Browse Produce</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Sent Offers Tab -->
+    <div class="tab-pane fade" id="buyerOffersTabContent">
+      {% if offers %}
+        <div class="row g-4">
+          {% for offer in offers %}
+          <div class="col-lg-6">
+            <div class="k-card h-100 p-4 border-start border-4 {% if offer.status == 'countered' %}border-warning{% elif offer.status == 'accepted' %}border-success{% else %}border-primary{% endif %}">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h5 class="fw-bold text-dark mb-0">{{ offer.product_name }}</h5>
+                  <small class="text-muted">Offered to: <strong>{{ offer.farmer.name }}</strong> ({{ offer.farmer.custom_id }})</small>
+                </div>
+                <span class="badge {% if offer.status == 'countered' %}bg-warning text-dark{% elif offer.status == 'accepted' %}bg-success{% else %}bg-primary{% endif %}">
+                  {{ offer.status.capitalize() }}
+                </span>
+              </div>
+
+              <div class="p-3 bg-light rounded-3 my-3">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <small class="text-muted d-block">Offered Quantity</small>
+                    <strong>{{ offer.quantity }} {{ offer.unit }}</strong>
+                  </div>
+                  <div class="col-6">
+                    <small class="text-muted d-block">Offered Price</small>
+                    <strong class="text-success">₹{{ offer.offered_price_per_unit }}/{{ offer.unit }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {% if offer.status == 'countered' %}
+                <div class="p-2 bg-warning-subtle text-dark rounded small mb-3 border border-warning">
+                  <strong>Farmer Proposed Counter:</strong> ₹{{ offer.counter_price_per_unit }}/{{ offer.unit }} for {{ offer.counter_quantity }} {{ offer.unit }}.
+                  {% if offer.counter_notes %}<div class="text-muted">{{ offer.counter_notes }}</div>{% endif %}
+                </div>
+              {% endif %}
+
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <a href="{{ url_for('chat.start_chat', target_user_id=offer.farmer.id, offer_id=offer.id) }}" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-comments me-1"></i> Open Negotiation Chat
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="k-card text-center py-5">
+          <p class="text-muted mb-0">No purchase offers sent currently.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

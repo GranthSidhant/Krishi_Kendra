@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}User Verifications - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-light border"><i class="fas fa-arrow-left"></i></a>
+    <h3 class="fw-bold text-danger mb-0"><i class="fas fa-id-badge me-2"></i> User Verification & Trust Review</h3>
+  </div>
+
+  <!-- Pending Queue -->
+  <div class="k-card p-4 mb-4 border-start border-danger border-4">
+    <h5 class="fw-bold text-danger mb-3">Pending Verification Applications ({{ pending_list|length }})</h5>
+
+    {% if pending_list %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>User Name</th>
+              <th>Krishi ID</th>
+              <th>Role</th>
+              <th>Document Type</th>
+              <th>Masked Number</th>
+              <th>Uploaded Doc</th>
+              <th class="text-end">Decision</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in pending_list %}
+            <tr>
+              <td><strong>{{ u.name }}</strong></td>
+              <td>{{ u.custom_id }}</td>
+              <td><span class="badge bg-light text-dark border">{{ u.role.capitalize() }}</span></td>
+              <td>{{ u.gov_id_type or 'Govt Identity' }}</td>
+              <td><code>{{ u.gov_id_masked or 'Masked' }}</code></td>
+              <td>
+                {% if u.verification_doc %}
+                  <a href="{{ url_for('static', filename='uploads/' + u.verification_doc) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-file-alt me-1"></i> View Document
+                  </a>
+                {% else %}
+                  <span class="text-muted small">No file attached</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  <form method="POST" action="{{ url_for('admin.decide_verification', user_id=u.id) }}" class="d-inline">
+                    <input type="hidden" name="decision" value="approve">
+                    <button type="submit" class="btn btn-sm btn-success fw-bold">
+                      <i class="fas fa-check me-1"></i> Approve & Award Badge
+                    </button>
+                  </form>
+
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ u.id }}">
+                    <i class="fas fa-times me-1"></i> Reject
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Rejection Modal -->
+            <div class="modal fade" id="rejectModal{{ u.id }}" tabindex="-1">
+              <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                  <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title">Reject Verification</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="POST" action="{{ url_for('admin.decide_verification', user_id=u.id) }}">
+                    <div class="modal-body p-3">
+                      <input type="hidden" name="decision" value="reject">
+                      <label class="form-label small fw-semibold">Reason for Rejection</label>
+                      <input type="text" name="reason" class="form-control form-control-sm" placeholder="e.g. Document image blurry or mismatch" required>
+                    </div>
+                    <div class="modal-footer py-2">
+                      <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-sm btn-danger">Confirm Rejection</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No pending verification requests.</p>
+    {% endif %}
+  </div>
+
+  <!-- Verified Users List -->
+  <div class="k-card p-4">
+    <h5 class="fw-bold text-success mb-3"><i class="fas fa-check-circle me-2"></i> Verified Platform Members ({{ all_verified|length }})</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>User</th>
+            <th>Krishi ID</th>
+            <th>Role</th>
+            <th>Location</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in all_verified %}
+          <tr>
+            <td><strong>{{ u.name }}</strong></td>
+            <td>{{ u.custom_id }}</td>
+            <td><span class="badge bg-light text-dark border">{{ u.role.capitalize() }}</span></td>
+            <td>{{ u.farmer_profile.district if u.role == 'farmer' and u.farmer_profile else (u.buyer_profile.district if u.buyer_profile else 'Registered') }}</td>
+            <td><span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

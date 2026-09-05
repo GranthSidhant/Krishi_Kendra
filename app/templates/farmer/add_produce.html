@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Add Produce to Inventory - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="k-card shadow-sm border-0 p-4">
+        
+        <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom">
+          <a href="{{ url_for('farmer.inventory') }}" class="btn btn-sm btn-light border"><i class="fas fa-arrow-left"></i></a>
+          <h4 class="fw-bold mb-0 text-success"><i class="fas fa-plus-circle me-2"></i> Add Produce to Inventory</h4>
+        </div>
+
+        <form method="POST" action="{{ url_for('farmer.add_produce') }}" enctype="multipart/form-data">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Product / Crop Name *</label>
+              <input type="text" id="offer-commodity-select" name="product_name" class="form-control" placeholder="e.g. Wheat, Red Onion, Tomato, Potato" required list="cropSuggestions" autofocus>
+              <datalist id="cropSuggestions">
+                {% for p in products %}
+                  <option value="{{ p.name }}">{{ p.hindi_name }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Category</label>
+              <select name="category_name" class="form-select">
+                {% for c in categories %}
+                  <option value="{{ c.name }}">{{ c.name }} ({{ c.hindi_name }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Dynamic Mandi Benchmark Display -->
+          <div class="p-3 bg-light rounded-3 mb-3 border">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="small text-muted"><i class="fas fa-chart-line text-success me-1"></i> Mandi Benchmark Rate:</span>
+              <span id="mandi-benchmark-display" class="small text-dark fw-bold">Select crop to view live rate</span>
+            </div>
+            <div id="deal-analysis-badge" class="alert py-2 px-3 mt-2 text-sm" style="display:none;"></div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available Quantity *</label>
+              <input type="number" step="0.5" name="available_quantity" class="form-control" placeholder="e.g. 500" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Unit</label>
+              <select id="offer-unit-select" name="unit" class="form-select">
+                <option value="kg" selected>kg (Kilograms)</option>
+                <option value="quintal">quintal (100 kg)</option>
+                <option value="ton">ton (1,000 kg)</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Expected Price (₹/unit) *</label>
+              <input type="number" step="0.5" id="offer-price-input" name="expected_price_per_unit" class="form-control" placeholder="e.g. 24" required>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Quality Grade</label>
+              <select name="quality_grade" class="form-select">
+                <option value="Grade A (Premium)" selected>Grade A (Premium / Export Quality)</option>
+                <option value="Grade B (Standard)">Grade B (Standard / FAQ)</option>
+                <option value="Grade C (Economy)">Grade C (Economy / Processing)</option>
+                <option value="Certified Organic">Certified Organic</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Harvest Date</label>
+              <input type="date" name="harvest_date" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Produce Photo</label>
+            <input type="file" name="produce_image_file" class="form-control" accept="image/*">
+            <small class="text-muted">Upload a clear photo of your harvested produce for buyer trust.</small>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Additional Description / Variety Details</label>
+            <textarea name="description" class="form-control" rows="3" placeholder="e.g. Freshly harvested Sharbati wheat, zero moisture, sorted and cleaned."></textarea>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-lg fw-bold">
+              <i class="fas fa-check-circle me-2"></i> Save & Publish Produce
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

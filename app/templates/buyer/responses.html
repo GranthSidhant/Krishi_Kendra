@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Matching Farmer Offers - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('buyer.dashboard') }}" class="btn btn-sm btn-light border"><i class="fas fa-arrow-left"></i></a>
+        <h3 class="fw-bold text-dark mb-0"><i class="fas fa-balance-scale text-warning me-2"></i> Farmer Matches & Offer Comparison</h3>
+      </div>
+      <p class="text-muted small mb-0 mt-1">
+        Requirement: <strong>{{ requirement.required_quantity }} {{ requirement.unit }} of {{ requirement.product_name }}</strong> in {{ requirement.delivery_district }}
+      </p>
+    </div>
+    
+    <!-- Mandi Benchmark Card -->
+    <div class="p-2 px-3 bg-light rounded-3 border d-flex align-items-center gap-2">
+      <i class="fas fa-university text-success fs-4"></i>
+      <div>
+        <small class="text-muted d-block">APMC Mandi Benchmark ({{ mandi_info.district }}):</small>
+        <strong class="text-success fs-6">₹{{ mandi_info.rate_per_kg }}/kg (₹{{ mandi_info.raw_modal_price }}/{{ mandi_info.unit }})</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side-by-Side Comparison Table -->
+  <div class="k-card p-0 overflow-hidden shadow-sm mb-4">
+    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-users text-primary me-2"></i> Matched Eligible Farmers (Ranked by Match Score)</h5>
+      <span class="badge bg-warning text-dark">{{ matches|length }} Matching Farmers Found</span>
+    </div>
+
+    {% if matches %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Farmer Supplier</th>
+              <th>Match Score</th>
+              <th>Available Stock</th>
+              <th>Farmer Price</th>
+              <th>Quality Grade</th>
+              <th>Location & Proximity</th>
+              <th>Trust & Rating</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in matches %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <img src="https://ui-avatars.com/api/?name={{ m.farmer.name }}&background=2e7d32&color=fff" alt="Avatar" class="rounded-circle" width="36" height="36">
+                  <div>
+                    <a href="#" class="text-decoration-none trigger-profile-popup fw-bold text-dark" data-user-id="{{ m.farmer.id }}">
+                      {{ m.farmer.name }}
+                    </a>
+                    {% if m.is_verified %}
+                      <span class="badge badge-verified ms-1" style="font-size:0.65rem;"><i class="fas fa-check"></i> Verified</span>
+                    {% endif %}
+                    <div class="text-muted small">ID: {{ m.farmer.custom_id }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height: 8px; width: 60px;">
+                    <div class="progress-bar bg-success" style="width: {{ m.match_score }}%;"></div>
+                  </div>
+                  <span class="small fw-bold text-success">{{ m.match_score }}%</span>
+                </div>
+              </td>
+              <td>
+                <strong>{{ m.available_quantity }} {{ m.unit }}</strong>
+                {% if m.available_quantity >= requirement.required_quantity %}
+                  <span class="badge bg-success-subtle text-success d-block small mt-1">Full Stock</span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-warning d-block small mt-1">Partial Stock</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong class="fs-6 text-success">₹{{ m.expected_price }}/{{ m.unit }}</strong>
+                <small class="text-muted d-block">
+                  {% set diff = ((m.expected_price - mandi_info.rate_per_kg) / mandi_info.rate_per_kg * 100)|round(1) %}
+                  {% if diff > 0 %}
+                    +{{ diff }}% vs Mandi
+                  {% else %}
+                    {{ diff }}% vs Mandi
+                  {% endif %}
+                </small>
+              </td>
+              <td><span class="badge bg-light text-dark border">{{ m.quality_grade }}</span></td>
+              <td>
+                <small class="text-muted d-block"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ m.district }}, {{ m.state }}</small>
+              </td>
+              <td>
+                <span class="text-warning fw-bold">★ {{ m.farmer_profile.rating if m.farmer_profile else 4.8 }}/5</span>
+                <small class="text-muted d-block">({{ m.farmer_profile.total_reviews if m.farmer_profile else 12 }} trades)</small>
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  <!-- Direct Offer Trigger -->
+                  <button type="button" class="btn btn-sm btn-warning text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#offerToFarmerModal{{ m.farmer.id }}">
+                    <i class="fas fa-paper-plane me-1"></i> Order
+                  </button>
+                  <a href="{{ url_for('chat.start_chat', target_user_id=m.farmer.id) }}" class="btn btn-sm btn-outline-primary" title="Chat with Farmer">
+                    <i class="fas fa-comments"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Offer to Specific Farmer Modal -->
+            <div class="modal fade" id="offerToFarmerModal{{ m.farmer.id }}" tabindex="-1">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0">
+                  <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-handshake me-2"></i> Submit Offer to {{ m.farmer.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="POST" action="{{ url_for('buyer.direct_request', inventory_id=m.inventory.id) }}">
+                    <div class="modal-body p-4">
+                      <div class="p-2 bg-light rounded mb-3">
+                        <strong>Produce:</strong> {{ requirement.product_name }} ({{ m.quality_grade }})<br>
+                        <strong>Farmer:</strong> {{ m.farmer.name }} (Max Available: {{ m.available_quantity }} {{ m.unit }})
+                      </div>
+
+                      <div class="row g-3 mb-3">
+                        <div class="col-6">
+                          <label class="form-label fw-semibold">Quantity ({{ m.unit }})</label>
+                          <input type="number" step="0.5" name="quantity" class="form-control" value="{{ [requirement.required_quantity, m.available_quantity]|min }}" max="{{ m.available_quantity }}" required>
+                        </div>
+                        <div class="col-6">
+                          <label class="form-label fw-semibold">Your Price (₹/{{ m.unit }})</label>
+                          <input type="number" step="0.5" name="offered_price_per_unit" class="form-control" value="{{ m.expected_price }}" required>
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">Delivery Instructions</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Destination: {{ requirement.delivery_location }}"></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-warning text-dark fw-bold">Submit Purchase Order</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <p>No eligible farmers found matching your exact requirements currently.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

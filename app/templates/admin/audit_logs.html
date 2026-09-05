@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}System Audit Logs - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-light border"><i class="fas fa-arrow-left"></i></a>
+    <h3 class="fw-bold text-dark mb-0"><i class="fas fa-history me-2"></i> Immutable System Audit Trail</h3>
+  </div>
+
+  <div class="k-card p-0 overflow-hidden shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>Timestamp (UTC)</th>
+            <th>Action Code</th>
+            <th>Admin / Officer</th>
+            <th>Target Entity</th>
+            <th>Details</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if logs %}
+            {% for log in logs %}
+            <tr>
+              <td class="text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td><span class="badge bg-primary-subtle text-primary fw-bold">{{ log.action }}</span></td>
+              <td><strong>{{ log.admin.name if log.admin else 'System' }}</strong></td>
+              <td><span class="badge bg-light text-dark border">{{ log.target_entity }}:{{ log.target_id }}</span></td>
+              <td>{{ log.details }}</td>
+              <td><code>{{ log.ip_address }}</code></td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No audit logs recorded yet.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

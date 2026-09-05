@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Book Cold Storage Space - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="k-card shadow-sm border-0 p-4">
+        
+        <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom">
+          <a href="{{ url_for('cold_storage.index') }}" class="btn btn-sm btn-light border"><i class="fas fa-arrow-left"></i></a>
+          <h4 class="fw-bold mb-0 text-info"><i class="fas fa-snowflake me-2"></i> Book Space at {{ storage.name }}</h4>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 mb-4 small">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Location:</span>
+            <strong>{{ storage.district }}, {{ storage.state }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Storage Fee:</span>
+            <strong class="text-success">₹{{ storage.approx_charge_per_month_per_quintal }} / quintal / month</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Available Capacity:</span>
+            <strong>{{ storage.available_capacity_mt }} MT</strong>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('cold_storage.book', storage_id=storage.id) }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Produce to Store *</label>
+            <input type="text" name="produce_name" class="form-control" placeholder="e.g. Potato, Onion, Grapes, Apple" required autofocus>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Quantity (in Quintals) *</label>
+              <input type="number" step="1" name="quantity_quintals" id="storageQty" class="form-control" placeholder="e.g. 50" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Duration (Months)</label>
+              <select name="duration_months" id="storageMonths" class="form-select">
+                <option value="1">1 Month</option>
+                <option value="2" selected>2 Months</option>
+                <option value="3">3 Months</option>
+                <option value="6">6 Months</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Expected Inward Date</label>
+            <input type="date" name="expected_storage_start" class="form-control" required>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Special Storage Notes (Optional)</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Pre-graded and bagged. Temperature requirement 2°C."></textarea>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-info text-white btn-lg fw-bold">
+              <i class="fas fa-check-circle me-2"></i> Submit Cold Storage Booking Request
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

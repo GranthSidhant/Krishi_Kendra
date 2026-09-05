@@ -1,0 +1,721 @@
+# KRISHI KENDRA - Project Development Requirements
+# Beginner-friendly technology and implementation guidance
+
+## 1. Purpose
+
+This file is a development guide for the coding agent implementing the
+Krishi Kendra project.
+
+The agent MUST choose a technology stack that is:
+- Easy for a beginner to understand and maintain.
+- Well documented and widely used.
+- Simple to run locally.
+- Modular enough to support all features described in `product_project.md`.
+- Suitable for an SIH prototype/demo.
+- Preferably based on technologies the team can learn and explain during the
+  SIH presentation.
+
+Do NOT select a complicated enterprise stack merely because it is technically
+possible. Simplicity, readability, maintainability, and successful completion
+of the requirements are the priorities.
+
+---
+
+## 2. Recommended Beginner-Friendly Stack
+
+### Backend
+- Python 3.11+
+- Flask
+- Flask-SQLAlchemy
+- Flask-JWT-Extended
+- Flask-CORS
+- Werkzeug for password hashing/security
+- python-dotenv for environment variables
+
+### Database
+- SQLite for local development and SIH prototype
+- SQLAlchemy ORM so the project can later migrate to PostgreSQL/MySQL without
+  rewriting the application logic
+
+### Frontend
+- HTML5
+- CSS3
+- Vanilla JavaScript
+- Bootstrap 5 for responsive UI components
+
+Avoid React/Vue/Angular unless there is a strong project-specific reason.
+The frontend should remain understandable to a beginner.
+
+### Templates
+- Jinja2 through Flask
+
+### API / Communication
+- REST APIs using Flask
+- JSON for frontend/backend communication
+
+### Maps / Location
+- Google Maps links and/or OpenStreetMap/Leaflet
+- Store latitude/longitude in the database
+- Keep map integration behind a simple service/helper so it can be replaced
+
+### Authentication
+Preferred:
+- Phone number + OTP using a suitable free/zero-cost OTP provider available
+  for the prototype.
+
+Fallback:
+- Phone number + password authentication using Flask + JWT.
+- Passwords MUST be securely hashed using Werkzeug.
+- NEVER store plaintext passwords.
+
+The authentication implementation should use a service/helper layer so an OTP
+provider can be added or replaced later without rewriting login/registration.
+
+### Chat
+For the beginner-friendly prototype:
+- Flask REST APIs
+- JavaScript polling for message refresh, OR a simple Flask-SocketIO setup
+  if real-time chat is required and the team can understand it.
+
+Start with REST + polling if that is simpler.
+
+### Voice / Calling
+- Use browser/device-supported calling where possible.
+- A `tel:` link can open the phone dialer after the user has explicitly chosen
+  to share their number.
+- If real voice chat requires a paid provider, implement a clear replaceable
+  service interface and a working prototype/mock where appropriate.
+
+### File Uploads
+- Store uploaded profile images using a simple local uploads directory during
+  development.
+- Store only the file path/reference in the database.
+- Validate file type and size.
+
+### AI / Advanced Features
+Use Python libraries and simple, explainable approaches first.
+Possible libraries:
+- pandas
+- NumPy
+- scikit-learn
+
+Do not introduce heavy AI infrastructure unless it is genuinely required.
+
+### Charts / Dashboards
+- Chart.js where charts are needed.
+
+### Testing
+- pytest
+- Flask test client
+
+### Dependency Management
+- Python virtual environment (`venv`)
+- `requirements.txt`
+
+---
+
+## 3. Core Engineering Rules
+
+1. The implementation MUST fulfill all requirements in `product_project.md`.
+2. Do not silently remove, simplify away, or postpone a required feature.
+3. Priority 3 features listed in `product_project.md` MUST be included in the
+   first project implementation.
+4. Prefer simple implementations over unnecessarily complex architecture.
+5. Write readable Python, HTML, CSS, and JavaScript.
+6. Use meaningful filenames, variables, functions, and database columns.
+7. Add comments only where they help a beginner understand the code.
+8. Keep business logic separate from routes/views where practical.
+9. Use environment variables for secrets/API keys.
+10. Never commit passwords, API keys, OTP credentials, JWT secrets, or other
+    secrets to source control.
+11. Provide a `.env.example` file if environment variables are required.
+12. Validate user input on both frontend and backend.
+13. Handle errors gracefully with useful messages.
+14. Do not expose sensitive personal information in API responses.
+15. Do not expose Aadhaar/government ID in public profiles, visiting cards,
+    search results, or chat.
+16. Phone numbers must be private by default and shared only after explicit
+    user consent.
+17. Admin actions must use role-based authorization.
+18. Important admin actions should be recorded in an audit log.
+19. Generate unique Farmer IDs and Buyer IDs at registration.
+20. Keep the database schema normalized enough to remain understandable.
+21. Use migrations or a clear database initialization strategy.
+22. Keep external integrations replaceable through helper/service modules.
+23. Use mock/sample data when a real external API is unavailable so the SIH
+    demo remains functional.
+
+---
+
+## 4. Required Roles
+
+The application MUST support exactly these high-level account roles:
+
+### Farmer
+Can:
+- Register/login
+- Manage profile and profile image
+- Receive unique Farmer ID
+- Add address and farm location
+- Paste Google Maps link/coordinates
+- Add/manage produce
+- View inventory
+- Receive buyer requests
+- Accept/reject/counter-offer
+- Chat with buyers
+- Use voice/call functionality where supported
+- View Mandi rates
+- Find/contact/request cold storage
+- Use farm supplies marketplace
+- View government schemes
+- Generate/share visiting card
+- View orders and delivery tracking
+
+### Buyer
+Can:
+- Register/login
+- Manage profile and profile image
+- Receive unique Buyer ID
+- Add business/address/location information
+- Browse and search produce
+- Enter required quantity
+- Place requests
+- Receive relevant farmer responses
+- Make offers
+- Counter-offer through chat
+- See relevant Mandi rate while entering an offer
+- Chat with farmers
+- Use voice/call functionality where supported
+- Track orders and deliveries
+- View delivery partner contact where available
+- View total historical spend inside order history
+- Generate/share visiting card
+
+### Admin / Authorized Agriculture Officer
+Can:
+- Securely log in
+- Manage farmers and buyers
+- Review verification status
+- Approve/reject/suspend/restore accounts where authorized
+- Add/manage product categories
+- Manage crop/product/quality/unit reference data
+- Review and resolve disputes
+- Take authorized action against users after disputes/rule violations
+- Register/manage cold storages
+- Manage government scheme/information-board posts
+- Review reports/flagged content
+- View operational dashboards
+- Maintain audit logs
+
+---
+
+## 5. Authentication Requirements
+
+Registration should collect the minimum information necessary.
+
+### Preferred flow
+1. User selects Farmer or Buyer.
+2. User enters phone number.
+3. System sends OTP if a suitable free provider is configured.
+4. User verifies OTP.
+5. User completes profile.
+6. System creates unique Farmer ID or Buyer ID.
+7. User can log in using the configured authentication method.
+
+### Fallback
+If no suitable free OTP service is available:
+- Use phone number + password.
+- Hash password securely.
+- Verify credentials against the database.
+- Use JWT/session authentication as appropriate.
+
+### Important
+Aadhaar/government ID is OPTIONAL.
+
+Users without government ID:
+- Can use the platform.
+- Must NOT receive a verified badge.
+
+Users who provide the required government ID:
+- Can enter the prototype verification workflow.
+- Can receive a Verified badge only after the configured verification state
+  is reached.
+
+The application should be structured so future DigiLocker/government identity
+integration can be added without redesigning authentication.
+
+---
+
+## 6. Privacy Requirements
+
+Default privacy should be strict.
+
+- Mobile number hidden from public profile.
+- Mobile number hidden from profile pop-up by default.
+- Mobile number hidden from visiting card unless explicitly shared.
+- User must explicitly enable/check "Share my mobile number" before it is
+  exposed to another user.
+- Once explicitly shared, provide a click-to-call action.
+- Aadhaar/government ID must never be publicly displayed.
+- Sensitive information must not be returned unnecessarily by APIs.
+- Users should only see information they are authorized to access.
+
+---
+
+## 7. Chat Requirements
+
+Chat is an important project feature, not an optional future feature.
+
+Each relevant farmer-buyer conversation should support:
+- Text messages
+- Conversation history
+- Product context
+- Offer
+- Counter-offer
+- Offer status
+- Related order
+- Order status
+- Delivery tracking
+- Delivery partner contact when available
+- Explicit phone-number sharing
+- Click-to-call after number sharing
+
+The chat window should function as a transaction history.
+
+A simple implementation is acceptable:
+- Store messages in a `messages` table.
+- Store order/offer references where applicable.
+- Use REST endpoints + JavaScript polling for message updates.
+
+---
+
+## 8. Marketplace Requirements
+
+Farmer supplies marketplace should support at least:
+- Seeds
+- Fertilizers
+- Farming equipment
+- Irrigation products
+- Other appropriate agricultural supplies
+
+Minimum functionality:
+- Categories
+- Search/filter
+- Product details
+- Pricing
+- Vendor/product information
+- Cart/order flow where feasible
+- Marketplace order history
+
+Keep the marketplace simple and demonstrable.
+
+---
+
+## 9. Cold Storage Requirements
+
+Farmers should be able to:
+- Find nearby cold storages.
+- View location.
+- View capacity.
+- View availability.
+- View approximate charges.
+- View supported produce/storage information.
+- Contact the facility.
+- Request/book storage.
+- Track request status.
+
+Admins should be able to:
+- Register a new cold storage.
+- Update cold-storage information.
+- Manage capacity and availability.
+- Update contact/location/service information.
+- Suspend invalid/outdated listings.
+
+---
+
+## 10. Government Schemes / Information Board
+
+Provide a farmer-facing section containing:
+- Government schemes
+- Agricultural benefits
+- Relevant loans
+- Important announcements/information
+
+Each item should have:
+- Title
+- Short description
+- Eligibility summary where available
+- Useful link/reference where available
+- Publication date
+- Status
+
+Admins should be able to add/edit/publish information.
+
+Do not fabricate official government claims. Use clearly marked sample/demo
+content if real data is not integrated.
+
+---
+
+## 11. Mandi Rates
+
+Mandi/market rates should be available to:
+- Farmers
+- Buyers
+
+For buyers:
+When entering an offer, display the relevant Mandi rate next to the offer
+input.
+
+Example:
+- Product: Potatoes
+- Quantity: 100 kg
+- Mandi rate: ₹23.50/kg
+- Buyer offer: ₹____/kg
+
+The Mandi rate is decision-support information and should not automatically
+force the buyer's offer.
+
+If a live API is unavailable, use replaceable sample/mock data.
+
+---
+
+## 12. Location Requirements
+
+During registration/profile setup:
+- Collect address.
+- Collect location where appropriate.
+- Farmers should provide farm location.
+- Allow a Google Maps link or coordinates to be stored.
+- Store latitude/longitude separately when possible.
+
+Use location for:
+- Nearby Mandi information
+- Cold-storage discovery
+- Relevant matching
+- Location-aware marketplace/logistics features
+
+Do not expose exact farm coordinates publicly unless the user explicitly
+authorizes it.
+
+---
+
+## 13. Visiting Card
+
+Both Farmer and Buyer need a digital Visiting Card.
+
+The card should be generated from profile data and may contain:
+- Name/business name
+- Profile image
+- Role
+- Farmer ID/Buyer ID
+- General location
+- Products/crops/business category
+- Verification badge
+- Short description
+- Contact options according to privacy settings
+
+Users should be able to:
+- Open card
+- Preview card
+- Share card
+
+Never automatically put private Aadhaar information or hidden phone numbers
+onto the card.
+
+---
+
+## 14. Multilingual Support
+
+The architecture MUST support multiple Indian languages.
+
+At minimum target:
+- English
+- Hindi
+- Marathi
+- Tamil
+- Telugu
+
+Design the UI using translation keys so additional languages can be added
+later without changing application logic.
+
+Do not hard-code user-facing text throughout JavaScript/Python files.
+
+---
+
+## 15. Orders and Delivery
+
+Orders should include:
+- Buyer
+- Farmer
+- Product
+- Quantity
+- Agreed price
+- Total amount
+- Status
+- Timestamps
+- Delivery information
+
+Suggested status flow:
+Request → Negotiating → Accepted → Confirmed → Processing → In Transit →
+Delivered → Completed
+
+The exact flow can be simplified where needed, but the user must be able
+to understand the current state.
+
+Delivery information should support:
+- Delivery partner name
+- Contact information when available
+- Tracking/status
+- Estimated delivery information where available
+
+---
+
+## 16. Buyer Dashboard Rule
+
+DO NOT show "Total Spent" as a homepage summary card.
+
+Instead:
+- Show historical order spending in Order History/Transactions.
+- Allow total historical spend to be calculated from completed/recorded orders.
+
+---
+
+## 17. Admin Dashboard
+
+Provide beginner-friendly admin screens for:
+- User management
+- Verification
+- Categories
+- Products/reference data
+- Disputes
+- Cold storages
+- Government schemes
+- Reports
+- Audit log
+- Basic platform statistics
+
+Admin UI should clearly distinguish destructive actions and ask for
+confirmation where appropriate.
+
+---
+
+## 18. Advanced Features
+
+All Priority 3 features in `product_project.md` MUST be implemented in the
+first project version.
+
+If a full production-grade implementation is not practical for a prototype:
+- Build a working demonstrable version.
+- Use mock/sample data where appropriate.
+- Keep integration interfaces replaceable.
+- Clearly label simulated functionality in the code/demo.
+
+Do not remove a Priority 3 feature simply because it is more difficult.
+
+---
+
+## 19. Suggested Project Structure
+
+Use a simple structure similar to:
+
+krishi-kendra/
+│
+├── app.py
+├── config.py
+├── requirements.txt
+├── .env.example
+├── README.md
+│
+├── instance/
+│   └── krishi_kendra.db
+│
+├── app/
+│   ├── __init__.py
+│   ├── models.py
+│   ├── extensions.py
+│   │
+│   ├── routes/
+│   │   ├── auth.py
+│   │   ├── farmer.py
+│   │   ├── buyer.py
+│   │   ├── admin.py
+│   │   ├── chat.py
+│   │   ├── orders.py
+│   │   ├── cold_storage.py
+│   │   ├── marketplace.py
+│   │   └── schemes.py
+│   │
+│   ├── services/
+│   │   ├── otp_service.py
+│   │   ├── maps_service.py
+│   │   ├── mandi_service.py
+│   │   ├── notification_service.py
+│   │   └── verification_service.py
+│   │
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── auth/
+│   │   ├── farmer/
+│   │   ├── buyer/
+│   │   ├── admin/
+│   │   ├── chat/
+│   │   └── shared/
+│   │
+│   └── static/
+│       ├── css/
+│       ├── js/
+│       └── uploads/
+│
+├── tests/
+│   ├── test_auth.py
+│   ├── test_farmer.py
+│   ├── test_buyer.py
+│   ├── test_admin.py
+│   ├── test_orders.py
+│   └── test_chat.py
+│
+└── seed/
+    └── sample_data.py
+
+The agent may change this structure if there is a clear reason, but it must
+remain beginner-friendly.
+
+---
+
+## 20. Database Guidance
+
+Use SQLAlchemy models for at least:
+
+- User
+- FarmerProfile
+- BuyerProfile
+- AdminProfile/permissions
+- Address
+- FarmLocation
+- Product
+- Category
+- Inventory
+- Requirement
+- Offer
+- Order
+- OrderItem
+- Delivery
+- DeliveryPartner
+- Message
+- ChatThread
+- ColdStorage
+- ColdStorageBooking
+- MarketplaceProduct
+- MarketplaceOrder
+- GovernmentScheme
+- Verification
+- Dispute
+- Notification
+- VisitingCard/share settings
+- AuditLog
+
+The exact model design can be adjusted as long as all required relationships
+and workflows are supported.
+
+---
+
+## 21. Beginner-Friendly Development Process
+
+The coding agent should implement in this order:
+
+1. Project setup and virtual environment.
+2. Flask application configuration.
+3. Database and models.
+4. Authentication.
+5. Role-based access.
+6. Farmer profile.
+7. Buyer profile.
+8. Admin dashboard.
+9. Product/category/inventory.
+10. Requirements and matching.
+11. Offers and counter-offers.
+12. Orders.
+13. Chat.
+14. Delivery tracking.
+15. Mandi rates.
+16. Cold storage.
+17. Marketplace.
+18. Government schemes.
+19. Visiting cards.
+20. Multilingual UI.
+21. Notifications.
+22. Advanced Priority 3 features.
+23. Testing.
+24. UI cleanup and SIH demo preparation.
+
+After each major module:
+- Run the application.
+- Test the module.
+- Fix errors before moving forward.
+- Keep the application runnable.
+
+---
+
+## 22. Definition of Done
+
+The project is NOT considered complete until:
+
+- Farmer registration works.
+- Buyer registration works.
+- Admin login works.
+- Authentication works with OTP or secure password fallback.
+- Farmer and Buyer IDs are generated and displayed.
+- Farmer and Buyer profiles work.
+- Profile images work.
+- Address/location/farm coordinates work.
+- Verification workflow and badges work.
+- Farmer inventory works.
+- Buyer browsing/requirements work.
+- Quantity-based matching works.
+- Offers and counter-offers work.
+- Mandi rates work for both roles.
+- Buyer sees Mandi rate while entering an offer.
+- Orders work.
+- Chat history works.
+- Offer/counter-offer appears in chat.
+- Order tracking appears in chat.
+- Delivery partner contact can be shown when available.
+- Click-to-call works only after phone sharing consent.
+- Visiting cards work.
+- Cold-storage search/contact/request works.
+- Admin can register/manage cold storage.
+- Farm supplies marketplace works.
+- Government schemes board works.
+- Multilingual architecture works with the target languages.
+- Dispute management works.
+- Admin category management works.
+- Priority 3 advanced features have a demonstrable implementation.
+- Sensitive data is protected.
+- The application runs locally using clear beginner-friendly instructions.
+- Tests cover the important workflows.
+
+---
+
+## 23. Agent Behavior
+
+The coding agent should behave like a beginner-friendly software mentor as
+well as an implementer.
+
+When making implementation decisions:
+- Prefer the simplest solution that satisfies the requirement.
+- Explain important architectural choices in comments or documentation.
+- Avoid unnecessary dependencies.
+- Avoid premature optimization.
+- Avoid microservices.
+- Avoid complicated DevOps/cloud infrastructure unless required.
+- Keep setup steps short.
+- Ensure another beginner can understand how the project works.
+
+If a requirement cannot be implemented using a free external service:
+1. Do not remove the requirement.
+2. Implement the feature locally/mock it where appropriate.
+3. Create a clean integration point for a real service later.
+4. Document exactly what is simulated.
+
+The final result should be a complete, functional, beginner-understandable
+Krishi Kendra SIH project—not merely a collection of UI screens or stubs.

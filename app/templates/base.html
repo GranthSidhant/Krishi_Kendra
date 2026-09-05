@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Krishi Kendra - Direct Agricultural Trade & Fulfilment (SIH 26033){% endblock %}</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if current_user and current_user.role == 'farmer' %}theme-farmer{% elif current_user and current_user.role == 'buyer' %}theme-buyer{% elif current_user and current_user.role == 'admin' %}theme-admin{% endif %}">
+
+  <!-- Mandi Rate Live Ticker -->
+  <div class="mandi-ticker">
+    <div class="mandi-ticker-badge">
+      <span class="badge bg-danger shadow-sm"><i class="fas fa-bolt me-1"></i> LIVE MANDI RATES</span>
+    </div>
+    <div class="mandi-ticker-track">
+      <div class="ticker-wrap">
+        <span class="me-4">🌾 <strong>Wheat (Nashik):</strong> ₹2,350/Qtl <i class="fas fa-caret-up text-success"></i> +1.5%</span>
+        <span class="me-4">🧅 <strong>Red Onion (Lasalgaon):</strong> ₹1,850/Qtl <i class="fas fa-caret-up text-success"></i> +3.2%</span>
+        <span class="me-4">🍅 <strong>Tomato (Indore):</strong> ₹1,400/Qtl <i class="fas fa-caret-down text-danger"></i> -0.8%</span>
+        <span class="me-4">🥔 <strong>Potato (Agra):</strong> ₹1,650/Qtl <i class="fas fa-caret-up text-success"></i> +2.0%</span>
+        <span class="me-4">🍚 <strong>Basmati Rice (Karnal):</strong> ₹3,800/Qtl <i class="fas fa-caret-up text-success"></i> +0.5%</span>
+        <span class="me-4">🌱 <strong>Soybean (Nagpur):</strong> ₹4,200/Qtl <i class="fas fa-caret-up text-success"></i> +1.2%</span>
+        <span class="me-4">🧄 <strong>Garlic (Ahmedabad):</strong> ₹8,500/Qtl <i class="fas fa-caret-up text-success"></i> +4.5%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-krishi sticky-top">
+    <div class="container-fluid px-lg-4">
+      <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+        <i class="fas fa-leaf text-success fs-3 me-2"></i>
+        <div class="brand-title">
+          KRISHI <span>KENDRA</span>
+        </div>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarKrishiContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarKrishiContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'main.index' %}active fw-bold{% endif %}" href="{{ url_for('main.index') }}"><i class="fas fa-home me-1"></i> <span data-i18n="nav_home">Home</span></a>
+          </li>
+
+          {% if current_user %}
+            {% if current_user.role == 'farmer' %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'farmer.dashboard' %}active text-success fw-bold{% endif %}" href="{{ url_for('farmer.dashboard') }}"><i class="fas fa-tachometer-alt me-1"></i> <span data-i18n="nav_dashboard">Dashboard</span></a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'farmer.inventory' or request.endpoint == 'farmer.add_produce' %}active text-success fw-bold{% endif %}" href="{{ url_for('farmer.inventory') }}"><i class="fas fa-boxes me-1"></i> <span data-i18n="nav_inventory">My Inventory</span></a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'farmer.orders' %}active text-success fw-bold{% endif %}" href="{{ url_for('farmer.orders') }}"><i class="fas fa-handshake me-1"></i> <span data-i18n="nav_orders">Orders</span></a>
+              </li>
+            {% elif current_user.role == 'buyer' %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'buyer.dashboard' %}active text-warning fw-bold{% endif %}" href="{{ url_for('buyer.dashboard') }}"><i class="fas fa-tachometer-alt me-1"></i> <span data-i18n="nav_dashboard">Dashboard</span></a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'buyer.browse' %}active text-warning fw-bold{% endif %}" href="{{ url_for('buyer.browse') }}"><i class="fas fa-search me-1"></i> Browse Produce</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'buyer.orders' %}active text-warning fw-bold{% endif %}" href="{{ url_for('buyer.orders') }}"><i class="fas fa-shopping-cart me-1"></i> My Orders</a>
+              </li>
+            {% elif current_user.role == 'admin' %}
+              <li class="nav-item">
+                <a class="nav-link {% if 'admin.' in (request.endpoint or '') %}active text-primary fw-bold{% endif %}" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-shield-alt me-1"></i> Admin Portal</a>
+              </li>
+            {% endif %}
+          {% endif %}
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'cold_storage.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-1"></i> <span data-i18n="nav_cold_storage">Cold Storage</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'marketplace.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('marketplace.index') }}"><i class="fas fa-store me-1"></i> <span data-i18n="nav_marketplace">Farm Supplies</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'schemes.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-1"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a>
+          </li>
+        </ul>
+
+        <!-- Right Side Nav: Language, Chat, Notifications, User -->
+        <div class="d-flex align-items-center gap-2">
+          <!-- Language Selector -->
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-globe me-1"></i> {{ available_languages.get(current_lang, 'Language') }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              {% for code, lang_name in available_languages.items() %}
+                <li><a class="dropdown-item lang-select-item {% if current_lang == code %}active{% endif %}" data-lang="{{ code }}" href="{{ url_for('main.set_language', lang=code) }}">{{ lang_name }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          {% if current_user %}
+            <!-- Chat Link -->
+            <a href="{{ url_for('chat.chat_list') }}" class="btn btn-sm btn-outline-primary position-relative" title="Conversations & Offers">
+              <i class="fas fa-comments"></i>
+            </a>
+
+            <!-- Notifications Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown" title="Notifications">
+                <i class="fas fa-bell"></i>
+                {% if unread_notifications_count > 0 %}
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ unread_notifications_count }}
+                  </span>
+                {% endif %}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow p-2" style="min-width: 280px; max-height: 350px; overflow-y: auto;">
+                <li class="dropdown-header fw-bold">Recent Notifications</li>
+                {% if current_user.notifications.limit(5).all() %}
+                  {% for notif in current_user.notifications.limit(5).all() %}
+                    <li class="p-2 border-bottom {% if not notif.is_read %}bg-light{% endif %}">
+                      <a href="{{ notif.link_url }}" class="text-decoration-none text-dark d-block">
+                        <div class="fw-semibold text-sm">{{ notif.title }}</div>
+                        <small class="text-muted d-block">{{ notif.message }}</small>
+                      </a>
+                    </li>
+                  {% endfor %}
+                {% else %}
+                  <li class="p-2 text-muted text-center text-sm">No notifications yet.</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <!-- User Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-sm btn-light border dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                <img src="{% if current_user.profile_image and current_user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + current_user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ current_user.name }}&background=2e7d32&color=fff{% endif %}" alt="Avatar" class="rounded-circle" width="26" height="26">
+                <span>{{ current_user.name.split()[0] }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li class="dropdown-header">
+                  <strong>{{ current_user.name }}</strong>
+                  <div class="text-muted small">{{ current_user.custom_id }} ({{ current_user.role.capitalize() }})</div>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                {% if current_user.role == 'farmer' %}
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.visiting_card') }}"><i class="fas fa-id-card me-2 text-success"></i> My Visiting Card</a></li>
+                {% elif current_user.role == 'buyer' %}
+                  <li><a class="dropdown-item" href="{{ url_for('buyer.visiting_card') }}"><i class="fas fa-id-card me-2 text-warning"></i> My Visiting Card</a></li>
+                {% endif %}
+                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="fas fa-user-cog me-2"></i> Profile & Privacy</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+              </ul>
+            </div>
+
+          {% else %}
+            <!-- Guest Buttons -->
+            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-success"><i class="fas fa-sign-in-alt me-1"></i> <span data-i18n="nav_login">Login</span></a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-success"><i class="fas fa-user-plus me-1"></i> <span data-i18n="nav_register">Register</span></a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="container-fluid px-lg-4 mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Page Main Content Block -->
+  <main class="py-3">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Floating Voice Assistant FAB -->
+  <div class="voice-assistant-fab" id="voiceAssistantFab" title="Click to speak or chat with Krishi Mitra AI Copilot">
+    <i class="fas fa-microphone fs-4"></i>
+  </div>
+
+  <!-- AI Voice & Text Assistant Modal -->
+  <div class="modal fade" id="voiceAssistantModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0" style="border-radius: var(--radius-lg);">
+        <div class="modal-header bg-success text-white">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-robot fs-4"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0">Krishi Mitra AI Copilot</h5>
+              <small class="text-white-50">कृषि मित्र AI सहायक • Multilingual Voice & Chat</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- Voice Interaction Visualizer -->
+          <div class="text-center mb-3">
+            <button type="button" id="startVoiceRecordingBtn" class="btn btn-outline-success rounded-circle p-3 shadow-sm mb-2" style="width:72px; height:72px;">
+              <i class="fas fa-microphone-alt fa-2x"></i>
+            </button>
+            <div class="fw-bold text-dark" id="voiceStatusText">Click mic to speak, or type your question below</div>
+            <div class="text-muted small">Supports Hindi, Marathi, Tamil, Telugu, and English</div>
+          </div>
+
+          <!-- Quick Suggestions Chips -->
+          <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
+            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="गेहूं का भाव क्या है?">🌾 गेहूं भाव</button>
+            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="Onion Mandi rate">🧅 Onion Rate</button>
+            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="Add produce to inventory">📦 Add Produce</button>
+            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="Find cold storage">❄️ Cold Storage</button>
+            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="PM KISAN scheme">🏛️ PM-KISAN</button>
+          </div>
+
+          <!-- AI Response Card -->
+          <div class="alert alert-light border p-3 mb-3" id="voiceResponseContainer">
+            <div class="d-flex align-items-center gap-2 text-success fw-bold mb-1">
+              <i class="fas fa-brain"></i> <span>Krishi Mitra AI:</span>
+            </div>
+            <div id="voiceResponseText" class="text-dark small">
+              Namaste! Ask me about live Mandi prices, crop diseases, cold storage availability, or platform navigation.
+            </div>
+            <div id="voiceActionContainer" class="mt-2" style="display:none;"></div>
+          </div>
+
+          <!-- Text Input Fallback -->
+          <form id="voiceTextQueryForm" class="d-flex gap-2">
+            <input type="text" id="voiceTextInput" class="form-control" placeholder="Type in Hindi or English (e.g. आलू का रेट)..." autocomplete="off">
+            <button type="submit" class="btn btn-success fw-bold px-3">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Profile Popup Modal (Strict Privacy) -->
+  <div class="modal fade" id="userProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content shadow border-0" style="border-radius: var(--radius-md);">
+        <div class="modal-header bg-light py-2">
+          <h6 class="modal-title fw-bold" id="popup-user-role">User Profile</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center p-3">
+          <h5 class="fw-bold mb-1" id="popup-user-name">User Name</h5>
+          <div class="text-muted small mb-2" id="popup-user-id">ID</div>
+          <div class="mb-2" id="popup-user-badge"></div>
+          <div class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-danger me-1"></i> <span id="popup-user-location">Location</span></div>
+          <p class="small text-secondary bg-light p-2 rounded" id="popup-user-bio">Bio description</p>
+          <div class="mt-3" id="popup-phone-container"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-top py-4 mt-5">
+    <div class="container-fluid px-lg-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+      <div>
+        <span class="fw-bold text-success">KRISHI KENDRA</span> &copy; 2026 | Smart India Hackathon (SIH26033)
+        <div class="text-muted small">Ministry of Consumer Affairs, Food & Public Distribution</div>
+      </div>
+      <div class="d-flex gap-3 small text-muted">
+        <span><i class="fas fa-check-circle text-success me-1"></i> Disintermediation</span>
+        <span><i class="fas fa-balance-scale text-primary me-1"></i> Fair Price Discovery</span>
+        <span><i class="fas fa-truck text-warning me-1"></i> Fulfilment Tracking</span>
+        <span><i class="fas fa-shield-alt text-info me-1"></i> Escrow Security</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Main Scripts -->
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/voice_assistant.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

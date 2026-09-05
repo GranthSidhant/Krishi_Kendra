@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="k-card shadow-lg border-0 p-4">
+        <div class="text-center mb-4">
+          <i class="fas fa-user-plus text-success fs-1 mb-2"></i>
+          <h3 class="fw-bold">Create Krishi Kendra Account</h3>
+          <p class="text-muted small">Select your role to get started with direct agricultural trading</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+          <!-- Role Selection Radio Cards -->
+          <div class="mb-4">
+            <label class="form-label fw-bold">Select Account Role</label>
+            <div class="row g-3">
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="role" id="roleFarmer" value="farmer" {% if selected_role != 'buyer' %}checked{% endif %}>
+                <label class="btn btn-outline-success w-100 p-3 text-start d-flex align-items-center gap-3" for="roleFarmer">
+                  <i class="fas fa-tractor fs-2"></i>
+                  <div>
+                    <div class="fw-bold">Farmer (किसान)</div>
+                    <small class="text-muted">Sell produce, manage inventory</small>
+                  </div>
+                </label>
+              </div>
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="role" id="roleBuyer" value="buyer" {% if selected_role == 'buyer' %}checked{% endif %}>
+                <label class="btn btn-outline-warning w-100 p-3 text-start d-flex align-items-center gap-3" for="roleBuyer">
+                  <i class="fas fa-store fs-2"></i>
+                  <div>
+                    <div class="fw-bold">Buyer (खरीदार)</div>
+                    <small class="text-muted">Buy any quantity, post requirements</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Basic Info -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name / Business Name *</label>
+              <input type="text" name="name" class="form-control" placeholder="e.g. Ramesh Patil / Fresh Foods" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mobile Number *</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">+91</span>
+                <input type="tel" name="phone" class="form-control" placeholder="9876543210" pattern="[0-9]{10}" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Password *</label>
+              <input type="password" name="password" class="form-control" placeholder="At least 6 characters" minlength="6" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Preferred Language</label>
+              <select name="preferred_language" class="form-select">
+                <option value="en" selected>English</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="mr">मराठी (Marathi)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+                <option value="te">తెలుగు (Telugu)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Geographical Info -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">State</label>
+              <select name="state" class="form-select">
+                <option value="Maharashtra" selected>Maharashtra</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">District</label>
+              <input type="text" name="district" class="form-control" placeholder="e.g. Nashik, Pune, Indore" value="Nashik" required>
+            </div>
+          </div>
+
+          <!-- Optional Government ID (Verification) -->
+          <div class="p-3 bg-light rounded-3 mb-4 border">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label fw-bold mb-0 text-success">
+                <i class="fas fa-shield-alt me-1"></i> Government ID Verification (Optional)
+              </label>
+              <span class="badge bg-secondary">Optional for registration</span>
+            </div>
+            <p class="text-muted small mb-2">
+              Providing government ID helps earn the <strong>Verified Badge</strong> after review. You can skip this and upload it later in your profile.
+            </p>
+            <div class="row g-2">
+              <div class="col-md-5">
+                <select name="gov_id_type" class="form-select form-select-sm">
+                  <option value="">-- Select ID Type --</option>
+                  <option value="Aadhaar Card">Aadhaar Card</option>
+                  <option value="Kisan Credit Card">Kisan Credit Card (KCC)</option>
+                  <option value="Voter ID">Voter ID</option>
+                  <option value="GSTIN">GST Certificate (Buyers)</option>
+                </select>
+              </div>
+              <div class="col-md-7">
+                <input type="text" name="gov_id_number" class="form-control form-select-sm" placeholder="Enter ID Number (Masked automatically)">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-success btn-lg fw-bold">
+              <i class="fas fa-arrow-right me-2"></i> Continue to OTP Verification
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center">
+          <span class="text-muted">Already have an account?</span>
+          <a href="{{ url_for('auth.login') }}" class="text-success fw-bold text-decoration-none ms-1">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

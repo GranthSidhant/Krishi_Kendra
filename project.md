@@ -21,11 +21,17 @@
 A **farmer-centric digital agricultural trading and fulfilment
 platform** that connects farmers directly with buyers.
 
-The platform is designed around two primary roles:
+The platform is designed around three role types:
 
 1.  **Farmer** --- supplies and sells agricultural produce.
-2.  **Buyer** --- purchases agricultural produce in any required
-    quantity.
+2.  **Buyer** --- purchases agricultural produce in any required quantity.
+3.  **Admin / Authorized Agriculture Officer** --- manages platform operations,
+    verifies users, manages categories and reference data, handles disputes,
+    manages cold-storage registrations, and performs authorized moderation and
+    administrative actions.
+
+The Buyer remains a unified account type; there are no separate bulk-buyer and
+small-buyer roles.
 
 A buyer is **not separated into "bulk buyer" and "small buyer"
 accounts**. Every buyer has one account and can enter the quantity they
@@ -106,8 +112,18 @@ role-based dashboards.
 
 The farmer can:
 
--   Register and log in.
+-   Register and log in using OTP when a suitable free OTP service is available;
+    otherwise use phone number + password authentication.
 -   Create and manage a farmer profile.
+-   Upload/update a profile image.
+-   Receive a unique Farmer ID generated at registration and display it in the
+    profile.
+-   Provide address and geographical information.
+-   Add farm location(s), including an option to paste a Google Maps link or
+    coordinates for the farm/land.
+-   Optionally provide Aadhaar/government ID information for verification.
+-   Receive a Verified Farmer badge only after the configured verification
+    condition is satisfied.
 -   Add produce to inventory.
 -   Update available quantity.
 -   Set product availability.
@@ -131,7 +147,16 @@ A buyer has one unified account.
 
 The buyer can:
 
--   Register and log in.
+-   Register and log in using OTP when a suitable free OTP service is available;
+    otherwise use phone number + password authentication.
+-   Create and manage a buyer/business profile.
+-   Upload/update a profile image.
+-   Receive a unique Buyer ID generated at registration and display it in the
+    profile.
+-   Provide business address and geographical information.
+-   Optionally provide Aadhaar/government ID information for verification.
+-   Receive a Verified Buyer badge only after the configured verification
+    condition is satisfied.
 -   Browse available produce.
 -   Search for farmers and products.
 -   Send a direct request to a selected farmer.
@@ -150,7 +175,67 @@ buyer" account types. The buyer simply enters the required quantity.
 
 ------------------------------------------------------------------------
 
-## 4. Buyer--Farmer Matching Model
+
+## 5. Admin / Authorized Agriculture Officer Module
+
+The platform includes a third role for authorized administrative management.
+For the SIH prototype this role may be represented as an **Admin / Authorized
+Agriculture Officer**. Access must be protected with role-based permissions.
+
+### Core Admin Responsibilities
+
+The admin can:
+
+-   Log in through a protected admin authentication flow.
+-   View and manage farmer and buyer accounts.
+-   Review farmer/buyer verification information and verification status.
+-   Approve, reject, suspend, restrict, or restore accounts where permitted.
+-   Review disputes registered between farmers and buyers.
+-   Record dispute decisions, actions taken, evidence/notes, and resolution
+    status.
+-   Take authorized action against a farmer or buyer when a dispute or
+    platform-rule violation requires intervention.
+-   Manage produce/category master data and add new categories that appear in
+    farmer and buyer selection fields.
+-   Manage crop/product names, units, quality-grade options, and other
+    configurable reference data.
+-   Review and manage cold-storage registrations.
+-   Add/register newly opened cold storages and update their details,
+    availability, capacity, location, contact information, and services.
+-   Manage featured/important government schemes and information-board posts.
+-   Manage platform announcements and important notifications.
+-   Review reports, flagged conversations/orders, and suspicious activity.
+-   View operational dashboards for users, orders, disputes, and logistics.
+-   Maintain an audit trail for important administrative actions.
+
+### Recommended Admin Dashboard
+
+Summary cards:
+
+-   Total Farmers
+-   Total Buyers
+-   Pending Verifications
+-   Open Disputes
+-   Active Orders
+-   Registered Cold Storages
+
+Quick actions:
+
+-   Verify User
+-   Add Category
+-   Review Disputes
+-   Register Cold Storage
+-   Publish Government Scheme
+-   Review Reports
+
+### Admin Permission Principle
+
+Administrative actions should be permission-based rather than giving every
+admin unrestricted access. Sensitive actions should be logged with the admin
+ID, timestamp, target user/order, action, and reason.
+
+
+## 5. Buyer--Farmer Matching Model
 
 The platform supports both workflows.
 
@@ -203,7 +288,7 @@ This gives the buyer two choices:
 
 ------------------------------------------------------------------------
 
-## 5. Quantity and Farmer Interest Logic
+## 6. Quantity and Farmer Interest Logic
 
 The buyer enters the required quantity instead of selecting a bulk/small
 order mode.
@@ -246,7 +331,7 @@ Request is sent only to matching farmers.
 
 ------------------------------------------------------------------------
 
-## 6. Farmer Dashboard
+## 7. Farmer Dashboard
 
 The farmer dashboard should prioritize simplicity and accessibility.
 
@@ -275,6 +360,10 @@ The farmer dashboard should prioritize simplicity and accessibility.
 -   Book Transport
 -   Buy Seeds / Fertilizers
 -   Voice Assistant
+-   Visiting Card
+-   Chat / Messages
+-   Find Cold Storage
+-   Government Schemes
 
 ### Main Sections
 
@@ -342,7 +431,7 @@ Provide:
 
 ------------------------------------------------------------------------
 
-## 7. Farmer Navigation
+## 8. Farmer Navigation
 
 ``` text
 Dashboard
@@ -362,7 +451,7 @@ Logout
 
 ------------------------------------------------------------------------
 
-## 8. Inventory Management
+## 9. Inventory Management
 
 Suggested product fields:
 
@@ -405,7 +494,7 @@ Offer available quantity: 1,500 kg
 
 ------------------------------------------------------------------------
 
-## 9. Buyer Requirement System
+## 10. Buyer Requirement System
 
 A major feature is **Post New Requirement**.
 
@@ -438,7 +527,7 @@ Receive Farmer Responses
 
 ------------------------------------------------------------------------
 
-## 10. Farmer Order Actions
+## 11. Farmer Order Actions
 
 When a farmer receives a request, show:
 
@@ -471,7 +560,7 @@ Requested Price: ₹22/kg
 
 ------------------------------------------------------------------------
 
-## 11. Market / Mandi Rates
+## 12. Market / Mandi Rates
 
 Show market information to support informed decisions.
 
@@ -484,6 +573,23 @@ Suggested information:
 -   Average/current price.
 -   Price movement.
 -   Last updated time.
+
+### Buyer-Side Offer Entry
+
+When a buyer enters an offer while creating an order/request, show the
+relevant Mandi rate for the selected product alongside the offer field.
+
+Example:
+
+``` text
+Product: Potatoes
+Quantity: 100 kg
+Current Mandi Rate: ₹23.50/kg
+Your Offer: ₹____/kg
+```
+
+The buyer can use the displayed market rate as decision support while entering
+the offer.
 
 ### Offer Comparison
 
@@ -507,7 +613,7 @@ Status:
 
 ------------------------------------------------------------------------
 
-## 12. Smart Order Decision Assistance
+## 13. Smart Order Decision Assistance
 
 Potential advanced feature: **Analyze Order**.
 
@@ -531,7 +637,7 @@ automatically.
 
 ------------------------------------------------------------------------
 
-## 13. Logistics & Transport
+## 14. Logistics & Transport
 
 Proposed workflow:
 
@@ -576,49 +682,138 @@ Future smart recommendation factors:
 
 ------------------------------------------------------------------------
 
-## 14. Cold Storage --- Advanced Feature
+## 15. Cold Storage --- Core Project Feature
 
-Potential module: **Find / Book Cold Storage**.
+The platform should provide a **Find / Book Cold Storage** module.
 
 The farmer may:
 
--   Search storage.
--   View capacity.
--   View availability.
+-   Search nearby cold storages using farm/current location.
+-   View cold-storage name, address and map location.
+-   View available capacity.
+-   View availability status.
 -   View approximate charges.
--   Request/book space.
+-   View storage type/temperature or supported produce where available.
+-   Contact the cold-storage operator.
+-   Request/book storage space.
+-   Track the status of the storage request.
 
-This is not required for the first MVP.
+### Cold Storage Registration
 
-------------------------------------------------------------------------
+The Admin / Authorized Agriculture Officer can:
 
-## 15. Farm Supplies Marketplace --- Secondary Feature
+-   Register newly opened cold storages.
+-   Approve or manage cold-storage listings.
+-   Update capacity, availability, charges, services and contact details.
+-   Maintain location/map information.
+-   Suspend outdated or invalid listings.
 
-Potential categories:
+This module is part of the initial project implementation rather than a
+deferred future-only feature.
+
+## 16. Farm Supplies Marketplace --- Initial Advanced Feature
+
+Provide a marketplace where farmers can purchase agricultural inputs and
+related products.
+
+### Categories
 
 -   Seeds
 -   Fertilizers
 -   Farming equipment
 -   Irrigation products
+-   Crop-protection/agricultural supplies where appropriate
 
-Possible functionality:
+### Functionality
 
 -   Browse categories.
--   View vendors.
+-   Search/filter products.
+-   View vendors/products.
 -   Compare options.
+-   View product details and pricing.
 -   Place orders.
+-   View marketplace order history.
 
-**Priority:** Phase 2 unless directly required by the official problem
-statement.
+This feature is included in the first project implementation alongside the
+other Priority 3 advanced features.
 
-Core focus remains:
+## 17. Shared Utilities and Communication
 
-> Farmer--Buyer Connection + Inventory + Orders + Market Information +
-> Logistics
+### Digital Visiting Card
 
-------------------------------------------------------------------------
+Both farmers and buyers/business buyers should have a **Visiting Card**
+utility generated automatically from their profile.
 
-## 16. Notifications
+The card can contain:
+
+-   Name / business name
+-   Profile image
+-   Role
+-   Farmer ID / Buyer ID
+-   Location
+-   Crops/products or business category
+-   Verification badge, if applicable
+-   Short profile/business description
+-   Contact options controlled by privacy settings
+
+Users can:
+
+-   Open their visiting card from the app.
+-   Preview it.
+-   Share it with another farmer or buyer.
+-   Use a shareable digital-card format without exposing restricted personal
+    information.
+
+### Profile Pop-up
+
+When a user clicks the profile picture/name of another farmer or buyer, show
+a compact profile pop-up with basic details.
+
+The mobile number must **not** be shown by default. Before sharing a personal
+mobile number, the owner must explicitly enable/check a **Share my mobile
+number** option. The same privacy rule applies to other sensitive personal
+contact details.
+
+### Chat and Communication
+
+Provide a communication layer between farmers and buyers with:
+
+-   Text chat.
+-   Voice-chat/call capability where technically available.
+-   Click-to-call action for a phone number that has been explicitly shared.
+-   Order-linked conversations.
+-   Offer and counter-offer cards inside the conversation.
+-   Order status and delivery tracking inside the conversation.
+-   Communication history retained as the transaction conversation history.
+
+Phone numbers must not be automatically exposed merely because two users are
+chatting.
+
+### Order-Linked Chat
+
+A chat thread can be associated with one or more relevant orders.
+
+Within the chat, users should be able to:
+
+1.  Discuss the selected product.
+2.  See the current offer.
+3.  Send a counter-offer.
+4.  Accept/reject an offer where the order state permits it.
+5.  View the related order.
+6.  View order/delivery status.
+7.  Access delivery-partner contact details when they are available.
+8.  Continue using the conversation as a history of negotiation and
+    fulfilment communication.
+
+### Delivery Partner Contact
+
+For an active delivery, the delivery details should include the assigned
+delivery partner/driver contact information when available and authorized.
+Both farmer and buyer should be able to contact the delivery partner for
+delivery follow-up.
+
+
+## 17. Notifications
 
 ### Farmer Notifications
 
@@ -643,30 +838,28 @@ Core focus remains:
 
 ------------------------------------------------------------------------
 
-## 17. Multilingual Support
+## 18. Multilingual Support
 
-Initial prototype target:
+The application should be architected for broad multilingual support rather
+than limiting the prototype to Hindi and English.
+
+### Initial / Target Languages
 
 -   English
 -   Hindi
--   One additional language if feasible
+-   Marathi
+-   Tamil
+-   Telugu
+-   Other major Indian languages relevant to farming communities, added
+    through the same translation architecture.
 
-Example labels:
+All UI labels, important notifications, help content, and farmer-facing
+information should use translation keys rather than hard-coded strings.
 
-``` text
-My Inventory → मेरा स्टॉक / मेरी फसल
-Orders → ऑर्डर
-Sell Produce → फसल बेचें
-Market Price → मंडी भाव
-Book Transport → गाड़ी बुक करें
-Help → मदद
-```
+Voice assistance should also be designed so additional Indian languages can
+be added where speech services support them.
 
-The architecture should allow additional languages later.
-
-------------------------------------------------------------------------
-
-## 18. Voice Assistance --- Advanced Feature
+## 19. Voice Assistance --- Advanced Feature
 
 Potential voice interactions:
 
@@ -687,37 +880,67 @@ Potential uses:
 
 ------------------------------------------------------------------------
 
-## 19. Trust and Verification
+## 20. Trust and Verification
+
+### Identity and IDs
+
+Every Farmer and Buyer receives a unique system-generated ID at registration.
+The ID acts as the primary application identifier and is displayed in the
+profile/visiting card where appropriate.
 
 ### Farmer Profile
 
 Suggested information:
 
--   Name.
--   Mobile number.
--   Farm location.
--   Crops grown.
--   Preferred language.
--   Verification status.
+-   Farmer ID
+-   Name
+-   Profile image
+-   Mobile number
+-   Address
+-   Farm location(s)
+-   Google Maps link / coordinates
+-   Crops grown
+-   Preferred language
+-   Verification status
+-   Verified badge, when eligible
 
 ### Buyer Profile
 
 Suggested information:
 
--   Name/organisation.
--   Mobile number.
--   Business details if applicable.
--   Location.
--   Verification status.
+-   Buyer ID
+-   Name/organisation
+-   Profile image
+-   Mobile number
+-   Business details if applicable
+-   Address
+-   Location
+-   Preferred language
+-   Verification status
+-   Verified badge, when eligible
 
-Potential badges:
+### Aadhaar / Government ID
 
--   Verified Farmer
--   Verified Buyer
+Aadhaar or another supported government ID is **optional**, not mandatory.
 
-------------------------------------------------------------------------
+If supplied, the prototype can store the required verification data securely
+and use it to represent a verification workflow. A future implementation may
+integrate a government-supported identity flow such as DigiLocker, subject to
+availability, authorization, privacy requirements, and API access.
 
-## 20. Ratings and Reviews
+For the SIH prototype:
+
+-   No Aadhaar/government ID means the user can still use the platform.
+-   Users who provide the required identity information can be marked as
+    **verification pending/verified** according to the prototype workflow.
+-   The **Verified Farmer** / **Verified Buyer** badge must only be displayed
+    when the configured verification condition has been met.
+-   Admins can review and manage verification status.
+
+Do not expose Aadhaar or sensitive identity information in public profiles,
+visiting cards, chat, or search results.
+
+## 21. Ratings and Reviews
 
 After completed transactions:
 
@@ -746,7 +969,7 @@ Simple model:
 
 ------------------------------------------------------------------------
 
-## 21. Buyer Dashboard
+## 22. Buyer Dashboard
 
 The buyer dashboard is tailored to purchasing.
 
@@ -764,7 +987,7 @@ The buyer dashboard is tailored to purchasing.
 -   Active Orders
 -   Pending Responses
 -   Orders in Delivery
--   Total Spent
+-   Pending Actions
 
 ### Quick Actions
 
@@ -818,12 +1041,15 @@ Statuses:
 ### Other Sections
 
 -   Market Prices
+-   Profile / Manage Profile
+-   Visiting Card
+-   Chat / Messages
 -   Notifications
 -   Support & Help
 
 ------------------------------------------------------------------------
 
-## 22. Buyer Navigation
+## 23. Buyer Navigation
 
 ``` text
 Dashboard
@@ -842,7 +1068,7 @@ Logout
 
 ------------------------------------------------------------------------
 
-## 23. Farmer Offer Comparison
+## 24. Farmer Offer Comparison
 
 When multiple farmers respond, compare:
 
@@ -873,7 +1099,7 @@ Confirm Order
 
 ------------------------------------------------------------------------
 
-## 24. Smart Matching / Recommendation
+## 25. Smart Matching / Recommendation
 
 Potential matching factors:
 
@@ -893,7 +1119,7 @@ AI/ML is not required for the MVP.
 
 ------------------------------------------------------------------------
 
-## 25. Order Tracking
+## 26. Order Tracking
 
 Suggested timeline:
 
@@ -917,7 +1143,7 @@ Suggested timeline:
 
 ------------------------------------------------------------------------
 
-## 26. Payments and Transaction History
+## 27. Payments and Transaction History
 
 ### Farmer
 
@@ -932,6 +1158,8 @@ Suggested timeline:
 -   Pending payments.
 -   Completed payments.
 -   Invoice/order history.
+-   Total amount spent across historical orders (shown in order history,
+    not as a homepage summary card).
 
 Payment integration may be simulated for the prototype if necessary.
 
@@ -944,7 +1172,7 @@ Future possibilities:
 
 ------------------------------------------------------------------------
 
-## 27. Help and Information
+## 28. Help and Information
 
 Include:
 
@@ -968,7 +1196,7 @@ Also:
 
 ------------------------------------------------------------------------
 
-## 28. Public Landing Page
+## 29. Public Landing Page
 
 ### Hero Section
 
@@ -1029,7 +1257,7 @@ Track Delivery
 
 ------------------------------------------------------------------------
 
-## 29. Technical Approach
+## 30. Technical Approach
 
 ### Suggested Stack
 
@@ -1051,6 +1279,14 @@ Track Delivery
 
 -   JWT
 -   Role-Based Access Control
+-   Phone-number based authentication
+-   Preferred: free/zero-cost OTP service if a suitable service is available
+  and practical for the prototype
+-   Fallback: phone number + password stored securely (password hash, never
+  plaintext) and verified from the database
+-   OTP/password implementation must be isolated behind an authentication
+  service so the provider can be changed later
+
 
 #### Potential Integrations
 
@@ -1082,7 +1318,7 @@ External Services
 
 ------------------------------------------------------------------------
 
-## 30. Development Methodology
+## 31. Development Methodology
 
 ### User-Centred Design
 
@@ -1104,6 +1340,14 @@ Suggested modules:
 10. Logistics
 11. Payments/history
 12. Notifications
+13. Chat & Communication
+14. Visiting Cards
+15. Cold Storage
+16. Farm Supplies Marketplace
+17. Government Schemes / Information Board
+18. Admin & Verification
+19. Disputes & Moderation
+20. Profile / Privacy
 
 ### Agile / Iterative Process
 
@@ -1125,7 +1369,7 @@ Add Next Module
 
 ------------------------------------------------------------------------
 
-## 31. MVP Scope
+## 32. MVP Scope
 
 ### Priority 1 --- Essential
 
@@ -1195,7 +1439,7 @@ Add Next Module
 
 ------------------------------------------------------------------------
 
-## 32. Key Differentiators
+## 33. Key Differentiators
 
 The project should not be positioned as only a basic marketplace.
 
@@ -1224,7 +1468,7 @@ The project should not be positioned as only a basic marketplace.
 
 ------------------------------------------------------------------------
 
-## 33. Feasibility and Risks
+## 34. Feasibility and Risks
 
 ### Why the MVP Is Feasible
 
@@ -1257,7 +1501,7 @@ The project should not be positioned as only a basic marketplace.
 
 ------------------------------------------------------------------------
 
-## 34. Expected Impact
+## 35. Expected Impact
 
 ### Farmers
 
@@ -1297,7 +1541,7 @@ The project should not be positioned as only a basic marketplace.
 
 ------------------------------------------------------------------------
 
-## 35. Presentation / PPT Structure
+## 36. Presentation / PPT Structure
 
 ### Slide 1 --- Title
 
@@ -1353,7 +1597,7 @@ Only include sources actually used:
 
 ------------------------------------------------------------------------
 
-## 36. Main Product Flow
+## 37. Main Product Flow
 
 ``` text
                          PLATFORM
@@ -1389,7 +1633,7 @@ Only include sources actually used:
 
 ------------------------------------------------------------------------
 
-## 37. Coding AI Agent Instructions
+## 38. Coding AI Agent Instructions
 
 Treat this file as the product requirements document.
 
@@ -1414,7 +1658,7 @@ Treat this file as the product requirements document.
 
 ------------------------------------------------------------------------
 
-## 38. Open Decisions / To Be Finalized
+## 39. Open Decisions / To Be Finalized
 
 ### Product Identity
 
@@ -1465,7 +1709,7 @@ Treat this file as the product requirements document.
 
 ------------------------------------------------------------------------
 
-## 39. Change Log
+## 40. Change Log
 
   -----------------------------------------------------------------------
   Date                    Change                  Reason / Notes
@@ -1485,7 +1729,7 @@ Treat this file as the product requirements document.
 
 ------------------------------------------------------------------------
 
-## 40. Current MVP Definition
+## 41. Current MVP Definition
 
 ``` text
 Authentication

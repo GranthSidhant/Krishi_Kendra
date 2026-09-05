@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Dashboard - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+
+  <!-- Welcome Header Banner -->
+  <div class="p-4 bg-success text-white rounded-4 shadow-sm mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% if user.profile_image and user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ user.name }}&background=1b5e20&color=fff{% endif %}" alt="Avatar" class="rounded-circle border border-white" width="65" height="65">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="fw-bold mb-0">Namaste, {{ user.name }}!</h3>
+          {% if user.is_verified %}
+            <span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified Farmer</span>
+          {% endif %}
+        </div>
+        <div class="text-white-50 small">
+          Farmer ID: <strong>{{ user.custom_id }}</strong> | Location: <strong>{{ user.farmer_profile.district if user.farmer_profile else 'Nashik' }}, {{ user.farmer_profile.state if user.farmer_profile else 'Maharashtra' }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-warning fw-bold px-3 py-2 shadow-sm">
+        <i class="fas fa-plus-circle me-1"></i> <span data-i18n="btn_add_produce">Add Produce</span>
+      </a>
+      <a href="{{ url_for('farmer.visiting_card') }}" class="btn btn-outline-light fw-bold px-3 py-2">
+        <i class="fas fa-id-card me-1"></i> <span data-i18n="nav_card">Visiting Card</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="k-card stat-card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold" data-i18n="total_inventory">Total Inventory</div>
+            <div class="stat-value text-success">{{ total_inventory_kg }} <small class="fs-6 text-muted">kg</small></div>
+          </div>
+          <div class="p-3 bg-success-subtle text-success rounded-circle">
+            <i class="fas fa-boxes fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="k-card stat-card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold" data-i18n="active_orders">Active Orders</div>
+            <div class="stat-value text-primary">{{ active_orders_count }}</div>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-circle">
+            <i class="fas fa-truck-loading fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="k-card stat-card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold" data-i18n="total_sales">Total Sales (Completed)</div>
+            <div class="stat-value text-success">₹{{ total_sales_amount }}</div>
+          </div>
+          <div class="p-3 bg-success-subtle text-success rounded-circle">
+            <i class="fas fa-wallet fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="k-card stat-card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold" data-i18n="pending_payments">Pending Payments</div>
+            <div class="stat-value text-warning">₹{{ pending_payments_amount }}</div>
+          </div>
+          <div class="p-3 bg-warning-subtle text-warning rounded-circle">
+            <i class="fas fa-clock fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Large Touch-Friendly Quick Action Grid -->
+  <div class="k-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="fas fa-th-large text-success me-2"></i> Farmer Quick Actions</h5>
+    <div class="row g-3 text-center">
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-light border btn-farmer-action text-success w-100 shadow-sm">
+          <i class="fas fa-seedling"></i>
+          <span>Add Produce</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('farmer.orders') }}" class="btn btn-light border btn-farmer-action text-primary w-100 shadow-sm">
+          <i class="fas fa-hand-holding-usd"></i>
+          <span>Buyer Requests</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('farmer.mandi_rates') }}" class="btn btn-light border btn-farmer-action text-danger w-100 shadow-sm">
+          <i class="fas fa-chart-line"></i>
+          <span>Live Mandi Rates</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('farmer.logistics') }}" class="btn btn-light border btn-farmer-action text-warning w-100 shadow-sm">
+          <i class="fas fa-truck"></i>
+          <span>Book Transport</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('cold_storage.index') }}" class="btn btn-light border btn-farmer-action text-info w-100 shadow-sm">
+          <i class="fas fa-snowflake"></i>
+          <span>Cold Storage</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('marketplace.index') }}" class="btn btn-light border btn-farmer-action text-secondary w-100 shadow-sm">
+          <i class="fas fa-shopping-basket"></i>
+          <span>Seeds & Fertilizers</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('schemes.index') }}" class="btn btn-light border btn-farmer-action text-dark w-100 shadow-sm">
+          <i class="fas fa-landmark"></i>
+          <span>Govt Schemes</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('farmer.visiting_card') }}" class="btn btn-light border btn-farmer-action text-success w-100 shadow-sm">
+          <i class="fas fa-id-badge"></i>
+          <span>Visiting Card</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Buyer Requests & Inventory Overview -->
+  <div class="row g-4 mb-4">
+    <!-- Incoming Buyer Requests -->
+    <div class="col-lg-7">
+      <div class="k-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-success"><i class="fas fa-inbox me-2"></i> Recent Buyer Offers & Requests</h5>
+          <a href="{{ url_for('farmer.orders') }}" class="btn btn-sm btn-outline-success">View All Requests</a>
+        </div>
+        
+        {% if recent_offers %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Offered Price</th>
+                  <th>Buyer</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for o in recent_offers %}
+                <tr>
+                  <td><strong>{{ o.product_name }}</strong></td>
+                  <td>{{ o.quantity }} {{ o.unit }}</td>
+                  <td class="fw-bold text-success">₹{{ o.offered_price_per_unit }}/{{ o.unit }}</td>
+                  <td>
+                    <a href="#" class="text-decoration-none trigger-profile-popup" data-user-id="{{ o.buyer.id }}">
+                      {{ o.buyer.name }}
+                    </a>
+                  </td>
+                  <td>
+                    {% if o.status == 'pending' %}
+                      <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif o.status == 'accepted' %}
+                      <span class="badge bg-success">Accepted</span>
+                    {% elif o.status == 'countered' %}
+                      <span class="badge bg-info text-dark">Countered</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ o.status.capitalize() }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <a href="{{ url_for('farmer.orders') }}" class="btn btn-sm btn-success">Review</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-seedling fa-3x mb-2 text-success opacity-50"></i>
+            <p>No buyer requests yet. Add produce to your inventory to start receiving direct purchase orders!</p>
+            <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-sm btn-success"><i class="fas fa-plus me-1"></i> Add Produce Now</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Active Inventory Summary -->
+    <div class="col-lg-5">
+      <div class="k-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-warehouse me-2"></i> Active Produce Stock</h5>
+          <a href="{{ url_for('farmer.inventory') }}" class="btn btn-sm btn-link text-decoration-none">Manage All</a>
+        </div>
+
+        {% if inventories %}
+          <div class="d-flex flex-column gap-2">
+            {% for item in inventories[:4] %}
+            <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="fw-bold mb-0 text-success">{{ item.product_name }}</h6>
+                <small class="text-muted">Stock: <strong>{{ item.available_quantity }} {{ item.unit }}</strong> ({{ item.quality_grade }})</small>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-dark">₹{{ item.expected_price_per_unit }}/{{ item.unit }}</div>
+                <span class="badge bg-success-subtle text-success">Available</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <p>No produce in inventory.</p>
+            <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-sm btn-outline-success">Add First Crop</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

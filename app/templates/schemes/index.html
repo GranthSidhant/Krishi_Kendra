@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Government Agricultural Schemes - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1"><i class="fas fa-landmark text-primary me-2"></i> Central & State Government Agricultural Schemes</h3>
+      <p class="text-muted small mb-0">Official subsidies, PM-KISAN, crop insurance, solar pumps, and direct farmer welfare programs</p>
+    </div>
+  </div>
+
+  <!-- Category Filter -->
+  <div class="k-card p-3 mb-4">
+    <form method="GET" action="{{ url_for('schemes.index') }}" class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <input type="text" name="q" class="form-control" placeholder="Search Scheme (e.g. PM-KISAN, PMFBY, Solar)" value="{{ query_text or '' }}">
+      </div>
+      <div class="col-md-5">
+        <select name="category" class="form-select">
+          <option value="All">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary fw-bold w-100">
+          <i class="fas fa-search me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Schemes Grid -->
+  <div class="row g-4">
+    {% for s in schemes %}
+    <div class="col-lg-6">
+      <div class="k-card h-100 p-4 d-flex flex-column justify-content-between border-start border-4 border-primary">
+        <div>
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="fw-bold text-dark mb-0">{{ s.title }}</h5>
+            <span class="badge bg-primary-subtle text-primary">{{ s.category }}</span>
+          </div>
+
+          {% if s.hindi_title %}
+            <div class="text-muted small mb-3">{{ s.hindi_title }}</div>
+          {% endif %}
+
+          <p class="text-dark small mb-3">{{ s.description }}</p>
+
+          <div class="p-3 bg-light rounded-3 mb-3 small">
+            <div class="mb-2">
+              <strong class="text-success"><i class="fas fa-check-circle me-1"></i> Key Benefits:</strong>
+              <div class="text-muted">{{ s.benefits_summary }}</div>
+            </div>
+            <div>
+              <strong class="text-primary"><i class="fas fa-user-check me-1"></i> Eligibility:</strong>
+              <div class="text-muted">{{ s.eligibility_summary }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+          <small class="text-muted">Launch Year: {{ s.launch_year }}</small>
+          {% if s.application_link %}
+            <a href="{{ s.application_link }}" target="_blank" class="btn btn-sm btn-outline-primary fw-semibold">
+              Official Portal <i class="fas fa-external-link-alt ms-1"></i>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

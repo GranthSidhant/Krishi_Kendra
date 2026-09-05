@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Logistics & Vehicle Transport - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="mb-4">
+    <h3 class="fw-bold text-success mb-1"><i class="fas fa-truck me-2"></i> Logistics & Transport Booking</h3>
+    <p class="text-muted small">Arrange milk-run pickups, refrigerated trucks, and tracked delivery for confirmed orders</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- Transport Request Form / Vehicle Recommendation -->
+    <div class="col-lg-5">
+      <div class="k-card p-4 h-100">
+        <h5 class="fw-bold text-success mb-3"><i class="fas fa-plus-circle me-2"></i> Request Transport Pickup</h5>
+        
+        <form method="POST" action="#">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Select Confirmed Order</label>
+            <select class="form-select" required>
+              {% if orders %}
+                {% for o in orders %}
+                  <option value="{{ o.id }}">#{{ o.order_code }} - {{ o.quantity }} {{ o.unit }} of {{ o.product_name }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="">No active confirmed orders</option>
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pickup Location (Farm Gate)</label>
+            <input type="text" class="form-control" value="{{ user.farmer_profile.farm_location_name if user.farmer_profile else '' }}, {{ user.farmer_profile.district if user.farmer_profile else 'Nashik' }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Recommended Vehicle Type</label>
+            <select class="form-select">
+              <option value="Mini Truck" selected>Mini Truck (Tata Ace / Mahindra Bolero - up to 1.5 MT)</option>
+              <option value="Pickup">Pickup Vehicle (up to 2.5 MT)</option>
+              <option value="Medium Truck">Medium Truck (6-Wheeler - up to 7 MT)</option>
+              <option value="Refrigerated">Refrigerated Cold-Chain Vehicle (Controlled Temp)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scheduled Pickup Date & Time</label>
+            <input type="datetime-local" class="form-control" required>
+          </div>
+
+          <div class="alert alert-info py-2 small mb-3">
+            <i class="fas fa-info-circle me-1"></i> Logistics rates are calculated based on distance and load clustering (Milk-Run consolidation reduces cost by up to 25%).
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 fw-bold py-2">
+            <i class="fas fa-check-circle me-1"></i> Confirm Transport Request
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Transport Deliveries -->
+    <div class="col-lg-7">
+      <div class="k-card p-4 h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-route text-primary me-2"></i> Active Transport Trackers</h5>
+        
+        {% if orders %}
+          <div class="d-flex flex-column gap-3">
+            {% for o in orders %}
+              {% set d = o.delivery %}
+              <div class="p-3 bg-light rounded-3 border">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-bold text-dark">Order #{{ o.order_code }} ({{ o.product_name }})</span>
+                  <span class="badge bg-primary">{{ d.current_status.replace('_', ' ').capitalize() if d else 'Assigned' }}</span>
+                </div>
+                
+                <div class="row g-2 small text-muted mb-2">
+                  <div class="col-6"><strong>Vehicle:</strong> {{ d.vehicle_type if d else 'Mini Truck (Tata Ace)' }}</div>
+                  <div class="col-6"><strong>Driver:</strong> {{ d.driver_name if d else 'Ramesh Shinde' }} ({{ d.driver_phone if d else '+91 98231 44556' }})</div>
+                  <div class="col-6"><strong>Current Hub:</strong> {{ d.current_location if d else 'Nashik Highway Hub' }}</div>
+                  <div class="col-6"><strong>Est. Arrival:</strong> {{ d.estimated_arrival if d else 'Tomorrow by 11:00 AM' }}</div>
+                </div>
+
+                <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                  <small class="text-success fw-bold"><i class="fas fa-shield-alt me-1"></i> Temperature & Load Verified</small>
+                  <a href="{{ url_for('orders.view_order', order_id=o.id) }}" class="btn btn-sm btn-outline-primary">View Timeline</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-truck fa-3x opacity-50 mb-3"></i>
+            <p>No active transport deliveries scheduled.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Farm Supplies & Input Marketplace - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-success mb-1"><i class="fas fa-store me-2"></i> Farm Supplies & Input Marketplace</h3>
+      <p class="text-muted small mb-0">High-grade certified seeds, fertilizers, drip irrigation kits, and tools at subsidized direct rates</p>
+    </div>
+  </div>
+
+  <!-- Search & Category Filters -->
+  <div class="k-card p-3 mb-4">
+    <form method="GET" action="{{ url_for('marketplace.index') }}" class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <input type="text" name="q" class="form-control" placeholder="Search inputs (e.g. Hybrid Seeds, NPK, Sprayer)" value="{{ query_text or '' }}">
+      </div>
+      <div class="col-md-5">
+        <select name="category" class="form-select">
+          <option value="All">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-success fw-bold w-100">
+          <i class="fas fa-search me-1"></i> Search
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="row g-4 mb-5">
+    {% for p in products %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+      <div class="k-card h-100 p-3 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-light text-success border">{{ p.category }}</span>
+            <small class="text-muted">{{ p.brand }}</small>
+          </div>
+          
+          <h6 class="fw-bold text-dark mb-1">{{ p.title }}</h6>
+          <p class="small text-muted mb-3">{{ p.description }}</p>
+
+          <div class="p-2 bg-light rounded-3 mb-3 d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Price:</span>
+            <strong class="text-success fs-5">₹{{ p.price }} <small class="fs-6 text-muted">/ {{ p.unit }}</small></strong>
+          </div>
+        </div>
+
+        <div class="pt-2 border-top">
+          <button type="button" class="btn btn-success w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">
+            <i class="fas fa-shopping-cart me-1"></i> Order Now
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buy Modal -->
+    <div class="modal fade" id="buyModal{{ p.id }}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title fw-bold"><i class="fas fa-shopping-cart me-2"></i> Purchase Input: {{ p.title }}</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="POST" action="{{ url_for('marketplace.buy_product', product_id=p.id) }}">
+            <div class="modal-body p-4">
+              <div class="p-2 bg-light rounded mb-3">
+                <strong>Price:</strong> ₹{{ p.price }} per {{ p.unit }}<br>
+                <strong>Brand:</strong> {{ p.brand }}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Quantity</label>
+                <input type="number" name="quantity" class="form-control" value="1" min="1" max="100" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Delivery Farm Address</label>
+                <input type="text" name="delivery_address" class="form-control" value="{{ current_user.farmer_profile.address if current_user and current_user.farmer_profile else '' }}" placeholder="Farm gate delivery address" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-success fw-bold">Confirm Purchase</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {% endfor %}
+  </div>
+
+  <!-- My Marketplace Orders -->
+  {% if my_orders %}
+    <div class="k-card p-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fas fa-receipt text-success me-2"></i> My Supply Orders History</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in my_orders %}
+            <tr>
+              <td><strong>#SUP-{{ o.id }}</strong></td>
+              <td>{{ o.product_title }}</td>
+              <td>{{ o.quantity }}</td>
+              <td class="fw-bold text-success">₹{{ o.total_amount }}</td>
+              <td><span class="badge bg-success">{{ o.status.capitalize() }}</span></td>
+              <td>{{ o.created_at.strftime('%d %b %Y') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

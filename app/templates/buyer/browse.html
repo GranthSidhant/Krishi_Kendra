@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Farm Produce - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1"><i class="fas fa-search text-warning me-2"></i> Browse Produce from Verified Farmers</h3>
+      <p class="text-muted small mb-0">Discover high-quality produce directly from source without intermediary commissions</p>
+    </div>
+    <a href="{{ url_for('buyer.post_requirement') }}" class="btn btn-warning text-dark fw-bold px-4 py-2 shadow-sm">
+      <i class="fas fa-bullhorn me-1"></i> Post Exact Quantity Requirement
+    </a>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="k-card p-3 mb-4">
+    <form method="GET" action="{{ url_for('buyer.browse') }}" class="row g-3 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-light"><i class="fas fa-seedling text-success"></i></span>
+          <input type="text" name="q" class="form-control" placeholder="Search Crop (e.g. Wheat, Onion)" value="{{ query_crop or '' }}">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="category" class="form-select">
+          <option value="All">All Categories</option>
+          <option value="Cereals" {% if category_filter == 'Cereals' %}selected{% endif %}>Cereals & Grains</option>
+          <option value="Vegetables" {% if category_filter == 'Vegetables' %}selected{% endif %}>Vegetables</option>
+          <option value="Fruits" {% if category_filter == 'Fruits' %}selected{% endif %}>Fruits</option>
+          <option value="Pulses" {% if category_filter == 'Pulses' %}selected{% endif %}>Pulses & Legumes</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="district" class="form-select">
+          <option value="All">All Districts</option>
+          {% for d in districts %}
+            <option value="{{ d }}" {% if district_filter == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-warning text-dark fw-bold w-100">
+          <i class="fas fa-filter me-1"></i> Apply Filters
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Produce Grid -->
+  {% if produce_items %}
+    <div class="row g-4">
+      {% for item in produce_items %}
+      <div class="col-lg-4 col-md-6">
+        <div class="k-card h-100 p-4 d-flex flex-column justify-content-between border-2">
+          <div>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h5 class="fw-bold text-success mb-0">{{ item.product_name }}</h5>
+                <span class="badge bg-light text-muted border mt-1">{{ item.quality_grade }}</span>
+              </div>
+              <span class="badge bg-success-subtle text-success">Available</span>
+            </div>
+
+            <!-- Farmer Details (Privacy compliant) -->
+            <div class="d-flex align-items-center gap-2 my-2 py-2 border-top border-bottom">
+              <img src="https://ui-avatars.com/api/?name={{ item.farmer.name }}&background=2e7d32&color=fff" alt="Avatar" class="rounded-circle" width="32" height="32">
+              <div>
+                <a href="#" class="text-decoration-none trigger-profile-popup fw-bold text-dark" data-user-id="{{ item.farmer.id }}">
+                  {{ item.farmer.name }}
+                </a>
+                {% if item.farmer.is_verified %}
+                  <i class="fas fa-check-circle text-success small ms-1" title="Verified Farmer"></i>
+                {% endif %}
+                <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ item.location_district }}, {{ item.location_state }}</div>
+              </div>
+            </div>
+
+            <!-- Specifications -->
+            <div class="p-3 bg-light rounded-3 mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted small">Available Stock:</span>
+                <strong class="text-dark">{{ item.available_quantity }} {{ item.unit }}</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted small">Farmer Asking Price:</span>
+                <strong class="text-success fs-6">₹{{ item.expected_price_per_unit }}/{{ item.unit }}</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-muted small">Harvest Date:</span>
+                <span class="small fw-semibold">{{ item.harvest_date or 'Recent' }}</span>
+              </div>
+            </div>
+
+            {% if item.description %}
+              <p class="small text-muted mb-3">{{ item.description }}</p>
+            {% endif %}
+          </div>
+
+          <div class="d-flex gap-2 pt-2 border-top">
+            <button type="button" class="btn btn-warning text-dark fw-bold flex-grow-1" data-bs-toggle="modal" data-bs-target="#directOrderModal{{ item.id }}">
+              <i class="fas fa-paper-plane me-1"></i> Send Buy Request
+            </button>
+            <a href="{{ url_for('chat.start_chat', target_user_id=item.farmer.id) }}" class="btn btn-outline-primary" title="Chat with Farmer">
+              <i class="fas fa-comments"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Direct Purchase Modal -->
+      <div class="modal fade" id="directOrderModal{{ item.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-warning text-dark">
+              <h5 class="modal-title fw-bold"><i class="fas fa-shopping-basket me-2"></i> Send Direct Purchase Request</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('buyer.direct_request', inventory_id=item.id) }}">
+              <div class="modal-body p-4">
+                <div class="p-2 bg-light rounded mb-3">
+                  <strong>Produce:</strong> {{ item.product_name }} ({{ item.quality_grade }})<br>
+                  <strong>Farmer:</strong> {{ item.farmer.name }} (Max Stock: {{ item.available_quantity }} {{ item.unit }})
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-6">
+                    <label class="form-label fw-semibold">Required Quantity ({{ item.unit }}) *</label>
+                    <input type="number" step="0.5" name="quantity" class="form-control" max="{{ item.available_quantity }}" value="{{ [100, item.available_quantity]|min }}" required>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label fw-semibold">Your Offer (₹/{{ item.unit }}) *</label>
+                    <input type="number" step="0.5" name="offered_price_per_unit" class="form-control" value="{{ item.expected_price_per_unit }}" required>
+                  </div>
+                </div>
+
+                <!-- Mandi Reference Rate Info -->
+                <div class="p-2 bg-success-subtle text-success rounded small mb-3 border border-success">
+                  <i class="fas fa-chart-line me-1"></i> <strong>APMC Mandi Benchmark:</strong> ₹{{ item.expected_price_per_unit }}/{{ item.unit }} in {{ item.location_district }}.
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Delivery & Packaging Notes</label>
+                  <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Standard 50kg gunny bags required. Delivery to wholesale warehouse."></textarea>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning text-dark fw-bold">Submit Purchase Offer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="k-card text-center py-5">
+      <i class="fas fa-search fa-3x text-muted opacity-50 mb-3"></i>
+      <h5>No produce found matching your query.</h5>
+      <p class="text-muted">You can post an open requirement with your desired quantity to let matching farmers offer quotes.</p>
+      <a href="{{ url_for('buyer.post_requirement') }}" class="btn btn-warning text-dark fw-bold">Post a Requirement</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

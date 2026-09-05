@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Settings - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="k-card shadow-sm border-0 p-4">
+        
+        <!-- Profile Header -->
+        <div class="d-flex align-items-center gap-3 pb-3 border-bottom mb-4 flex-wrap">
+          {% if user.profile_image and not user.profile_image.startswith('default') and not user.profile_image.startswith('avatar_') %}
+            <img id="currentAvatarPreview" src="{{ user.profile_image if user.profile_image.startswith('/') or user.profile_image.startswith('http') else url_for('static', filename='uploads/avatars/' + user.profile_image) }}" alt="Avatar" class="rounded-circle border shadow-sm" width="80" height="80" style="object-fit: cover;">
+          {% elif user.profile_image and user.profile_image.startswith('avatar_') %}
+            <div id="currentAvatarPreview" class="rounded-circle border shadow-sm d-flex align-items-center justify-content-center bg-light fs-1" style="width:80px; height:80px;">
+              {% if user.profile_image == 'avatar_farmer_m' %}👨‍🌾
+              {% elif user.profile_image == 'avatar_farmer_f' %}👩‍🌾
+              {% elif user.profile_image == 'avatar_farmer_turban' %}👳‍♂️
+              {% elif user.profile_image == 'avatar_buyer_m' %}👨‍💼
+              {% elif user.profile_image == 'avatar_buyer_f' %}👩‍💼
+              {% else %}🌱{% endif %}
+            </div>
+          {% else %}
+            <img id="currentAvatarPreview" src="https://ui-avatars.com/api/?name={{ user.name }}&background={% if user.role == 'farmer' %}2e7d32{% else %}e65100{% endif %}&color=fff" alt="Avatar" class="rounded-circle border shadow-sm" width="80" height="80">
+          {% endif %}
+
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h4 class="fw-bold mb-0 text-dark">{{ user.name }}</h4>
+              {% if user.is_verified %}
+                <span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified {{ user.role.capitalize() }}</span>
+              {% else %}
+                <span class="badge bg-secondary">Verification: {{ user.verification_status.capitalize() }}</span>
+              {% endif %}
+            </div>
+            <div class="text-muted small mt-1">
+              Unique ID: <strong>{{ user.custom_id }}</strong> | Role: <span class="badge {% if user.role == 'farmer' %}bg-success{% elif user.role == 'buyer' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ user.role.capitalize() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.profile') }}" enctype="multipart/form-data">
+          
+          <!-- Avatar & Profile Photo Selector -->
+          <div class="p-3 bg-light rounded-3 mb-4 border">
+            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-camera text-success me-2"></i> Choose Profile Photo or Indian Avatar</h6>
+            <p class="text-muted small mb-3">Select a representative avatar or upload your own real photo.</p>
+            
+            <input type="hidden" name="avatar_choice" id="avatarChoiceInput" value="">
+
+            <div class="row g-2 mb-3 text-center">
+              <div class="col-4 col-sm-2">
+                <button type="button" class="btn btn-outline-success w-100 p-2 avatar-btn" onclick="selectAvatar('avatar_farmer_m', '👨‍🌾')">
+                  <div class="fs-2">👨‍🌾</div>
+                  <small class="fw-semibold d-block">Kisan</small>
+                </button>
+              </div>
+              <div class="col-4 col-sm-2">
+                <button type="button" class="btn btn-outline-success w-100 p-2 avatar-btn" onclick="selectAvatar('avatar_farmer_f', '👩‍🌾')">
+                  <div class="fs-2">👩‍🌾</div>
+                  <small class="fw-semibold d-block">Mahila Kisan</small>
+                </button>
+              </div>
+              <div class="col-4 col-sm-2">
+                <button type="button" class="btn btn-outline-success w-100 p-2 avatar-btn" onclick="selectAvatar('avatar_farmer_turban', '👳‍♂️')">
+                  <div class="fs-2">👳‍♂️</div>
+                  <small class="fw-semibold d-block">Shetkari</small>
+                </button>
+              </div>
+              <div class="col-4 col-sm-2">
+                <button type="button" class="btn btn-outline-warning w-100 p-2 avatar-btn" onclick="selectAvatar('avatar_buyer_m', '👨‍💼')">
+                  <div class="fs-2">👨‍💼</div>
+                  <small class="fw-semibold d-block text-dark">Trader</small>
+                </button>
+              </div>
+              <div class="col-4 col-sm-2">
+                <button type="button" class="btn btn-outline-warning w-100 p-2 avatar-btn" onclick="selectAvatar('avatar_buyer_f', '👩‍💼')">
+                  <div class="fs-2">👩‍💼</div>
+                  <small class="fw-semibold d-block text-dark">Buyer</small>
+                </button>
+              </div>
+              <div class="col-4 col-sm-2">
+                <button type="button" class="btn btn-outline-primary w-100 p-2 avatar-btn" onclick="selectAvatar('avatar_krishi_mitra', '🌱')">
+                  <div class="fs-2">🌱</div>
+                  <small class="fw-semibold d-block">Krishi</small>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label fw-semibold small">Or Upload Custom Photo (JPG / PNG):</label>
+              <input type="file" name="profile_image_file" id="profileImageFileInput" class="form-control" accept="image/*" onchange="previewUploadedImage(this)">
+            </div>
+          </div>
+
+          <!-- General Details -->
+          <h5 class="fw-bold text-success mb-3"><i class="fas fa-user-circle me-2"></i> Account Details</h5>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name</label>
+              <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Preferred Language</label>
+              <select name="preferred_language" class="form-select">
+                <option value="en" {% if user.preferred_language == 'en' %}selected{% endif %}>English</option>
+                <option value="hi" {% if user.preferred_language == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                <option value="mr" {% if user.preferred_language == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                <option value="ta" {% if user.preferred_language == 'ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                <option value="te" {% if user.preferred_language == 'te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Registered Mobile Number</label>
+              <input type="text" class="form-control bg-light" value="{{ user.phone }}" readonly disabled>
+              <small class="text-muted">Primary identity key linked to OTP verification.</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Role</label>
+              <input type="text" class="form-control bg-light" value="{{ user.role.capitalize() }}" readonly disabled>
+            </div>
+          </div>
+
+          <!-- Strict Privacy Setting -->
+          <div class="p-3 bg-light rounded-3 mb-4 border border-warning">
+            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-shield-alt text-warning me-2"></i> Privacy & Contact Consent</h6>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="share_phone_consent" id="sharePhoneConsent" {% if (farmer_prof and farmer_prof.share_phone_consent) or (buyer_prof and buyer_prof.share_phone_consent) %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="sharePhoneConsent">
+                Share my phone number on my Public Visiting Card and Profile Pop-ups
+              </label>
+            </div>
+            <small class="text-muted d-block mt-1">
+              When disabled, other users cannot see your personal phone number in search, visiting cards, or profile clicks.
+            </small>
+          </div>
+
+          <!-- Role-Specific Details -->
+          {% if user.role == 'farmer' and farmer_prof %}
+            <h5 class="fw-bold text-success mb-3"><i class="fas fa-tractor me-2"></i> Farm & Agricultural Details</h5>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Farm Name</label>
+                <input type="text" name="farm_location_name" class="form-control" value="{{ farmer_prof.farm_location_name }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Farm Size (in Acres)</label>
+                <input type="number" step="0.1" name="farm_size_acres" class="form-control" value="{{ farmer_prof.farm_size_acres }}">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Crops Grown</label>
+                <input type="text" name="crops_grown" class="form-control" value="{{ farmer_prof.crops_grown }}" placeholder="e.g. Wheat, Onion, Tomato, Soybean">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Google Maps Link / Farm Coordinates</label>
+                <input type="text" name="google_maps_link" class="form-control" value="{{ farmer_prof.google_maps_link }}" placeholder="https://maps.google.com/?q=...">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">District</label>
+                <input type="text" name="district" class="form-control" value="{{ farmer_prof.district }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">State</label>
+                <input type="text" name="state" class="form-control" value="{{ farmer_prof.state }}">
+              </div>
+            </div>
+
+            <!-- Quantity Range Preferences -->
+            <div class="p-3 bg-light rounded-3 mb-4 border">
+              <h6 class="fw-bold text-dark mb-2"><i class="fas fa-sliders-h text-success me-2"></i> Quantity Range & Order Preferences</h6>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="open_to_all_quantities" id="openToAll" {% if farmer_prof.open_to_all_quantities %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="openToAll">
+                  Open to all quantity orders (Small and Bulk)
+                </label>
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label small text-muted">Minimum Order (kg)</label>
+                  <input type="number" name="min_qty_kg" class="form-control form-control-sm" value="{{ farmer_prof.min_qty_kg }}">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small text-muted">Maximum Supply Capacity (kg)</label>
+                  <input type="number" name="max_qty_kg" class="form-control form-control-sm" value="{{ farmer_prof.max_qty_kg }}">
+                </div>
+              </div>
+            </div>
+
+          {% elif user.role == 'buyer' and buyer_prof %}
+            <h5 class="fw-bold text-warning mb-3"><i class="fas fa-store me-2"></i> Business & Procurement Details</h5>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Business / Organisation Name</label>
+                <input type="text" name="business_name" class="form-control" value="{{ buyer_prof.business_name }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Business Type</label>
+                <select name="business_type" class="form-select">
+                  <option value="Wholesale Trader" {% if buyer_prof.business_type == 'Wholesale Trader' %}selected{% endif %}>Wholesale Trader</option>
+                  <option value="Retailer / Supermarket" {% if buyer_prof.business_type == 'Retailer / Supermarket' %}selected{% endif %}>Retailer / Supermarket</option>
+                  <option value="Food Processing Unit" {% if buyer_prof.business_type == 'Food Processing Unit' %}selected{% endif %}>Food Processing Unit</option>
+                  <option value="Apartment Buying Club" {% if buyer_prof.business_type == 'Apartment Buying Club' %}selected{% endif %}>Apartment Buying Club</option>
+                  <option value="Individual Consumer" {% if buyer_prof.business_type == 'Individual Consumer' %}selected{% endif %}>Individual Consumer</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">GSTIN / Trade License (Optional)</label>
+                <input type="text" name="gst_number" class="form-control" value="{{ buyer_prof.gst_number or '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">District</label>
+                <input type="text" name="district" class="form-control" value="{{ buyer_prof.district }}">
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Verification Badge Application Section -->
+          <div class="p-3 bg-light rounded-3 mb-4 border">
+            <h5 class="fw-bold text-primary mb-2"><i class="fas fa-id-badge me-2"></i> Official Verification Status</h5>
+            {% if user.is_verified %}
+              <div class="alert alert-success py-2 mb-0">
+                <i class="fas fa-check-circle me-2"></i> Your identity is verified! The <strong>Verified Badge</strong> is active on your profile.
+              </div>
+            {% else %}
+              <p class="text-muted small mb-2">
+                Upload your ID document (Aadhaar / Kisan Credit Card / Voter ID) for Authorized Agriculture Officer verification.
+              </p>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <select name="gov_id_type" class="form-select form-select-sm">
+                    <option value="Aadhaar Card" {% if user.gov_id_type == 'Aadhaar Card' %}selected{% endif %}>Aadhaar Card</option>
+                    <option value="Kisan Credit Card" {% if user.gov_id_type == 'Kisan Credit Card' %}selected{% endif %}>Kisan Credit Card</option>
+                    <option value="Voter ID" {% if user.gov_id_type == 'Voter ID' %}selected{% endif %}>Voter ID</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <input type="text" name="gov_id_number" class="form-control form-control-sm" placeholder="ID Number (e.g. Last 4 digits: 9812)">
+                </div>
+                <div class="col-md-4">
+                  <input type="file" name="verification_doc_file" class="form-control form-control-sm" accept=".pdf,image/*">
+                </div>
+              </div>
+              {% if user.verification_status == 'pending' %}
+                <div class="badge bg-warning text-dark mt-2 p-2"><i class="fas fa-hourglass-half me-1"></i> Verification Pending Review by Agriculture Officer</div>
+              {% elif user.verification_status == 'rejected' %}
+                <div class="badge bg-danger mt-2 p-2"><i class="fas fa-times-circle me-1"></i> Rejected: {{ user.verification_rejection_reason or 'Please re-upload clear document' }}</div>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+              <i class="fas fa-save me-2"></i> Save Profile & Avatar
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectAvatar(code, emoji) {
+  document.getElementById('avatarChoiceInput').value = code;
+  const preview = document.getElementById('currentAvatarPreview');
+  if (preview) {
+    preview.innerHTML = emoji;
+    preview.className = 'rounded-circle border shadow-sm d-flex align-items-center justify-content-center bg-light fs-1';
+  }
+}
+
+function previewUploadedImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('avatarChoiceInput').value = '';
+      const preview = document.getElementById('currentAvatarPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = e.target.result;
+      } else {
+        const img = document.createElement('img');
+        img.id = 'currentAvatarPreview';
+        img.src = e.target.result;
+        img.className = 'rounded-circle border shadow-sm';
+        img.width = 80;
+        img.height = 80;
+        img.style.objectFit = 'cover';
+        preview.parentNode.replaceChild(img, preview);
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+
+  <!-- Hero Banner -->
+  <div class="hero-section mb-5 text-center text-md-start">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <span class="badge bg-light text-success fw-bold px-3 py-2 rounded-pill mb-3">
+          <i class="fas fa-award text-warning me-1"></i> <span data-i18n="hero_sih_badge">SIH 2026 Problem SIH26033 Solution</span>
+        </span>
+        <h1 class="display-4 fw-extrabold mb-3" data-i18n="hero_title">
+          Better Markets. Direct Connections. Smarter Agricultural Trade.
+        </h1>
+        <p class="lead mb-4 text-white-50" data-i18n="hero_desc">
+          Eliminating exploitative middlemen across the farm-to-fork chain. Connecting farmers directly with bulk & retail buyers with live APMC Mandi price discovery, smart counter-negotiation, and tracked fulfilment.
+        </p>
+        <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+          {% if current_user %}
+            {% if current_user.role == 'farmer' %}
+              <a href="{{ url_for('farmer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
+                <i class="fas fa-th-large me-2"></i> <span data-i18n="btn_farmer_dash">Farmer Dashboard</span>
+              </a>
+              <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
+                <i class="fas fa-plus-circle me-2"></i> <span data-i18n="btn_list_crop">List New Crop</span>
+              </a>
+            {% elif current_user.role == 'buyer' %}
+              <a href="{{ url_for('buyer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
+                <i class="fas fa-th-large me-2"></i> <span data-i18n="btn_buyer_dash">Buyer Dashboard</span>
+              </a>
+              <a href="{{ url_for('marketplace.index') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
+                <i class="fas fa-shopping-basket me-2"></i> <span data-i18n="btn_explore_market">Explore Marketplace</span>
+              </a>
+            {% elif current_user.role == 'admin' %}
+              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
+                <i class="fas fa-shield-alt me-2"></i> <span data-i18n="btn_admin_portal">Admin Portal</span>
+              </a>
+            {% endif %}
+          {% else %}
+            <a href="{{ url_for('auth.register', role='farmer') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
+              <i class="fas fa-tractor me-2"></i> <span data-i18n="btn_i_am_farmer">I am a Farmer (किसान)</span>
+            </a>
+            <a href="{{ url_for('auth.register', role='buyer') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
+              <i class="fas fa-shopping-basket me-2"></i> <span data-i18n="btn_i_am_buyer">I am a Buyer (खरीदार)</span>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-lg-5 mt-4 mt-lg-0 text-center">
+        <div class="p-4 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-25 shadow-lg">
+          <h4 class="fw-bold mb-3"><i class="fas fa-chart-line text-warning me-2"></i> <span data-i18n="impact_title">Real-Time Platform Impact</span></h4>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
+                <div class="fs-2 fw-bold text-warning">{{ stats.farmers }}+</div>
+                <div class="small" data-i18n="stat_farmers">Registered Farmers</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
+                <div class="fs-2 fw-bold text-info">{{ stats.buyers }}+</div>
+                <div class="small" data-i18n="stat_buyers">Direct Buyers</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
+                <div class="fs-2 fw-bold text-success">{{ stats.mandis_covered }}+</div>
+                <div class="small" data-i18n="stat_mandis">APMC Mandis Linked</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
+                <div class="fs-2 fw-bold text-danger">{{ stats.cold_storages }}+</div>
+                <div class="small" data-i18n="stat_cold_storages">Cold Storages</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How It Works Section -->
+  <div class="mb-5">
+    <div class="text-center mb-4">
+      <h3 class="fw-bold text-success" data-i18n="how_it_works_title">How Krishi Kendra Works</h3>
+      <p class="text-muted" data-i18n="how_it_works_sub">A streamlined, transparent 4-step workflow for both Farmers and Buyers</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Farmer Flow -->
+      <div class="col-md-6">
+        <div class="k-card h-100 border-start border-success border-4">
+          <h5 class="fw-bold text-success mb-3"><i class="fas fa-user-tie me-2"></i> <span data-i18n="for_farmers">For Farmers</span></h5>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-success rounded-circle p-2 fs-6">1</span>
+              <div>
+                <strong data-i18n="step_f1_title">List Harvest Produce:</strong> <span data-i18n="step_f1_desc">Enter available crop quantity, expected price, quality grade, and photos.</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-success rounded-circle p-2 fs-6">2</span>
+              <div>
+                <strong data-i18n="step_f2_title">Receive Direct Buyer Requests:</strong> <span data-i18n="step_f2_desc">Get notified instantly when nearby buyers match your crop and quantity range.</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-success rounded-circle p-2 fs-6">3</span>
+              <div>
+                <strong data-i18n="step_f3_title">Smart Counter-Offer & Negotiation:</strong> <span data-i18n="step_f3_desc">Compare buyer offers with live Mandi benchmarks before accepting or countering.</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-success rounded-circle p-2 fs-6">4</span>
+              <div>
+                <strong data-i18n="step_f4_title">Logistics & Escrow Payout:</strong> <span data-i18n="step_f4_desc">Book vehicle transport and receive guaranteed payment directly upon delivery.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buyer Flow -->
+      <div class="col-md-6">
+        <div class="k-card h-100 border-start border-warning border-4">
+          <h5 class="fw-bold text-warning mb-3"><i class="fas fa-shopping-cart me-2"></i> <span data-i18n="for_buyers">For Buyers</span></h5>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-warning text-dark rounded-circle p-2 fs-6">1</span>
+              <div>
+                <strong data-i18n="step_b1_title">Post Exact Quantity Requirement:</strong> <span data-i18n="step_b1_desc">Enter the exact kilograms or quintals needed (no bulk/small restrictions).</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-warning text-dark rounded-circle p-2 fs-6">2</span>
+              <div>
+                <strong data-i18n="step_b2_title">Automated Matching Engine:</strong> <span data-i18n="step_b2_desc">The system identifies and notifies relevant farmers with adequate inventory.</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-warning text-dark rounded-circle p-2 fs-6">3</span>
+              <div>
+                <strong data-i18n="step_b3_title">Side-by-Side Offer Comparison:</strong> <span data-i18n="step_b3_desc">Compare quotes on price, farmer rating, proximity, and quality grades.</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <span class="badge bg-warning text-dark rounded-circle p-2 fs-6">4</span>
+              <div>
+                <strong data-i18n="step_b4_title">Live Delivery Tracking:</strong> <span data-i18n="step_b4_desc">Track the assigned vehicle from farm gate to your warehouse/storefront.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Featured Available Produce & Live Mandi Benchmarks -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0"><i class="fas fa-seedling text-success me-2"></i> <span data-i18n="fresh_produce_heading">Fresh Produce Direct from Verified Farmers</span></h4>
+        <a href="{{ url_for('buyer.browse') }}" class="btn btn-sm btn-outline-success"><span data-i18n="btn_view_all_produce">View All Produce</span> <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+
+      <div class="row g-3">
+        {% for crop in featured_crops %}
+        <div class="col-md-4 col-sm-6">
+          <div class="k-card p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="fw-bold mb-0 text-success">{{ crop.name }}</h6>
+                <span class="badge bg-light text-dark border">{{ crop.category.name if crop.category else 'Crops' }}</span>
+              </div>
+              <div class="text-muted small mb-2">{{ crop.hindi_name }}</div>
+              <div class="bg-light p-2 rounded small mb-3">
+                <span class="text-muted" data-i18n="mandi_benchmark">Mandi Benchmark:</span>
+                <div class="fw-bold text-dark fs-6">₹{{ crop.estimated_mandi_rate }}/{{ crop.default_unit }}</div>
+              </div>
+            </div>
+            <a href="{{ url_for('buyer.browse', q=crop.name) }}" class="btn btn-sm btn-success w-100">
+              <i class="fas fa-search me-1"></i> <span data-i18n="btn_find_farmers">Find Farmers</span>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Live Mandi Rates Sidebar -->
+    <div class="col-lg-4">
+      <div class="k-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="fas fa-university text-primary me-2"></i> <span data-i18n="apmc_mandi_heading">APMC Mandi Rates</span></h5>
+          <span class="badge bg-success-subtle text-success border border-success" data-i18n="badge_live_today">Live Today</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr class="small text-muted">
+                <th data-i18n="th_commodity">Commodity</th>
+                <th data-i18n="th_market">Market</th>
+                <th class="text-end" data-i18n="th_modal_price">Modal Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in latest_mandi[:6] %}
+              <tr>
+                <td><strong>{{ r.commodity }}</strong></td>
+                <td><small class="text-muted">{{ r.market_name.split()[0] }} ({{ r.district }})</small></td>
+                <td class="text-end fw-bold text-success">₹{{ r.modal_price }}/{{ r.unit }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3 text-center">
+          <a href="{{ url_for('farmer.mandi_rates') }}" class="btn btn-sm btn-outline-primary w-100">
+            <i class="fas fa-chart-bar me-1"></i> <span data-i18n="btn_view_all_mandi">View All Mandi Rates</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Government Schemes & Cold Storage Highlights -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="k-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-primary mb-0"><i class="fas fa-landmark me-2"></i> <span data-i18n="schemes_heading">Government Schemes & Subsidies</span></h5>
+          <a href="{{ url_for('schemes.index') }}" class="btn btn-sm btn-link text-decoration-none" data-i18n="btn_view_all_schemes">View All</a>
+        </div>
+        {% for s in schemes %}
+        <div class="p-3 bg-light rounded-3 mb-2">
+          <div class="fw-bold text-dark">{{ s.title }}</div>
+          <div class="text-muted small mb-2">{{ s.benefits_summary }}</div>
+          <a href="{{ s.application_link }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2"><span data-i18n="btn_apply_online">Apply Online</span> <i class="fas fa-external-link-alt ms-1"></i></a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="k-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-info mb-0"><i class="fas fa-snowflake me-2"></i> <span data-i18n="cold_storage_heading">Nearby Cold Storage Network</span></h5>
+          <a href="{{ url_for('cold_storage.index') }}" class="btn btn-sm btn-link text-decoration-none" data-i18n="btn_explore_storage">Explore Facilities</a>
+        </div>
+        <p class="text-muted small" data-i18n="cold_storage_desc">
+          Prevent post-harvest distress selling and perishability losses by storing crops at verified, temperature-controlled facilities with transparent monthly rates.
+        </p>
+        <div class="p-3 bg-light rounded-3 mb-3 d-flex align-items-center justify-content-between">
+          <div>
+            <div class="fw-bold">Kisan Shetkari Sahakari Cold Storage</div>
+            <small class="text-muted"><i class="fas fa-map-marker-alt text-danger me-1"></i> Nashik, Maharashtra (Available: 1,850 MT)</small>
+          </div>
+          <span class="badge bg-success">₹65/Qtl/Month</span>
+        </div>
+        <a href="{{ url_for('cold_storage.index') }}" class="btn btn-sm btn-info text-white w-100">
+          <i class="fas fa-search-location me-1"></i> <span data-i18n="btn_find_storage">Find & Book Cold Storage</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
