@@ -253,91 +253,139 @@ def logout():
     return redirect(url_for('main.index'))
 
 
+def safe_float(val, default=0.0):
+    if val is None:
+        return default
+    val_str = str(val).strip()
+    if not val_str:
+        return default
+    try:
+        return float(val_str)
+    except (ValueError, TypeError):
+        return default
+
+
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     user = g.user
-    farmer_prof = user.farmer_profile
-    buyer_prof = user.buyer_profile
+
+    # Ensure profile models exist
+    if user.role == 'farmer':
+        if not user.farmer_profile:
+            user.farmer_profile = FarmerProfile(user_id=user.id)
+            db.session.add(user.farmer_profile)
+            try:
+                db.session.flush()
+            except Exception:
+                db.session.rollback()
+        farmer_prof = user.farmer_profile
+        buyer_prof = None
+    elif user.role == 'buyer':
+        if not user.buyer_profile:
+            user.buyer_profile = BuyerProfile(user_id=user.id)
+            db.session.add(user.buyer_profile)
+            try:
+                db.session.flush()
+            except Exception:
+                db.session.rollback()
+        buyer_prof = user.buyer_profile
+        farmer_prof = None
+    else:
+        farmer_prof = user.farmer_profile
+        buyer_prof = user.buyer_profile
 
     if request.method == 'POST':
-        user.name = request.form.get('name', user.name).strip()
-        user.preferred_language = request.form.get('preferred_language', user.preferred_language)
-        
-        # Profile image upload or avatar selection
-        avatar_choice = request.form.get('avatar_choice', '').strip()
-        if avatar_choice:
-            user.profile_image = avatar_choice
+        try:
+            name_val = request.form.get('name', '').strip()
+            if name_val:
+                user.name = name_val
+            user.preferred_language = request.form.get('preferred_language', user.preferred_language or 'en')
+            
+            # Profile image upload or avatar selection
+            avatar_choice = request.form.get('avatar_choice', '').strip()
+            if avatar_choice:
+                user.profile_image = avatar_choice
 
-        if 'profile_image_file' in request.files:
-            file = request.files['profile_image_file']
-            if file and file.filename != '':
-                try:
-                    file_bytes = file.read()
-                    if file_bytes:
-                        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpeg'
-                        mime = f"image/{ext}" if ext in ['png', 'webp', 'gif', 'svg'] else 'image/jpeg'
-                        b64_str = base64.b64encode(file_bytes).decode('utf-8')
-                        user.profile_image = f"data:{mime};base64,{b64_str}"
-                        
-                        # Also attempt saving to uploads/avatars/ directory if disk is writable
-                        try:
-                            upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
-                            os.makedirs(upload_dir, exist_ok=True)
-                            filename = secure_filename(f"{user.custom_id}_{int(time.time())}_{file.filename}")
-                            upload_path = os.path.join(upload_dir, filename)
-                            with open(upload_path, 'wb') as f:
-                                f.write(file_bytes)
-                        except Exception:
-                            pass
-                except Exception as e:
-                    current_app.logger.error(f"Error handling profile image: {e}")
+            if 'profile_image_file' in request.files:
+                file = request.files['profile_image_file']
+                if file and file.filename != '':
+                    try:
+                        file_bytes = file.read()
+                        if file_bytes and len(file_bytes) > 0:
+                            ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpeg'
+                            mime = f"image/{ext}" if ext in ['png', 'webp', 'gif', 'svg'] else 'image/jpeg'
+                            b64_str = base64.b64encode(file_bytes).decode('utf-8')
+                            user.profile_image = f"data:{mime};base64,{b64_str}"
+                            
+                            # Also attempt saving to uploads/avatars/ directory if disk is writable
+                            try:
+                                upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
+                                os.makedirs(upload_dir, exist_ok=True)
+                                filename = secure_filename(f"{user.custom_id}_{int(time.time())}_{file.filename}")
+                                upload_path = os.path.join(upload_dir, filename)
+                                with open(upload_path, 'wb') as f:
+                                    f.write(file_bytes)
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        current_app.logger.error(f"Error handling profile image: {e}")
 
-        # Farmer profile updates
-        if user.role == 'farmer' and farmer_prof:
-            farmer_prof.farm_location_name = request.form.get('farm_location_name', farmer_prof.farm_location_name)
-            farmer_prof.address = request.form.get('address', farmer_prof.address)
-            farmer_prof.district = request.form.get('district', farmer_prof.district)
-            farmer_prof.state = request.form.get('state', farmer_prof.state)
-            farmer_prof.google_maps_link = request.form.get('google_maps_link', farmer_prof.google_maps_link)
-            farmer_prof.crops_grown = request.form.get('crops_grown', farmer_prof.crops_grown)
-            farmer_prof.farm_size_acres = float(request.form.get('farm_size_acres', farmer_prof.farm_size_acres or 3.0))
-            farmer_prof.share_phone_consent = 'share_phone_consent' in request.form
-            farmer_prof.open_to_all_quantities = 'open_to_all_quantities' in request.form
-            farmer_prof.min_qty_kg = float(request.form.get('min_qty_kg', farmer_prof.min_qty_kg or 50.0))
-            farmer_prof.max_qty_kg = float(request.form.get('max_qty_kg', farmer_prof.max_qty_kg or 10000.0))
-            farmer_prof.bio = request.form.get('bio', farmer_prof.bio)
+            # Farmer profile updates
+            if user.role == 'farmer' and farmer_prof:
+                farmer_prof.farm_location_name = request.form.get('farm_location_name', farmer_prof.farm_location_name or '')
+                farmer_prof.address = request.form.get('address', farmer_prof.address or '')
+                farmer_prof.district = request.form.get('district', farmer_prof.district or '')
+                farmer_prof.state = request.form.get('state', farmer_prof.state or '')
+                farmer_prof.google_maps_link = request.form.get('google_maps_link', farmer_prof.google_maps_link or '')
+                farmer_prof.crops_grown = request.form.get('crops_grown', farmer_prof.crops_grown or '')
+                farmer_prof.farm_size_acres = safe_float(request.form.get('farm_size_acres'), farmer_prof.farm_size_acres or 3.0)
+                farmer_prof.share_phone_consent = 'share_phone_consent' in request.form
+                farmer_prof.open_to_all_quantities = 'open_to_all_quantities' in request.form
+                farmer_prof.min_qty_kg = safe_float(request.form.get('min_qty_kg'), farmer_prof.min_qty_kg or 50.0)
+                farmer_prof.max_qty_kg = safe_float(request.form.get('max_qty_kg'), farmer_prof.max_qty_kg or 10000.0)
+                farmer_prof.bio = request.form.get('bio', farmer_prof.bio or '')
 
-        # Buyer profile updates
-        if user.role == 'buyer' and buyer_prof:
-            buyer_prof.business_name = request.form.get('business_name', buyer_prof.business_name)
-            buyer_prof.business_type = request.form.get('business_type', buyer_prof.business_type)
-            buyer_prof.address = request.form.get('address', buyer_prof.address)
-            buyer_prof.district = request.form.get('district', buyer_prof.district)
-            buyer_prof.state = request.form.get('state', buyer_prof.state)
-            buyer_prof.gst_number = request.form.get('gst_number', buyer_prof.gst_number)
-            buyer_prof.share_phone_consent = 'share_phone_consent' in request.form
-            buyer_prof.description = request.form.get('description', buyer_prof.description)
+            # Buyer profile updates
+            if user.role == 'buyer' and buyer_prof:
+                buyer_prof.business_name = request.form.get('business_name', buyer_prof.business_name or '')
+                buyer_prof.business_type = request.form.get('business_type', buyer_prof.business_type or '')
+                buyer_prof.address = request.form.get('address', buyer_prof.address or '')
+                buyer_prof.district = request.form.get('district', buyer_prof.district or '')
+                buyer_prof.state = request.form.get('state', buyer_prof.state or '')
+                buyer_prof.gst_number = request.form.get('gst_number', buyer_prof.gst_number or '')
+                buyer_prof.share_phone_consent = 'share_phone_consent' in request.form
+                buyer_prof.description = request.form.get('description', buyer_prof.description or '')
 
-        # Optional Verification Document Upload
-        if 'verification_doc_file' in request.files:
-            doc = request.files['verification_doc_file']
-            if doc and doc.filename != '':
-                upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
-                os.makedirs(upload_dir, exist_ok=True)
-                doc_name = secure_filename(f"VERIF_{user.custom_id}_{doc.filename}")
-                doc.save(os.path.join(upload_dir, doc_name))
-                user.verification_doc = doc_name
-                user.gov_id_type = request.form.get('gov_id_type', user.gov_id_type or 'Aadhaar Card')
-                raw_id = request.form.get('gov_id_number', '').strip()
-                if raw_id:
-                    user.gov_id_masked = f"XXXX-XXXX-{raw_id[-4:]}"
-                user.verification_status = 'pending'
-                user.is_verified = False
+            # Optional Verification Document Upload
+            if 'verification_doc_file' in request.files:
+                doc = request.files['verification_doc_file']
+                if doc and doc.filename != '':
+                    doc_name = secure_filename(f"VERIF_{user.custom_id}_{int(time.time())}_{doc.filename}")
+                    try:
+                        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+                        os.makedirs(upload_dir, exist_ok=True)
+                        doc.save(os.path.join(upload_dir, doc_name))
+                        user.verification_doc = doc_name
+                    except Exception as e:
+                        current_app.logger.warning(f"Could not save verification doc to disk: {e}")
+                        user.verification_doc = doc_name
 
-        db.session.commit()
-        flash('Profile and Avatar updated successfully!', 'success')
-        return redirect(url_for('auth.profile'))
+                    user.gov_id_type = request.form.get('gov_id_type', user.gov_id_type or 'Aadhaar Card')
+                    raw_id = request.form.get('gov_id_number', '').strip()
+                    if raw_id:
+                        user.gov_id_masked = f"XXXX-XXXX-{raw_id[-4:]}"
+                    user.verification_status = 'pending'
+                    user.is_verified = False
+
+            db.session.commit()
+            flash('Profile and Avatar updated successfully!', 'success')
+            return redirect(url_for('auth.profile'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Profile update error: {e}")
+            flash(f'An error occurred while saving profile: {str(e)}', 'danger')
+            return redirect(url_for('auth.profile'))
 
     return render_template('auth/profile.html', user=user, farmer_prof=farmer_prof, buyer_prof=buyer_prof)
 

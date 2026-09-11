@@ -10,19 +10,12 @@
         
         <!-- Profile Header -->
         <div class="d-flex align-items-center gap-3 pb-3 border-bottom mb-4 flex-wrap">
-          {% if user.profile_image and not user.profile_image.startswith('default') and not user.profile_image.startswith('avatar_') %}
-            <img id="currentAvatarPreview" src="{{ user.profile_image if user.profile_image.startswith('/') or user.profile_image.startswith('http') else url_for('static', filename='uploads/avatars/' + user.profile_image) }}" alt="Avatar" class="rounded-circle border shadow-sm" width="80" height="80" style="object-fit: cover;">
-          {% elif user.profile_image and user.profile_image.startswith('avatar_') %}
+          {% if user.avatar_emoji %}
             <div id="currentAvatarPreview" class="rounded-circle border shadow-sm d-flex align-items-center justify-content-center bg-light fs-1" style="width:80px; height:80px;">
-              {% if user.profile_image == 'avatar_farmer_m' %}👨‍🌾
-              {% elif user.profile_image == 'avatar_farmer_f' %}👩‍🌾
-              {% elif user.profile_image == 'avatar_farmer_turban' %}👳‍♂️
-              {% elif user.profile_image == 'avatar_buyer_m' %}👨‍💼
-              {% elif user.profile_image == 'avatar_buyer_f' %}👩‍💼
-              {% else %}🌱{% endif %}
+              {{ user.avatar_emoji }}
             </div>
           {% else %}
-            <img id="currentAvatarPreview" src="https://ui-avatars.com/api/?name={{ user.name }}&background={% if user.role == 'farmer' %}2e7d32{% else %}e65100{% endif %}&color=fff" alt="Avatar" class="rounded-circle border shadow-sm" width="80" height="80">
+            <img id="currentAvatarPreview" src="{{ user.avatar_src }}" alt="Avatar" class="rounded-circle border shadow-sm" width="80" height="80" style="object-fit: cover;">
           {% endif %}
 
           <div>
