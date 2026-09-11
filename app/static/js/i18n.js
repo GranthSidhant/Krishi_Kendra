@@ -1,8 +1,10 @@
 /**
- * Krishi Kendra - Multilingual Translation Dictionary (i18n)
- * Full translation support: English (en), Hindi (hi), Marathi (mr), Tamil (ta), Telugu (te)
+ * Krishi Kendra - Comprehensive Multilingual Translation Engine (i18n)
+ * Languages supported: English (en), Hindi (hi), Marathi (mr), Tamil (ta), Telugu (te)
+ * Features Key-based translation + Whole-DOM Phrase Translation + Safe String Preservation
  */
 
+// 1. Core Key-Based Translations
 const KRISHI_TRANSLATIONS = {
   en: {
     brand_title: "Krishi Kendra",
@@ -433,10 +435,123 @@ const KRISHI_TRANSLATIONS = {
   }
 };
 
+// 2. Comprehensive Phrase Translation Dictionary for Full UI Coverage across all pages
+const KRISHI_PHRASES = {
+  // Navigation & Core Labels
+  "Home": { hi: "मुख्य पृष्ठ", mr: "मुख्य पान", ta: "முகப்பு", te: "హోమ్" },
+  "Dashboard": { hi: "डैशबोर्ड", mr: "डॅशबोर्ड", ta: "டாஷ்போர்டு", te: "డ్యాష్‌బోర్డ్" },
+  "My Inventory": { hi: "मेरी फसल सूची", mr: "माझी शेतमाल यादी", ta: "விளைச்சல் பட்டியல்", te: "నా పంట నిల్వలు" },
+  "Orders": { hi: "ऑर्डर सूची", mr: "ऑर्डर्स", ta: "ஆர்டர்கள்", te: "ఆర్డర్లు" },
+  "Orders & Requests": { hi: "ऑर्डर व मांग", mr: "ऑर्डर्स आणि मागण्या", ta: "ஆர்டர்கள் & கோரிக்கைகள்", te: "ఆర్డర్లు & అభ్యర్థనలు" },
+  "My Orders": { hi: "मेरे ऑर्डर", mr: "माझे ऑर्डर्स", ta: "எனது ஆர்டர்கள்", te: "నా ఆర్డర్లు" },
+  "Cold Storage": { hi: "कोल्ड स्टोरेज", mr: "शीतगृह", ta: "குளிர்பதன கிடங்கு", te: "కోల్డ్ స్టోరేజ్" },
+  "Farm Supplies": { hi: "कृषि सामग्री", mr: "शेती साहित्य", ta: "விவசாய பொருட்கள்", te: "వ్యవసాయ సామాగ్రి" },
+  "Govt Schemes": { hi: "सरकारी योजनाएं", mr: "शासकीय योजना", ta: "அரசு திட்டங்கள்", te: "ప్రభుత్వ పథకాలు" },
+  "My Visiting Card": { hi: "मेरा विजिटिंग कार्ड", mr: "माझे व्हिजिटिंग कार्ड", ta: "எனது விசிட்டிங் கார்டு", te: "నా విజిటింగ్ కార్డు" },
+  "Profile & Privacy": { hi: "प्रोफाइल व गोपनीयता", mr: "प्रोफाइल व गोपनीयता", ta: "சுயவிவரம் & தனியுரிமை", te: "ప్రొఫైల్ & గోప్యత" },
+  "Logout": { hi: "लॉगआउट", mr: "बाहेर पडा", ta: "வெளியேறு", te: "లాగ్ అవుట్" },
+  "Login": { hi: "लॉगिन करें", mr: "लॉगिन", ta: "உள்நுழைக", te: "లాగిన్" },
+  "Register": { hi: "पंजीकरण करें", mr: "नोंदणी करा", ta: "பதிவு செய்க", te: "నమోదు" },
+  "Admin Portal": { hi: "प्रशासनिक पोर्टल", mr: "प्रशासक पोर्टल", ta: "நிர்வாக தளம்", te: "అడ్మిన్ పోర్టల్" },
+  "Recent Notifications": { hi: "हाल की सूचनाएं", mr: "अलीकडील सूचना", ta: "சமீபத்திய அறிவிப்புகள்", te: "ఇటీవలి నోటిఫికేషన్లు" },
+  "No notifications yet.": { hi: "अभी कोई सूचना नहीं है।", mr: "अद्याप कोणतीही सूचना नाही.", ta: "அறிவிப்புகள் எதுவும் இல்லை.", te: "ఇంకా నోటిఫికేషన్లు లేవు." },
+
+  // Farmer Dashboard & Inventory
+  "Farmer Dashboard": { hi: "किसान डैशबोर्ड", mr: "शेतकरी डॅशबोर्ड", ta: "விவசாயி டாஷ்போர்டு", te: "రైతు డ్యాష్‌బోర్డ్" },
+  "Buyer Dashboard": { hi: "खरीदार डैशबोर्ड", mr: "खरेदीदार डॅशबोर्ड", ta: "வாங்குபவர் டாஷ்போர்டு", te: "కొనుగోలుదారు డ్యాష్‌బోర్డ్" },
+  "Add Produce": { hi: "नई फसल जोड़ें", mr: "नवीन शेतमाल जोडा", ta: "பயிர் சேர்க்க", te: "పంటను జోడించండి" },
+  "List New Crop": { hi: "नई फसल दर्ज करें", mr: "नवीन पीक नोंदवा", ta: "புதிய பயிர் சேர்க்க", te: "కొత్త పంటను చేర్చండి" },
+  "Post Requirement": { hi: "मांग पोस्ट करें", mr: "मागणी नोंदवा", ta: "தேவையை பதிவிடுக", te: "అవసరాన్ని పోస్ట్ చేయండి" },
+  "Browse Produce": { hi: "फसलें खोजें", mr: "शेतमाल शोधा", ta: "பயிர்களை காண்க", te: "పంటలను చూడండి" },
+  "Quick Actions": { hi: "त्वरित क्रियाएं", mr: "जलद कृती", ta: "விரைவு செயல்கள்", te: "త్వరిత చర్యలు" },
+  "Total Produce Listed": { hi: "कुल सूचीबद्ध फसल", mr: "एकूण नोंदवलेला शेतमाल", ta: "பட்டியலிடப்பட்ட பயிர்கள்", te: "మొత్తం లిస్ట్ చేసిన పంట" },
+  "Active Deals & Negotiations": { hi: "सक्रिय सौदे व बातचीत", mr: "सक्रिय सौदे व चर्चा", ta: "செயலில் உள்ள வர்த்தகம்", te: "యాక్టివ్ డీల్స్" },
+  "Total Earnings": { hi: "कुल कमाई", mr: "एकूण उत्पन्न", ta: "மொத்த வருவாய்", te: "మొత్తం ఆదాయం" },
+  "Cold Storage Bookings": { hi: "कोल्ड स्टोरेज बुकिंग", mr: "शीतगृह बुकींग", ta: "குளிர்பதன முன்பதிவு", te: "కోల్డ్ స్టోరేజ్ బుకింగ్స్" },
+  "Crop Inventory": { hi: "फसल भंडार", mr: "शेतमाल साठा", ta: "பயிர் இருப்பு", te: "పంట నిల్వ" },
+  "Available Quantity": { hi: "उपलब्ध मात्रा", mr: "उपलब्ध प्रमाण", ta: "கிடைக்கும் அளவு", te: "అందుబాటులో ఉన్న పరిమాణం" },
+  "Expected Price": { hi: "अपेक्षित मूल्य", mr: "अपेक्षित दर", ta: "எதிர்பார்க்கும் விலை", te: "ఆశించిన ధర" },
+  "Quality Grade": { hi: "गुणवत्ता ग्रेड", mr: "गुणवत्ता प्रत", ta: "தர நிலை", te: "నాణ్యత గ్రేడ్" },
+  "Harvest Date": { hi: "कटाई की तारीख", mr: "कापणी तारीख", ta: "அறுவடை தேதி", te: "కోత తేదీ" },
+  "Location": { hi: "स्थान", mr: "ठिकाण", ta: "இடம்", te: "ప్రాంతం" },
+  "Status": { hi: "स्थिति", mr: "स्थिती", ta: "நிலை", te: "స్థితి" },
+  "Action": { hi: "कार्यवाही", mr: "कृती", ta: "செயல்", te: "చర్య" },
+  "Actions": { hi: "कार्यवाही", mr: "कृती", ta: "செயல்கள்", te: "చర్యలు" },
+  "Edit": { hi: "संपादित करें", mr: "बदला", ta: "திருத்து", te: "సవరించు" },
+  "Delete": { hi: "हटाएं", mr: "हटवा", ta: "நீக்கு", te: "తొలగించు" },
+  "View Details": { hi: "विवरण देखें", mr: "तपशील पहा", ta: "விவரங்களை காண்க", te: "వివరాలు చూడండి" },
+  "Available": { hi: "उपलब्ध", mr: "उपलब्ध", ta: "இருப்பில் உள்ளது", te: "అందుబాటులో ఉంది" },
+  "Low Stock": { hi: "कम स्टॉक", mr: "कमी साठा", ta: "குறைந்த இருப்பு", te: "తక్కువ నిల్వ" },
+  "Sold Out": { hi: "बिक चुका है", mr: "विक्री झाली", ta: "விற்றுத் தீர்ந்தது", te: "అయిపోయింది" },
+
+  // Orders & Deals
+  "Pending": { hi: "लंबित", mr: "प्रलंबित", ta: "நிலுவையில்", te: "పెండింగ్" },
+  "Accepted": { hi: "स्वीकृत", mr: "स्वीकृत", ta: "ஏற்றுக்கொள்ளப்பட்டது", te: "ఆమోదించబడింది" },
+  "Rejected": { hi: "अस्वीकृत", mr: "नाकारले", ta: "நிராகரிக்கப்பட்டது", te: "తిరస్కరించబడింది" },
+  "Countered": { hi: "काउंटर ऑफ़र", mr: "पर्यायी दर", ta: "மாற்று ஆஃபர்", te: "కౌంటర్ ఆఫర్" },
+  "In Transit": { hi: "रास्ते में (ट्रांजिट)", mr: "मार्गावर", ta: "வழியில் உள்ளது", te: "రవాణాలో ఉంది" },
+  "Delivered": { hi: "डिलीवर हो गया", mr: "पोहोचले", ta: "விநியோகிக்கப்பட்டது", te: "చేరింది" },
+  "Completed": { hi: "पूर्ण हुआ", mr: "पूर्ण झाले", ta: "முடிந்தது", te: "పూర్తయింది" },
+  "View Tax Invoice": { hi: "टैक्स इनवॉइस देखें", mr: "टॅक्स इनव्हॉइस पहा", ta: "வரி விலைப்பட்டியல்", te: "పన్ను ఇన్‌వాయిస్" },
+  "Print Invoice": { hi: "इनवॉइस प्रिंट करें", mr: "इनव्हॉइस प्रिंट करा", ta: "அச்சிடுக", te: "ప్రింట్ చేయండి" },
+  "Total Amount": { hi: "कुल राशि", mr: "एकूण रक्कम", ta: "மொத்த தொகை", te: "మొత్తం మొత్తం" },
+  "Agreed Price": { hi: "सहमति मूल्य", mr: "ठरलेला दर", ta: "ஒப்புக்கொண்ட விலை", te: "ఒప్పుకున్న ధర" },
+  "Delivery Address": { hi: "डिलीवरी का पता", mr: "वितरण पत्ता", ta: "டெலிவரி முகவரி", te: "డెలివరీ చిరునామా" },
+  "Accept Offer": { hi: "ऑफ़र स्वीकार करें", mr: "ऑफर स्वीकारा", ta: "ஏற்றுக்கொள்", te: "ఆమోదించండి" },
+  "Make Counter-Offer": { hi: "काउंटर ऑफ़र दें", mr: "पर्यायी ऑफर द्या", ta: "மாற்று ஆஃபர்", te: "కౌంటర్ ఆఫర్ ఇవ్వండి" },
+
+  // Cold Storage & Schemes
+  "Nearby Cold Storage Network": { hi: "नजदीकी कोल्ड स्टोरेज नेटवर्क", mr: "जवळपासची शीतगृहे", ta: "அருகிலுள்ள குளிர்பதன கிடங்குகள்", te: "సమీప కోల్డ్ స్టోరేజ్ నెట్‌వర్క్" },
+  "Accredited Cold Storages": { hi: "प्रमाणित कोल्ड स्टोरेज", mr: "प्रमाणित शीतगृहे", ta: "அங்கீகரிக்கப்பட்ட கிடங்குகள்", te: "ధృవీకరించబడిన కోల్డ్ స్టోరేజీలు" },
+  "Total Capacity": { hi: "कुल क्षमता", mr: "एकूण क्षमता", ta: "மொத்த கொள்ளளவு", te: "మొత్తం సామర్థ్యం" },
+  "Available Space": { hi: "उपलब्ध स्थान", mr: "उपलब्ध जागा", ta: "கிடைக்கும் இடம்", te: "అందుబాటులో ఉన్న స్థలం" },
+  "Daily Rental Rate": { hi: "दैनिक किराया दर", mr: "दैनिक भाडे दर", ta: "தினசரி வாடகை", te: "రోజువారీ అద్దె ధర" },
+  "Book Storage Space": { hi: "स्टोरेज बुक करें", mr: "जागा बुक करा", ta: "முன்பதிவு செய்க", te: "బుక్ చేయండి" },
+  "Government Schemes & Subsidies": { hi: "सरकारी कल्याणकारी योजनाएं व सब्सिडी", mr: "शासकीय योजना व सबसिडी", ta: "அரசு திட்டங்கள் & மானியங்கள்", te: "ప్రభుత్వ పథకాలు & రాయితీలు" },
+  "Apply Online": { hi: "ऑनलाइन आवेदन करें", mr: "ऑनलाइन अर्ज करा", ta: "விண்ணப்பிக்கவும்", te: "దరఖాస్తు చేసుకోండి" },
+  "Eligibility": { hi: "पात्रता", mr: "पात्रता", ta: "தகுதி", te: "అర్హత" },
+  "Benefits": { hi: "लाभ", mr: "फायदे", ta: "நன்மைகள்", te: "ప్రయోజనాలు" },
+
+  // Mandi & Crops
+  "APMC Mandi Rates": { hi: "APMC मंडी भाव", mr: "बाजार समिती थेट दर", ta: "நேரடி மंडी விலை", te: "APMC మార్కెట్ ధరలు" },
+  "Commodity": { hi: "फसल / वस्तु", mr: "शेतमाल", ta: "பயிர்", te: "పంట" },
+  "Market": { hi: "मंडी", mr: "बाजार समिती", ta: "சந்தை", te: "మార్కెట్" },
+  "Modal Price": { hi: "औसत भाव", mr: "सरासरी दर", ta: "சராசரி விலை", te: "సగటు ధర" },
+  "Live Mandi Rates": { hi: "लाइव मंडी भाव", mr: "थेट बाजार भाव", ta: "நேரலை மண்டி விலை", te: "లైవ్ మార్కెట్ ధరలు" },
+  "Wheat": { hi: "गेहूं", mr: "गहू", ta: "கோதுமை", te: "గోధుమలు" },
+  "Onion": { hi: "प्याज", mr: "कांदा", ta: "வெங்காயம்", te: "ఉల్లిపాయలు" },
+  "Tomato": { hi: "टमाटर", mr: "टोमॅटो", ta: "தக்காளி", te: "టమాటాలు" },
+  "Potato": { hi: "आलू", mr: "बटाटा", ta: "உருளைக்கிழங்கு", te: "బంగాళాదుంపలు" },
+  "Rice": { hi: "चावल (धान)", mr: "तांदूळ / भात", ta: "அரிசி", te: "వరి / బియ్యం" },
+  "Soybean": { hi: "सोयाबीन", mr: "सोयाबीन", ta: "சோயாபீன்", te: "సోయాబీన్" },
+  "Cotton": { hi: "कपास", mr: "कापूस", ta: "பருத்தி", te: "పత్తి" },
+  "Garlic": { hi: "लहसुन", mr: "लसूण", ta: "பூண்டு", te: "వెల్లుల్లి" },
+  "Mustard": { hi: "सरसों", mr: "मोहरी", ta: "கடுகு", te: "ఆవాలు" },
+  "Maize": { hi: "मक्का", mr: "मका", ta: "மக்காச்சோளம்", te: "మొక్కజొన్న" },
+  "Gram": { hi: "चना", mr: "हरभरा", ta: "கடலை", te: "శనగలు" },
+
+  // General Buttons & Filters
+  "Search": { hi: "खोजें", mr: "शोधा", ta: "தேடுக", te: "శోధించండి" },
+  "Filter": { hi: "फ़िल्टर", mr: "फिल्टर", ta: "வடிகட்டு", te: "ఫిల్టర్" },
+  "Save Changes": { hi: "बदलाव सहेजें", mr: "बदल जतन करा", ta: "சேமிக்கவும்", te: "మార్పులను సేవ్ చేయండి" },
+  "Submit": { hi: "जमा करें", mr: "सबमिट करा", ta: "சமர்ப்பிக்கவும்", te: "సమర్పించండి" },
+  "Cancel": { hi: "रद्द करें", mr: "रद्द करा", ta: "ரத்து செய்", te: "రద్దు చేయండి" },
+  "Back": { hi: "वापस जाएं", mr: "मागे जा", ta: "பின்செல்", te: "వెనుకకు" },
+  "Close": { hi: "बंद करें", mr: "बंद करा", ta: "மூடு", te: "మూసివేయి" },
+  "Verified": { hi: "सत्यापित", mr: "प्रमाणित", ta: "சரிபார்க்கப்பட்டது", te: "ధృవీకరించబడింది" },
+  "State": { hi: "राज्य", mr: "राज्य", ta: "மாநிலம்", te: "రాష్ట్రం" },
+  "District": { hi: "ज़िला", mr: "जिल्हा", ta: "மாவட்டம்", te: "జిల్లా" },
+  "Price": { hi: "मूल्य", mr: "दर", ta: "விலை", te: "ధర" },
+  "Quantity": { hi: "मात्रा", mr: "प्रमाण", ta: "அளவு", te: "పరిమాణం" },
+  "Kisan Saarthi": { hi: "किसान सारथी", mr: "किसान सारथी", ta: "கிசான் சாரதி", te: "కిసాన్ సారథి" }
+};
+
+// 3. Smart Full-DOM Translation Execution Engine
 function applyTranslations(lang) {
+  if (!lang) lang = 'en';
   const dict = KRISHI_TRANSLATIONS[lang] || KRISHI_TRANSLATIONS.en;
-  
-  // Translate all [data-i18n] text nodes
+
+  // Step A: Translate all elements with explicit [data-i18n]
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) {
@@ -444,7 +559,7 @@ function applyTranslations(lang) {
     }
   });
 
-  // Translate placeholders if any
+  // Step B: Translate [data-i18n-placeholder] and [placeholder]
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (dict[key]) {
@@ -452,16 +567,77 @@ function applyTranslations(lang) {
     }
   });
 
-  // Save selected lang to localStorage
+  // Step C: If non-English selected, perform recursive phrase matching on text nodes
+  if (lang !== 'en') {
+    translateDOMTextNodes(document.body, lang);
+  } else {
+    restoreOriginalEnglish(document.body);
+  }
+
+  // Save selected language in localStorage and html tag
   localStorage.setItem('krishi_selected_lang', lang);
   document.documentElement.lang = lang;
 }
 
+// Helper: Recursively walk and translate all text nodes while preserving original strings
+function translateDOMTextNodes(node, lang) {
+  if (!node) return;
+  // Skip script, style, textarea, input, and pre tags
+  const skipTags = ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'CODE', 'PRE', 'SVG', 'PATH'];
+  if (node.nodeType === Node.ELEMENT_NODE && skipTags.includes(node.tagName)) {
+    return;
+  }
+
+  if (node.nodeType === Node.TEXT_NODE) {
+    const rawText = node.textContent.trim();
+    if (rawText.length > 0) {
+      // Store original English text if not already stored
+      const parent = node.parentElement;
+      if (parent && !parent.hasAttribute('data-i18n') && !parent.classList.contains('font-monospace')) {
+        let original = parent.getAttribute('data-original-text');
+        if (!original) {
+          parent.setAttribute('data-original-text', node.textContent);
+          original = node.textContent;
+        }
+
+        const trimmedOrig = original.trim();
+        if (KRISHI_PHRASES[trimmedOrig] && KRISHI_PHRASES[trimmedOrig][lang]) {
+          node.textContent = original.replace(trimmedOrig, KRISHI_PHRASES[trimmedOrig][lang]);
+        }
+      }
+    }
+    return;
+  }
+
+  // Walk child nodes
+  for (let child of node.childNodes) {
+    translateDOMTextNodes(child, lang);
+  }
+}
+
+// Helper: Restore original English text
+function restoreOriginalEnglish(node) {
+  if (!node) return;
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const original = node.getAttribute('data-original-text');
+    if (original && node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE) {
+      node.childNodes[0].textContent = original;
+    }
+  }
+  for (let child of node.childNodes) {
+    restoreOriginalEnglish(child);
+  }
+}
+
+// 4. Initialization & Event Handlers
 document.addEventListener('DOMContentLoaded', () => {
-  const savedLang = localStorage.getItem('krishi_selected_lang') || document.documentElement.lang || 'en';
+  // Read saved language from server session or localStorage
+  const serverLang = document.documentElement.lang;
+  const savedLang = localStorage.getItem('krishi_selected_lang') || serverLang || 'en';
+  
   applyTranslations(savedLang);
 
-  // Hook language dropdown items for instant live translation
+  // Hook all language dropdown items for instant real-time live translation
   document.querySelectorAll('.lang-select-item').forEach(item => {
     item.addEventListener('click', (e) => {
       const selectedLang = item.getAttribute('data-lang');
