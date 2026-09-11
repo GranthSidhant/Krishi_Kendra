@@ -5,18 +5,28 @@ BASE_DIR = Path(__file__).resolve().parent
 
 IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
 
+def get_database_uri():
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        # Normalize postgres:// to postgresql:// for SQLAlchemy 2.0+
+        if db_url.startswith('postgres://'):
+            db_url = db_url.replace('postgres://', 'postgresql://', 1)
+        return db_url
+    
+    if IS_VERCEL:
+        return f"sqlite:///{Path('/tmp') / 'krishi_kendra.db'}"
+    return f"sqlite:///{BASE_DIR / 'instance' / 'krishi_kendra.db'}"
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'krishi-kendra-sih2026-super-secret-key-xyz987')
+    SQLALCHEMY_DATABASE_URI = get_database_uri()
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # In Vercel serverless, the filesystem is read-only except /tmp
     if IS_VERCEL:
-        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{Path('/tmp') / 'krishi_kendra.db'}")
         UPLOAD_FOLDER = Path('/tmp') / 'uploads'
     else:
-        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'instance' / 'krishi_kendra.db'}")
         UPLOAD_FOLDER = BASE_DIR / 'app' / 'static' / 'uploads'
-
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Uploads
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max
