@@ -195,58 +195,92 @@
   </main>
 
   <!-- Floating Voice Assistant FAB -->
-  <div class="voice-assistant-fab" id="voiceAssistantFab" title="Click to speak or chat with Krishi Mitra AI Copilot">
+  <div class="voice-assistant-fab" id="voiceAssistantFab" title="Click to speak with Kisan Saarthi AI Copilot">
     <i class="fas fa-microphone fs-4"></i>
   </div>
 
-  <!-- AI Voice & Text Assistant Modal -->
-  <div class="modal fade" id="voiceAssistantModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow-lg border-0" style="border-radius: var(--radius-lg);">
-        <div class="modal-header bg-success text-white">
-          <div class="d-flex align-items-center gap-2">
-            <i class="fas fa-robot fs-4"></i>
+  <!-- Kisan Saarthi AI Conversational Voice & Chat Modal -->
+  <div class="modal fade" id="voiceAssistantModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+      <div class="modal-content shadow-lg border-0 kisan-saarthi-modal" style="border-radius: 18px; overflow: hidden; background: #fdfdfd;">
+        <!-- Header -->
+        <div class="modal-header bg-gradient-success text-white py-3 px-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1b5e20, #2e7d32);">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-white rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px;">
+              <i class="fas fa-seedling text-success fs-4"></i>
+            </div>
             <div>
-              <h5 class="modal-title fw-bold mb-0">Krishi Mitra AI Copilot</h5>
-              <small class="text-white-50">कृषि मित्र AI सहायक • Multilingual Voice & Chat</small>
+              <div class="d-flex align-items-center gap-2">
+                <h5 class="modal-title fw-bold mb-0">Kisan Saarthi</h5>
+                <span class="badge bg-warning text-dark font-monospace text-xs px-2 py-0.5 rounded-pill shadow-xs">AI Copilot</span>
+              </div>
+              <small class="text-white-50">किसान सारथी • Grounded with Live Mandi, Cold Storage & Schemes</small>
             </div>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4">
-          <!-- Voice Interaction Visualizer -->
-          <div class="text-center mb-3">
-            <button type="button" id="startVoiceRecordingBtn" class="btn btn-outline-success rounded-circle p-3 shadow-sm mb-2" style="width:72px; height:72px;">
-              <i class="fas fa-microphone-alt fa-2x"></i>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" id="toggleVoiceMuteBtn" class="btn btn-sm btn-outline-light rounded-pill px-2.5" title="Toggle AI voice readout">
+              <i class="fas fa-volume-up" id="voiceMuteIcon"></i>
             </button>
-            <div class="fw-bold text-dark" id="voiceStatusText">Click mic to speak, or type your question below</div>
-            <div class="text-muted small">Supports Hindi, Marathi, Tamil, Telugu, and English</div>
+            <button type="button" id="clearChatHistoryBtn" class="btn btn-sm btn-outline-light rounded-pill px-2.5" title="Reset Conversation">
+              <i class="fas fa-redo-alt"></i>
+            </button>
+            <button type="button" class="btn-close btn-close-white ms-1" data-bs-dismiss="modal"></button>
           </div>
+        </div>
 
-          <!-- Quick Suggestions Chips -->
-          <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
-            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="गेहूं का भाव क्या है?">🌾 गेहूं भाव</button>
-            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="Onion Mandi rate">🧅 Onion Rate</button>
-            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="Add produce to inventory">📦 Add Produce</button>
-            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="Find cold storage">❄️ Cold Storage</button>
-            <button type="button" class="btn btn-sm btn-light border ai-quick-chip" data-query="PM KISAN scheme">🏛️ PM-KISAN</button>
-          </div>
-
-          <!-- AI Response Card -->
-          <div class="alert alert-light border p-3 mb-3" id="voiceResponseContainer">
-            <div class="d-flex align-items-center gap-2 text-success fw-bold mb-1">
-              <i class="fas fa-brain"></i> <span>Krishi Mitra AI:</span>
+        <!-- Chat History Body -->
+        <div class="modal-body p-3 p-md-4" style="background: #f8fafc; min-height: 380px; max-height: 480px; overflow-y: auto;" id="kisanChatStream">
+          <!-- Welcome Message -->
+          <div class="chat-msg chat-msg-ai mb-3 d-flex gap-2">
+            <div class="chat-avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+              <i class="fas fa-robot text-xs"></i>
             </div>
-            <div id="voiceResponseText" class="text-dark small">
-              Namaste! Ask me about live Mandi prices, crop diseases, cold storage availability, or platform navigation.
+            <div class="chat-bubble bg-white p-3 rounded-3 shadow-xs border" style="max-width: 85%;">
+              <div class="fw-bold text-success small mb-1"><i class="fas fa-brain me-1"></i> Kisan Saarthi (किसान सारथी)</div>
+              <div class="chat-text text-dark">
+                नमस्ते! मैं किसान सारथी हूँ। आप मुझसे मंडी भाव (जैसे: <em>प्याज या गेहूं का रेट</em>), नजदीकी कोल्ड स्टोरेज, सरकारी योजनाएं (PM-KISAN) या अपनी फसल बेचने के बारे में बेझिझक पूछ सकते हैं।
+              </div>
+              <div class="mt-2.5 d-flex flex-wrap gap-1.5" id="initialActionPills">
+                <a href="/farmer/mandi-rates" class="btn btn-xs btn-outline-success rounded-pill fw-semibold"><i class="fas fa-chart-line me-1"></i> लाइव मंडी भाव</a>
+                <a href="/cold-storage/" class="btn btn-xs btn-outline-primary rounded-pill fw-semibold"><i class="fas fa-snowflake me-1"></i> कोल्ड स्टोरेज</a>
+                <a href="/schemes/" class="btn btn-xs btn-outline-dark rounded-pill fw-semibold"><i class="fas fa-landmark me-1"></i> सरकारी योजनाएं</a>
+              </div>
             </div>
-            <div id="voiceActionContainer" class="mt-2" style="display:none;"></div>
           </div>
+        </div>
 
-          <!-- Text Input Fallback -->
-          <form id="voiceTextQueryForm" class="d-flex gap-2">
-            <input type="text" id="voiceTextInput" class="form-control" placeholder="Type in Hindi or English (e.g. आलू का रेट)..." autocomplete="off">
-            <button type="submit" class="btn btn-success fw-bold px-3">
+        <!-- Waveform & Mic Status Bar -->
+        <div class="px-3 py-2 bg-white border-top border-bottom d-flex align-items-center justify-content-between" id="voiceStatusContainer">
+          <div class="d-flex align-items-center gap-2 small">
+            <span class="status-indicator-dot" id="voicePulseDot"></span>
+            <span class="text-muted fw-medium" id="voiceStatusText">Press mic to speak or type in Hindi/English</span>
+          </div>
+          <!-- Live Audio Waves Visualizer -->
+          <div class="audio-waves" id="audioWaveVisualizer" style="display: none;">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Quick Query Suggestion Chips -->
+        <div class="px-3 py-2 bg-light d-flex gap-1.5 overflow-x-auto text-nowrap" style="scrollbar-width: thin;">
+          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="नासिक में प्याज का आज का भाव क्या है?">🧅 प्याज भाव</button>
+          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="गेहूं का मंडी रेट क्या चल रहा है?">🌾 गेहूं भाव</button>
+          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="पास में कौन सा कोल्ड स्टोरेज उपलब्ध है?">❄️ कोल्ड स्टोरेज</button>
+          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="PM KISAN योजना की क्या स्थिति है?">🏛️ PM-KISAN</button>
+          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="नई फसल बेचने के लिए कैसे लिस्ट करें?">📦 फसल बेचें</button>
+        </div>
+
+        <!-- Footer Input Controls -->
+        <div class="modal-footer p-2.5 bg-white border-top d-flex gap-2 align-items-center">
+          <!-- Voice Record Trigger -->
+          <button type="button" id="startVoiceRecordingBtn" class="btn btn-success rounded-circle shadow-sm flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 46px; height: 46px;" title="Click to speak">
+            <i class="fas fa-microphone fa-lg" id="micBtnIcon"></i>
+          </button>
+
+          <!-- Text Input Form -->
+          <form id="voiceTextQueryForm" class="d-flex flex-grow-1 gap-2 m-0">
+            <input type="text" id="voiceTextInput" class="form-control rounded-pill px-3 py-2" placeholder="Ask in Hindi, English, Marathi (e.g. आज आलू का रेट क्या है)..." autocomplete="off">
+            <button type="submit" class="btn btn-primary rounded-circle shadow-sm flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 46px; height: 46px;">
               <i class="fas fa-paper-plane"></i>
             </button>
           </form>

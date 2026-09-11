@@ -41,10 +41,11 @@ from app.services.ai_voice_service import AIVoiceService
 def voice_query():
     data = request.get_json() or {}
     query = data.get('query', '').strip()
+    history = data.get('history', [])
     if not query:
         return jsonify({
             'success': True,
-            'response_text': 'Namaste! I am Krishi Mitra, your agricultural AI copilot. Ask me anything about mandi rates, cold storages, government schemes, or buying/selling crops.',
+            'response_text': 'Namaste! I am Kisan Saarthi, your AI agricultural voice copilot. Ask me anything about live mandi rates, cold storages, government schemes, or your active farm inventory and deals.',
             'action_url': '/farmer/mandi-rates',
             'action_label': 'View Live Mandi Rates'
         })
@@ -58,7 +59,7 @@ def voice_query():
             'preferred_language': g.user.preferred_language
         }
 
-    result = AIVoiceService.process_query(query, user_context)
+    result = AIVoiceService.process_query(query, user_context, history)
     return jsonify(result)
 
 

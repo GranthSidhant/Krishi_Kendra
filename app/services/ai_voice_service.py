@@ -1,122 +1,167 @@
 import os
 import json
 import logging
-import urllib.request
-import urllib.parse
+from flask import g
+from app.models import MandiRate, ColdStorage, GovernmentScheme, Inventory, Offer, User
 from app.services.mandi_service import MandiService
 
 logger = logging.getLogger(__name__)
 
 class AIVoiceService:
     @staticmethod
-    def process_query(query: str, user_context: dict = None) -> dict:
+    def get_database_grounding_context(user_context: dict = None) -> str:
         """
-        Processes voice/text query with Google Gemini AI.
-        Falls back seamlessly to local agricultural intelligence if GEMINI_API_KEY is not configured or offline.
+        Dynamically extracts current database records so Gemini AI answers with 100% accuracy based on actual platform data.
+        """
+        context_parts = []
+        
+        # 1. Mandi Rates summary from Database
+        try:
+            rates = MandiRate.query.order_by(MandiRate.last_updated.desc()).limit(12).all()
+            if rates:
+                rate_strs = [f"{r.commodity} in {r.market_name} ({r.district}): ₹{r.modal_price_per_kg}/kg (₹{r.modal_price_per_kg*100:.0f}/Q)" for r in rates]
+                context_parts.append("LIVE MANDI RATES IN DATABASE:\n" + "\n".join(rate_strs[:8]))
+        except Exception as e:
+            logger.debug(f"DB Mandi context note: {e}")
+
+        # 2. Cold Storages from Database
+        try:
+            storages = ColdStorage.query.filter_by(is_active=True).limit(6).all()
+            if storages:
+                storage_strs = [
+                    f"{cs.name} ({cs.district}, {cs.state}): {cs.available_capacity_mt} MT available out of {cs.total_capacity_mt} MT, Temp: {cs.temperature_celsius}°C, Rate: ₹{cs.price_per_day_quintal}/day/Q"
+                    for cs in storages
+                ]
+                context_parts.append("ACTIVE COLD STORAGES IN DATABASE:\n" + "\n".join(storage_strs))
+        except Exception as e:
+            logger.debug(f"DB Cold storage context note: {e}")
+
+        # 3. Government Schemes from Database
+        try:
+            schemes = GovernmentScheme.query.filter_by(is_active=True).limit(6).all()
+            if schemes:
+                scheme_strs = [f"{s.title} ({s.code}): {s.benefit_summary}" for s in schemes]
+                context_parts.append("GOVERNMENT SCHEMES IN DATABASE:\n" + "\n".join(scheme_strs))
+        except Exception as e:
+            logger.debug(f"DB Schemes context note: {e}")
+
+        # 4. User-Specific Live Data (if logged in)
+        if user_context and user_context.get('id'):
+            user_id = user_context.get('id')
+            role = user_context.get('role', 'farmer')
+            try:
+                if role == 'farmer':
+                    my_inv = Inventory.query.filter_by(farmer_id=user_id, status='available').all()
+                    if my_inv:
+                        inv_strs = [f"{i.product_name} ({i.available_quantity} {i.unit} @ ₹{i.expected_price_per_unit}/{i.unit}, {i.quality_grade})" for i in my_inv]
+                        context_parts.append(f"USER'S ACTIVE INVENTORY:\n" + ", ".join(inv_strs))
+                    
+                    my_offers = Offer.query.filter_by(farmer_id=user_id, status='pending').all()
+                    if my_offers:
+                        context_parts.append(f"USER'S PENDING BUYER OFFERS: {len(my_offers)} buyer offers awaiting confirmation in /farmer/orders")
+                elif role == 'buyer':
+                    buyer_offers = Offer.query.filter_by(buyer_id=user_id).limit(5).all()
+                    if buyer_offers:
+                        context_parts.append(f"USER'S BUYER OFFERS: {len(buyer_offers)} active trade requests placed.")
+            except Exception as e:
+                logger.debug(f"User context DB note: {e}")
+
+        return "\n\n".join(context_parts)
+
+    @staticmethod
+    def process_query(query: str, user_context: dict = None, conversation_history: list = None) -> dict:
+        """
+        Processes voice/text queries using Google Gemini AI grounded on live database records.
+        Supports multi-turn conversation history.
         """
         api_key = os.environ.get('GEMINI_API_KEY')
         if not api_key:
             return AIVoiceService._fallback_rule_based(query)
 
         user_role = user_context.get('role', 'farmer') if user_context else 'farmer'
-        user_name = user_context.get('name', 'Farmer') if user_context else 'Farmer'
-
-        # Live Mandi benchmark sample for context grounding
-        mandi_sample = "Wheat: ₹2,275/Q (Nashik), Onion: ₹2,450/Q (Lasalgaon), Tomato: ₹1,800/Q (Pune), Soybean: ₹4,600/Q (Indore)"
+        user_name = user_context.get('name', 'Kisan') if user_context else 'Kisan'
+        db_context = AIVoiceService.get_database_grounding_context(user_context)
 
         system_instruction = f"""
-You are 'Krishi Mitra' (कृषि मित्र), an expert agricultural AI copilot on the Krishi Kendra platform.
-You assist Indian farmers, buyers, and traders.
+You are 'Kisan Saarthi' (किसान सारथी), an intelligent, conversational agricultural AI advisor and voice navigator on the Krishi Kendra platform.
+You assist Indian farmers, buyers, and agricultural traders in their native regional languages (Hindi, Marathi, Tamil, Telugu, English, Hinglish).
 
-User Info:
-- Role: {user_role}
+CURRENT USER:
 - Name: {user_name}
-- Live platform Mandi rates sample: {mandi_sample}
+- Role: {user_role}
 
-Guidelines:
-1. Understand queries in any Indian regional language (Hindi, Marathi, Tamil, Telugu, English, Hinglish).
-2. Answer concisely (2-3 sentences max) in the EXACT same language and script the user spoke.
-3. Provide practical, encouraging agricultural guidance (prices, post-harvest storage, schemes like PM-KISAN/PMFBY, selling produce).
-4. Match to the most relevant deep-link URL:
-   - '/farmer/inventory/add' (Sell produce / Add crop listing)
-   - '/farmer/mandi-rates' (Live APMC mandi rates & price analytics)
-   - '/cold-storage/' (Book accredited cold storage warehouse)
-   - '/schemes/' (Govt agricultural subsidies, PM-KISAN, PMFBY, KCC)
-   - '/marketplace/' (Browse marketplace / Buy produce)
-   - '/farmer/orders' (Active deals, orders, negotiations)
-   - '/farmer/visiting-card' (Digital Kisan Visiting Card with QR)
-   - '/auth/profile' (Profile, avatar, verification settings)
-   - '/farmer/dashboard' (Weather & general advisory)
+REAL-TIME PLATFORM DATABASE RECORDS:
+{db_context}
 
-Output STRICTLY a valid JSON object:
+INSTRUCTIONS:
+1. Ground your answers directly on the platform database records provided above whenever answering about prices, cold storages, government schemes, or user inventory.
+2. Reply concisely (2 to 3 sentences max) in the EXACT same language and script that the user asked in (e.g. reply in Devanagari Hindi if user asks in Hindi).
+3. Be respectful, encouraging, and clear for voice readout.
+4. Maintain context across conversation turns if the user asks follow-up questions.
+5. Suggest the single most appropriate deep-link action URL:
+   - '/farmer/inventory/add' -> If user wants to sell produce or add crop listing
+   - '/farmer/mandi-rates' -> If user wants to check mandi rates or price charts
+   - '/cold-storage/' -> If user asks about cold storage facilities or booking
+   - '/schemes/' -> If user asks about government schemes (PM-KISAN, PMFBY, KCC, AIF)
+   - '/marketplace/' -> If user wants to buy crops or browse listings
+   - '/farmer/orders' -> If user asks about their active orders or deals
+   - '/farmer/visiting-card' -> If user asks about digital visiting card or QR profile
+   - '/auth/profile' -> If user asks about account settings or verification
+   - '/farmer/dashboard' -> For general navigation or dashboard
+
+Return STRICTLY a JSON object with this structure:
 {{
-  "response_text": "Spoken answer in user's language",
-  "action_url": "/selected-path",
-  "action_label": "Button text in user's language (e.g. 'मंडी भाव देखें' or 'View Schemes')"
+  "response_text": "<concise spoken reply in user's language>",
+  "action_url": "<relevant url or null>",
+  "action_label": "<short button label in user's language, e.g. 'मंडी भाव देखें' or 'View Schemes'>"
 }}
 """
 
-        # Method 1: Try using google-genai SDK
-        try:
-            from google import genai
-            from google.genai import types
+        # Build prompt with history
+        history_text = ""
+        if conversation_history and isinstance(conversation_history, list):
+            for turn in conversation_history[-4:]: # Keep last 4 turns for context
+                role_label = "User" if turn.get('role') == 'user' else "Kisan Saarthi"
+                history_text += f"{role_label}: {turn.get('content', '')}\n"
 
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=f"User query: {query}",
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    response_mime_type="application/json",
-                    temperature=0.3
+        full_prompt = f"{system_instruction}\n\nCONVERSATION HISTORY:\n{history_text}\nUser Voice Query: {query}"
+
+        # Call Gemini using google-genai SDK
+        for model_candidate in ['gemini-3.6-flash', 'gemini-flash-latest']:
+            try:
+                from google import genai
+                from google.genai import types
+
+                client = genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model=model_candidate,
+                    contents=full_prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.3
+                    )
                 )
-            )
-            data = json.loads(response.text)
-            return {
-                'success': True,
-                'response_text': data.get('response_text', ''),
-                'action_url': data.get('action_url'),
-                'action_label': data.get('action_label', 'Open Page'),
-                'is_ai': True
-            }
-        except Exception as sdk_err:
-            logger.info(f"SDK attempt note: {sdk_err}. Trying REST API endpoint...")
-
-        # Method 2: Fallback to direct Gemini REST API via standard library
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {"text": f"{system_instruction}\n\nUser query: {query}"}
-                        ]
-                    }
-                ],
-                "generationConfig": {
-                    "responseMimeType": "application/json",
-                    "temperature": 0.3
-                }
-            }
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode('utf-8'),
-                headers={'Content-Type': 'application/json'}
-            )
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                res_body = json.loads(resp.read().decode('utf-8'))
-                raw_text = res_body['candidates'][0]['content']['parts'][0]['text']
-                data = json.loads(raw_text)
+                
+                text_out = response.text.strip()
+                # Clean any markdown block formatting if present
+                if text_out.startswith("```"):
+                    text_out = text_out.strip("`").replace("json\n", "", 1).strip()
+                data = json.loads(text_out)
+                
                 return {
                     'success': True,
                     'response_text': data.get('response_text', ''),
                     'action_url': data.get('action_url'),
                     'action_label': data.get('action_label', 'Open Page'),
-                    'is_ai': True
+                    'is_ai': True,
+                    'model': model_candidate
                 }
-        except Exception as rest_err:
-            logger.warning(f"Gemini REST call failed: {rest_err}. Falling back to rule-based logic.")
-            return AIVoiceService._fallback_rule_based(query)
+            except Exception as e:
+                logger.warning(f"Model {model_candidate} attempt note: {e}")
+                continue
+
+        # Fallback to local rule-based if all API calls failed
+        return AIVoiceService._fallback_rule_based(query)
 
     @staticmethod
     def _fallback_rule_based(query: str) -> dict:
