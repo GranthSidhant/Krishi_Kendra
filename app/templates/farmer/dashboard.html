@@ -8,7 +8,13 @@
   <!-- Welcome Header Banner -->
   <div class="p-4 bg-success text-white rounded-4 shadow-sm mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
     <div class="d-flex align-items-center gap-3">
-      <img src="{% if user.profile_image and user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ user.name }}&background=1b5e20&color=fff{% endif %}" alt="Avatar" class="rounded-circle border border-white" width="65" height="65">
+      {% if user.avatar_emoji %}
+        <div class="rounded-circle border border-white bg-light d-flex align-items-center justify-content-center shadow-sm" style="width:65px; height:65px; font-size:2.2rem;">
+          {{ user.avatar_emoji }}
+        </div>
+      {% else %}
+        <img src="{{ user.avatar_src }}" alt="Avatar" class="rounded-circle border border-white shadow-sm" width="65" height="65" style="object-fit: cover;">
+      {% endif %}
       <div>
         <div class="d-flex align-items-center gap-2">
           <h3 class="fw-bold mb-0">Namaste, {{ user.name }}!</h3>

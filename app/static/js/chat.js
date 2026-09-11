@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let recordTimerInterval = null;
   let recordedBlob = null;
   let recordingDurationStr = "0:05";
+  let activeStream = null;
 
   if (startChatVoiceBtn) {
     startChatVoiceBtn.addEventListener('click', async () => {
@@ -108,22 +109,43 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioChunks = [];
-        mediaRecorder = new MediaRecorder(stream);
+        recordedBlob = null;
+
+        // Choose best supported MIME type
+        let options = undefined;
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm;codecs=opus' };
+          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/webm' };
+          } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
+          } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+            options = { mimeType: 'audio/ogg' };
+          }
+        }
+
+        mediaRecorder = options ? new MediaRecorder(activeStream, options) : new MediaRecorder(activeStream);
 
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
+          if (event.data && event.data.size > 0) {
             audioChunks.push(event.data);
           }
         };
 
         mediaRecorder.onstop = () => {
-          recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          stream.getTracks().forEach(track => track.stop());
+          const type = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+          recordedBlob = new Blob(audioChunks, { type });
+          if (activeStream) {
+            activeStream.getTracks().forEach(track => track.stop());
+            activeStream = null;
+          }
         };
 
-        mediaRecorder.start();
+        // Start collecting slices every 250ms
+        mediaRecorder.start(250);
         recordStartTime = Date.now();
         showRecordingUI(true);
 
@@ -131,13 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const elapsedSecs = Math.floor((Date.now() - recordStartTime) / 1000);
           const mins = String(Math.floor(elapsedSecs / 60)).padStart(2, '0');
           const secs = String(elapsedSecs % 60).padStart(2, '0');
-          recordingTimer.textContent = `${mins}:${secs}`;
+          if (recordingTimer) recordingTimer.textContent = `${mins}:${secs}`;
           recordingDurationStr = `${mins}:${secs}`;
         }, 1000);
 
       } catch (err) {
         console.error('Microphone access denied:', err);
-        alert('Microphone access is required to record voice notes.');
+        alert('Microphone access is required to record voice notes. Please allow microphone access in your browser settings.');
       }
     });
   }
@@ -158,7 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cancelVoiceRecordBtn) {
     cancelVoiceRecordBtn.addEventListener('click', () => {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
+        try { mediaRecorder.stop(); } catch(e) {}
+      }
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+        activeStream = null;
       }
       showRecordingUI(false);
       audioChunks = [];
@@ -167,46 +193,59 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (sendVoiceRecordBtn) {
-    sendVoiceRecordBtn.addEventListener('click', () => {
+    sendVoiceRecordBtn.addEventListener('click', async () => {
       if (!mediaRecorder) return;
 
-      if (mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
+      sendVoiceRecordBtn.disabled = true;
+      sendVoiceRecordBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
 
-      setTimeout(() => {
-        if (!recordedBlob && audioChunks.length > 0) {
-          recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      try {
+        // Wait for MediaRecorder to stop if still recording
+        if (mediaRecorder.state !== 'inactive') {
+          await new Promise((resolve) => {
+            mediaRecorder.addEventListener('stop', resolve, { once: true });
+            mediaRecorder.stop();
+          });
         }
 
-        if (recordedBlob) {
-          const formData = new FormData();
-          formData.append('audio', recordedBlob, 'voice_note.webm');
-          formData.append('duration', recordingDurationStr);
+        const mime = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+        if (!recordedBlob && audioChunks.length > 0) {
+          recordedBlob = new Blob(audioChunks, { type: mime });
+        }
 
-          fetch(`/chat/thread/${threadId}/send-voice`, {
+        if (recordedBlob && recordedBlob.size > 0) {
+          const formData = new FormData();
+          const ext = mime.includes('mp4') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
+          formData.append('audio', recordedBlob, `voice_note.${ext}`);
+          formData.append('duration', recordingDurationStr || '0:05');
+
+          const res = await fetch(`/chat/thread/${threadId}/send-voice`, {
             method: 'POST',
             body: formData
-          })
-            .then(res => res.json())
-            .then(data => {
-              showRecordingUI(false);
-              if (data.success) {
-                appendMessageBubble(data.message, true);
-                lastMessageId = Math.max(lastMessageId, data.message.id);
-                scrollToBottom();
-              } else {
-                alert(data.error || 'Failed to upload voice note.');
-              }
-            })
-            .catch(err => {
-              showRecordingUI(false);
-              console.error('Voice send error:', err);
-            });
+          });
+          const data = await res.json();
+          showRecordingUI(false);
+          if (data.success) {
+            appendMessageBubble(data.message, true);
+            lastMessageId = Math.max(lastMessageId, data.message.id);
+            scrollToBottom();
+          } else {
+            alert(data.error || 'Failed to send voice note.');
+          }
         } else {
           showRecordingUI(false);
+          alert('Recording was empty. Please speak clearly into your microphone.');
         }
-      }, 300);
+      } catch (err) {
+        showRecordingUI(false);
+        console.error('Voice send error:', err);
+        alert('Failed to send voice note. Please try again.');
+      } finally {
+        sendVoiceRecordBtn.disabled = false;
+        sendVoiceRecordBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send Voice';
+        audioChunks = [];
+        recordedBlob = null;
+      }
     });
   }
 

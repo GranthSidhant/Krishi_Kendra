@@ -1,6 +1,9 @@
+import os
+import time
+import base64
 import json
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, g, jsonify, current_app
 from app.routes.auth import login_required
 from app.models import ChatThread, Message, User, Offer, Order, Delivery
 from app.extensions import db
@@ -163,21 +166,35 @@ def send_voice_note(thread_id):
         return jsonify({'success': False, 'error': 'No audio file provided'}), 400
 
     audio_file = request.files['audio']
-    if audio_file.filename == '':
+    if not audio_file or audio_file.filename == '':
         return jsonify({'success': False, 'error': 'Empty audio recording'}), 400
 
-    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'voice_notes')
-    os.makedirs(upload_dir, exist_ok=True)
+    audio_bytes = audio_file.read()
+    if not audio_bytes or len(audio_bytes) < 10:
+        return jsonify({'success': False, 'error': 'Audio recording is empty'}), 400
 
-    filename = f"voice_{thread.id}_{user.id}_{int(time.time())}.webm"
-    file_path = os.path.join(upload_dir, filename)
-    audio_file.save(file_path)
-
-    relative_url = f"/static/uploads/voice_notes/{filename}"
     duration = request.form.get('duration', '0:05')
+    
+    # Store as base64 data URL to guarantee instant playback on any host/serverless platform
+    b64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+    mime_type = audio_file.content_type or 'audio/webm'
+    audio_url = f"data:{mime_type};base64,{b64_audio}"
+
+    # Also try to save locally if writable
+    try:
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'voice_notes')
+        os.makedirs(upload_dir, exist_ok=True)
+        ext = 'mp4' if 'mp4' in mime_type else 'ogg' if 'ogg' in mime_type else 'webm'
+        filename = f"voice_{thread.id}_{user.id}_{int(time.time())}.{ext}"
+        file_path = os.path.join(upload_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(audio_bytes)
+        audio_url = f"/static/uploads/voice_notes/{filename}"
+    except Exception:
+        pass
 
     metadata = {
-        'audio_url': relative_url,
+        'audio_url': audio_url,
         'duration': duration,
         'sender_name': user.name
     }

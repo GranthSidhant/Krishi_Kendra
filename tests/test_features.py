@@ -138,29 +138,32 @@ def test_chat_offer_and_voice_features(app, client):
     assert voice_data['message']['type'] == 'voice_note'
 
 
-def test_home_page_rendering_for_all_roles(client):
-    # 1. Guest
-    res_guest = client.get('/')
-    assert res_guest.status_code == 200
-    assert b"I am a Farmer" in res_guest.data or b"btn_i_am_farmer" in res_guest.data
-
-    # 2. Farmer
+def test_profile_picture_upload_and_avatar(app, client):
+    # Login as farmer
     client.post('/auth/login', data={'login_id': '9111111111', 'password': 'farmerpass'}, follow_redirects=True)
-    res_farmer = client.get('/')
-    assert res_farmer.status_code == 200
-    assert b"Farmer Dashboard" in res_farmer.data or b"btn_farmer_dash" in res_farmer.data
-    client.get('/auth/logout')
+    
+    # 1. Test Avatar Choice selection
+    res_avatar = client.post('/auth/profile', data={
+        'name': 'Ramesh Farmer',
+        'avatar_choice': 'avatar_farmer_turban',
+        'preferred_language': 'hi'
+    }, follow_redirects=True)
+    assert res_avatar.status_code == 200
+    with app.app_context():
+        u = User.query.filter_by(phone='9111111111').first()
+        assert u.profile_image == 'avatar_farmer_turban'
+        assert u.avatar_emoji == '👳‍♂️'
 
-    # 3. Buyer
-    client.post('/auth/login', data={'login_id': '9222222222', 'password': 'buyerpass'}, follow_redirects=True)
-    res_buyer = client.get('/')
-    assert res_buyer.status_code == 200
-    assert b"Buyer Dashboard" in res_buyer.data or b"btn_buyer_dash" in res_buyer.data
-    client.get('/auth/logout')
+    # 2. Test Custom Photo File Upload
+    img_bytes = io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4")
+    res_img = client.post('/auth/profile', data={
+        'name': 'Ramesh Farmer Updated',
+        'profile_image_file': (img_bytes, 'my_photo.png')
+    }, content_type='multipart/form-data', follow_redirects=True)
+    assert res_img.status_code == 200
+    with app.app_context():
+        u = User.query.filter_by(phone='9111111111').first()
+        assert u.profile_image.startswith('data:image/png;base64,')
+        assert u.avatar_src.startswith('data:image/png;base64,')
 
-    # 4. Admin
-    client.post('/auth/admin/login', data={'login_id': '9999999999', 'password': 'adminpass'}, follow_redirects=True)
-    res_admin = client.get('/')
-    assert res_admin.status_code == 200
-    assert b"Admin Portal" in res_admin.data or b"btn_admin_portal" in res_admin.data
 

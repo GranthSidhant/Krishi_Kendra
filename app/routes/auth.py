@@ -1,5 +1,7 @@
 import os
 import random
+import time
+import base64
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, g, current_app
 from werkzeug.utils import secure_filename
@@ -270,12 +272,26 @@ def profile():
         if 'profile_image_file' in request.files:
             file = request.files['profile_image_file']
             if file and file.filename != '':
-                upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
-                os.makedirs(upload_dir, exist_ok=True)
-                filename = secure_filename(f"{user.custom_id}_{int(os.times().system)}_{file.filename}")
-                upload_path = os.path.join(upload_dir, filename)
-                file.save(upload_path)
-                user.profile_image = filename
+                try:
+                    file_bytes = file.read()
+                    if file_bytes:
+                        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpeg'
+                        mime = f"image/{ext}" if ext in ['png', 'webp', 'gif', 'svg'] else 'image/jpeg'
+                        b64_str = base64.b64encode(file_bytes).decode('utf-8')
+                        user.profile_image = f"data:{mime};base64,{b64_str}"
+                        
+                        # Also attempt saving to uploads/avatars/ directory if disk is writable
+                        try:
+                            upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
+                            os.makedirs(upload_dir, exist_ok=True)
+                            filename = secure_filename(f"{user.custom_id}_{int(time.time())}_{file.filename}")
+                            upload_path = os.path.join(upload_dir, filename)
+                            with open(upload_path, 'wb') as f:
+                                f.write(file_bytes)
+                        except Exception:
+                            pass
+                except Exception as e:
+                    current_app.logger.error(f"Error handling profile image: {e}")
 
         # Farmer profile updates
         if user.role == 'farmer' and farmer_prof:

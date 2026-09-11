@@ -149,7 +149,11 @@
             <!-- User Dropdown -->
             <div class="dropdown">
               <button class="btn btn-sm btn-light border dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
-                <img src="{% if current_user.profile_image and current_user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + current_user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ current_user.name }}&background=2e7d32&color=fff{% endif %}" alt="Avatar" class="rounded-circle" width="26" height="26">
+                {% if current_user.avatar_emoji %}
+                  <span style="font-size:1.2rem; line-height:1;">{{ current_user.avatar_emoji }}</span>
+                {% else %}
+                  <img src="{{ current_user.avatar_src }}" alt="Avatar" class="rounded-circle" width="26" height="26" style="object-fit:cover;">
+                {% endif %}
                 <span>{{ current_user.name.split()[0] }}</span>
               </button>
               <ul class="dropdown-menu dropdown-menu-end shadow">

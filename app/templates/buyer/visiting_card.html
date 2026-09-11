@@ -38,7 +38,13 @@
 
       <!-- Buyer Info -->
       <div class="d-flex align-items-center gap-3 mb-3">
-        <img src="{% if user.profile_image and user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ user.name }}&background=e65100&color=fff{% endif %}" alt="Avatar" class="visiting-card-avatar">
+        {% if user.avatar_emoji %}
+          <div class="visiting-card-avatar d-flex align-items-center justify-content-center bg-light fs-1 border">
+            {{ user.avatar_emoji }}
+          </div>
+        {% else %}
+          <img src="{{ user.avatar_src }}" alt="Avatar" class="visiting-card-avatar" style="object-fit: cover;">
+        {% endif %}
         <div>
           <h4 class="fw-extrabold mb-0 text-dark">{{ user.name }}</h4>
           <div class="text-warning fw-bold small">ID: {{ user.custom_id }}</div>

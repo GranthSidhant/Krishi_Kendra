@@ -12,7 +12,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=True)
     role = db.Column(db.String(20), nullable=False, default='farmer') # farmer, buyer, admin
     name = db.Column(db.String(120), nullable=False)
-    profile_image = db.Column(db.String(255), default='default_avatar.png')
+    profile_image = db.Column(db.Text, default='default_avatar.png')
     preferred_language = db.Column(db.String(10), default='en') # en, hi, mr, ta, te
     
     # Verification details (optional Govt ID - Aadhaar/Voter ID)
@@ -33,6 +33,32 @@ class User(db.Model):
     inventories = db.relationship('Inventory', backref='farmer', lazy='dynamic', cascade='all, delete-orphan')
     requirements = db.relationship('Requirement', backref='buyer', lazy='dynamic', cascade='all, delete-orphan')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+
+    @property
+    def avatar_src(self):
+        if not self.profile_image or self.profile_image == 'default_avatar.png':
+            bg = '2e7d32' if self.role == 'farmer' else 'e65100'
+            return f"https://ui-avatars.com/api/?name={self.name}&background={bg}&color=fff"
+        if self.profile_image.startswith(('http://', 'https://', 'data:', '/')):
+            return self.profile_image
+        if self.profile_image.startswith('avatar_'):
+            bg = '2e7d32' if self.role == 'farmer' else 'e65100'
+            return f"https://ui-avatars.com/api/?name={self.name}&background={bg}&color=fff"
+        if self.profile_image.startswith('avatars/'):
+            return f"/static/uploads/{self.profile_image}"
+        return f"/static/uploads/avatars/{self.profile_image}"
+
+    @property
+    def avatar_emoji(self):
+        emojis = {
+            'avatar_farmer_m': '👨‍🌾',
+            'avatar_farmer_f': '👩‍🌾',
+            'avatar_farmer_turban': '👳‍♂️',
+            'avatar_buyer_m': '👨‍💼',
+            'avatar_buyer_f': '👩‍💼',
+            'avatar_krishi_mitra': '🌱'
+        }
+        return emojis.get(self.profile_image)
 
     @property
     def is_authenticated(self):

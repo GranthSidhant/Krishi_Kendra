@@ -26,7 +26,13 @@
       </div>
 
       <div class="d-flex align-items-center gap-3 mb-3">
-        <img src="{% if card_user.profile_image and card_user.profile_image != 'default_avatar.png' %}{{ url_for('static', filename='uploads/' + card_user.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ card_user.name }}&background=2e7d32&color=fff{% endif %}" alt="Avatar" class="visiting-card-avatar">
+        {% if card_user.avatar_emoji %}
+          <div class="visiting-card-avatar d-flex align-items-center justify-content-center bg-light fs-1 border">
+            {{ card_user.avatar_emoji }}
+          </div>
+        {% else %}
+          <img src="{{ card_user.avatar_src }}" alt="Avatar" class="visiting-card-avatar" style="object-fit: cover;">
+        {% endif %}
         <div>
           <h4 class="fw-bold mb-0 text-dark">{{ card_user.name }}</h4>
           <div class="fw-bold small {% if card_user.role == 'farmer' %}text-success{% else %}text-warning{% endif %}">ID: {{ card_user.custom_id }}</div>
