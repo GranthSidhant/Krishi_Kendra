@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Buyer Requirements & Advance Pre-Orders - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fas fa-bullhorn text-warning me-2"></i> Buyer Requirements & Advance Pre-Orders
+      </h3>
+      <p class="text-muted small mb-0">
+        Browse open procurement demands from verified traders, food processors, and buying clubs. Submit direct harvest offers or lock in advance pre-order contracts.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('farmer.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('farmer.profit_calculator') }}" class="btn btn-outline-success btn-sm fw-semibold">
+        <i class="fas fa-calculator me-1"></i> Profit Calculator
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Pills and Search -->
+  <div class="row g-3 mb-4 align-items-center">
+    <div class="col-md-7 d-flex flex-wrap gap-2">
+      <a href="{{ url_for('farmer.browse_requirements', filter='all', commodity=commodity) }}" class="btn btn-sm {% if filter_type == 'all' %}btn-dark fw-bold{% else %}btn-outline-secondary{% endif %}">
+        <i class="fas fa-list me-1"></i> All Demands ({{ requirements|length }})
+      </a>
+      <a href="{{ url_for('farmer.browse_requirements', filter='pre_order', commodity=commodity) }}" class="btn btn-sm {% if filter_type == 'pre_order' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} shadow-sm">
+        <i class="fas fa-seedling me-1"></i> 🌱 Advance Pre-Orders ({{ pre_order_count }})
+      </a>
+      <a href="{{ url_for('farmer.browse_requirements', filter='immediate', commodity=commodity) }}" class="btn btn-sm {% if filter_type == 'immediate' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %}">
+        <i class="fas fa-bolt me-1"></i> Immediate Stock Requirements
+      </a>
+    </div>
+    <div class="col-md-5">
+      <form method="GET" action="{{ url_for('farmer.browse_requirements') }}" class="d-flex gap-2">
+        <input type="hidden" name="filter" value="{{ filter_type }}">
+        <input type="text" name="commodity" class="form-control form-control-sm" placeholder="Search crop (e.g. Wheat, Red Onion)..." value="{{ commodity }}">
+        <button type="submit" class="btn btn-sm btn-success px-3"><i class="fas fa-search"></i></button>
+        {% if commodity %}
+          <a href="{{ url_for('farmer.browse_requirements', filter=filter_type) }}" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></a>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- Requirements Grid -->
+  {% if requirements %}
+    <div class="row g-3">
+      {% for req in requirements %}
+        <div class="col-md-6 col-lg-4">
+          <div class="k-card p-3 shadow-sm h-100 d-flex flex-column justify-content-between position-relative {% if req.is_pre_order %}border-primary border-2{% endif %}">
+            
+            <div>
+              <!-- Header Badges -->
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                {% if req.is_pre_order %}
+                  <span class="badge bg-primary px-2 py-1 rounded-pill">
+                    <i class="fas fa-seedling me-1"></i> Advance Pre-Order
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning text-dark px-2 py-1 rounded-pill">
+                    <i class="fas fa-clock me-1"></i> Ready Stock
+                  </span>
+                {% endif %}
+                
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-light p-1 text-muted" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                    <li>
+                      <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="openReportModal('requirement', {{ req.id }}, '{{ req.product_name }} - Required {{ req.required_quantity }} {{ req.unit }}')">
+                        <i class="fas fa-flag me-2"></i> Report this Demand
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Crop Title -->
+              <h5 class="fw-bold text-dark mb-1">{{ req.product_name }}</h5>
+              <div class="text-muted small mb-3">
+                <i class="fas fa-map-marker-alt text-danger me-1"></i> Delivery: <strong>{{ req.delivery_district }}, {{ req.delivery_state }}</strong>
+              </div>
+
+              <!-- Key Specs -->
+              <div class="p-2 bg-light rounded-3 mb-3 small">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Required Quantity:</span>
+                  <strong class="text-dark">{{ req.required_quantity }} {{ req.unit }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Target Price:</span>
+                  <strong class="text-success">₹{{ req.target_price_per_unit or 'Open Negotiable' }}{% if req.target_price_per_unit %}/{{ req.unit }}{% endif %}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Quality Grade:</span>
+                  <span>{{ req.required_quality }}</span>
+                </div>
+                {% if req.is_pre_order %}
+                  <div class="border-top pt-1 mt-1">
+                    <span class="text-primary fw-semibold"><i class="fas fa-calendar-alt me-1"></i> Harvest Season:</span>
+                    <div class="fw-bold text-dark">{{ req.target_harvest_timeline or 'Next Sowing Season' }}</div>
+                    <small class="text-muted d-block mt-1"><i class="fas fa-hand-holding-usd text-success me-1"></i> {{ req.advance_payment_terms }}</small>
+                  </div>
+                {% elif req.required_by_date %}
+                  <div class="d-flex justify-content-between text-muted border-top pt-1 mt-1">
+                    <span>Required By:</span>
+                    <strong>{{ req.required_by_date }}</strong>
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if req.additional_notes %}
+                <p class="text-muted small mb-3 fst-italic" style="font-size: 0.8rem;">
+                  "{{ req.additional_notes }}"
+                </p>
+              {% endif %}
+            </div>
+
+            <!-- Footer Action -->
+            <div class="pt-2 border-top d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 1.2rem;">{{ req.buyer.avatar_emoji or '👨‍💼' }}</span>
+                <div style="line-height: 1.2;">
+                  <span class="fw-semibold small d-block">{{ req.buyer.name }}</span>
+                  <small class="text-muted" style="font-size: 0.72rem;">{{ req.buyer.custom_id }}</small>
+                </div>
+              </div>
+              <a href="{{ url_for('chat.start_chat', target_user_id=req.buyer_id) }}" class="btn btn-sm btn-success fw-bold px-3">
+                <i class="fas fa-comment-dots me-1"></i> Respond / Deal
+              </a>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="k-card p-5 text-center text-muted">
+      <i class="fas fa-inbox fa-3x text-warning mb-3"></i>
+      <h5>No Requirements Found</h5>
+      <p class="small">No active buyer procurement demands match your filter criteria right now.</p>
+      <a href="{{ url_for('farmer.browse_requirements') }}" class="btn btn-sm btn-outline-success">Clear Filters</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

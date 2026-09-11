@@ -98,6 +98,10 @@ def create_transport_booking():
         flash('Pickup and drop-off addresses are required for transport booking.', 'danger')
         return redirect(url_for('requests.index', tab='transport'))
 
+    pickup_lat = request.form.get('pickup_latitude', type=float)
+    pickup_lon = request.form.get('pickup_longitude', type=float)
+    is_shared_pooling = 'is_shared_pooling' in request.form
+
     # Calculate estimated cost based on quantity and vehicle type
     base_rate = 800.0
     if '10-Ton' in vehicle_type or 'Medium' in vehicle_type:
@@ -108,6 +112,11 @@ def create_transport_booking():
         base_rate = 1400.0
 
     est_cost = base_rate + (quantity_quintals * 35.0)
+    pool_code = None
+    if is_shared_pooling:
+        est_cost *= 0.65 # 35% savings from load consolidation
+        pool_code = f"POOL-2026-{random.randint(100, 999)}"
+
     booking_code = f"TRP-2026-{random.randint(1000, 9999)}"
 
     booking = TransportBooking(
@@ -116,6 +125,8 @@ def create_transport_booking():
         order_id=int(order_id) if order_id and order_id.isdigit() else None,
         pickup_address=pickup_address,
         drop_address=drop_address,
+        pickup_latitude=pickup_lat,
+        pickup_longitude=pickup_lon,
         produce_type=produce_type,
         quantity_quintals=quantity_quintals,
         vehicle_type=vehicle_type,
@@ -125,8 +136,10 @@ def create_transport_booking():
         driver_phone='+91 98231 44556',
         vehicle_number='MH-15-EG-4402',
         estimated_cost=round(est_cost, 2),
+        is_shared_pooling=is_shared_pooling,
+        pool_code=pool_code,
         status='driver_assigned',
-        tracking_notes='Vehicle allocated and driver verified. Pre-pickup call scheduled.'
+        tracking_notes='Shared pooling vehicle assigned. 35% freight cost saved.' if is_shared_pooling else 'Dedicated vehicle allocated and driver verified. Pre-pickup call scheduled.'
     )
     db.session.add(booking)
 

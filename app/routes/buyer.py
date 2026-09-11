@@ -134,6 +134,10 @@ def post_requirement():
         required_by_date = request.form.get('required_by_date', '')
         additional_notes = request.form.get('additional_notes', '')
 
+        is_pre_order = 'is_pre_order' in request.form
+        target_harvest_timeline = request.form.get('target_harvest_timeline', '').strip()
+        advance_payment_terms = request.form.get('advance_payment_terms', '20% Advance on Sowing, 80% on Mandi Delivery').strip()
+
         req = Requirement(
             buyer_id=user.id,
             product_name=product_name,
@@ -146,6 +150,9 @@ def post_requirement():
             delivery_state=delivery_state,
             required_by_date=required_by_date,
             additional_notes=additional_notes,
+            is_pre_order=is_pre_order,
+            target_harvest_timeline=target_harvest_timeline,
+            advance_payment_terms=advance_payment_terms,
             status='open'
         )
         db.session.add(req)

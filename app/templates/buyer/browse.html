@@ -61,7 +61,21 @@
                 <h5 class="fw-bold text-success mb-0">{{ item.product_name }}</h5>
                 <span class="badge bg-light text-muted border mt-1">{{ item.quality_grade }}</span>
               </div>
-              <span class="badge bg-success-subtle text-success">Available</span>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-success-subtle text-success">Available</span>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-light p-1 text-muted" type="button" data-bs-toggle="dropdown" title="Options">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                    <li>
+                      <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="openReportModal('inventory', {{ item.id }}, '{{ item.product_name }} ({{ item.available_quantity }} {{ item.unit }} by {{ item.farmer.name }})')">
+                        <i class="fas fa-flag me-2"></i> Report Listing
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
             <!-- Farmer Details (Privacy compliant) -->

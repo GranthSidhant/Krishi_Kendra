@@ -216,6 +216,11 @@ class Requirement(db.Model):
     required_by_date = db.Column(db.String(30), default='')
     additional_notes = db.Column(db.Text, default='')
     
+    # Pre-Order / Advance Contract Farming Request
+    is_pre_order = db.Column(db.Boolean, default=False)
+    target_harvest_timeline = db.Column(db.String(100), default='') # e.g. "Nov 2026 Harvest Season"
+    advance_payment_terms = db.Column(db.String(150), default='20% Advance on Sowing, 80% on Delivery')
+    
     status = db.Column(db.String(30), default='open') # open, responded, matched, completed, closed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     offers = db.relationship('Offer', backref='requirement', lazy='dynamic', cascade='all, delete-orphan')
@@ -542,6 +547,18 @@ class TransportBooking(db.Model):
     
     status = db.Column(db.String(30), default='requested') # requested, driver_assigned, en_route, completed, cancelled
     tracking_notes = db.Column(db.Text, default='Driver will contact before pickup.')
+    
+    # Map & GPS Coordinates
+    pickup_latitude = db.Column(db.Float, nullable=True)
+    pickup_longitude = db.Column(db.Float, nullable=True)
+    
+    # Shared Transport / Vehicle Pooling
+    is_shared_pooling = db.Column(db.Boolean, default=False)
+    pool_code = db.Column(db.String(32), nullable=True) # Groups multiple bookings sharing same truck
+    pool_capacity_quintals = db.Column(db.Float, default=50.0)
+    current_pooled_quintals = db.Column(db.Float, default=0.0)
+    savings_percentage = db.Column(db.Float, default=35.0)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', foreign_keys=[user_id], backref='transport_bookings')
@@ -569,5 +586,33 @@ class AdminTicket(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = db.relationship('User', foreign_keys=[user_id], backref='admin_tickets')
+    resolved_by = db.relationship('User', foreign_keys=[resolved_by_admin_id])
+
+
+class Report(db.Model):
+    __tablename__ = 'reports'
+
+    id = db.Column(db.Integer, primary_key=True)
+    report_code = db.Column(db.String(32), unique=True, nullable=False, index=True) # e.g. RPT-2026-001
+    reporter_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    
+    target_type = db.Column(db.String(30), nullable=False) # 'inventory', 'requirement', 'user'
+    target_id = db.Column(db.Integer, nullable=False)
+    target_title = db.Column(db.String(150), default='')
+    target_owner_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    reason = db.Column(db.String(100), nullable=False) # 'Spam / Fake Listing', 'Unrealistic Price', 'Expired / Sold Out', 'Misleading Details', 'Other'
+    details = db.Column(db.Text, default='')
+    
+    status = db.Column(db.String(30), default='pending') # 'pending', 'resolved', 'dismissed'
+    action_taken = db.Column(db.String(50), default='') # 'listing_removed', 'warning_sent', 'dismissed', 'no_action'
+    admin_notes = db.Column(db.Text, default='')
+    resolved_by_admin_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    reporter = db.relationship('User', foreign_keys=[reporter_id], backref='submitted_reports')
+    target_owner = db.relationship('User', foreign_keys=[target_owner_id])
     resolved_by = db.relationship('User', foreign_keys=[resolved_by_admin_id])
 

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Flagged Listings Moderation Hub - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fas fa-flag text-danger me-2"></i> Flagged Listings & Moderation Hub
+      </h3>
+      <p class="text-muted small mb-0">Review community reports regarding inaccurate prices, expired farm stock, spam, or misleading requirements.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Status Filter Pills -->
+  <div class="d-flex gap-2 mb-4">
+    <a href="{{ url_for('admin.moderation_list', status='pending') }}" class="btn btn-sm {% if status_filter == 'pending' %}btn-danger fw-bold{% else %}btn-outline-secondary{% endif %}">
+      <i class="fas fa-clock me-1"></i> Pending Review ({{ pending_count }})
+    </a>
+    <a href="{{ url_for('admin.moderation_list', status='resolved') }}" class="btn btn-sm {% if status_filter == 'resolved' %}btn-success fw-bold{% else %}btn-outline-secondary{% endif %}">
+      <i class="fas fa-check-circle me-1"></i> Resolved
+    </a>
+    <a href="{{ url_for('admin.moderation_list', status='dismissed') }}" class="btn btn-sm {% if status_filter == 'dismissed' %}btn-secondary fw-bold{% else %}btn-outline-secondary{% endif %}">
+      <i class="fas fa-times-circle me-1"></i> Dismissed
+    </a>
+    <a href="{{ url_for('admin.moderation_list', status='all') }}" class="btn btn-sm {% if status_filter == 'all' %}btn-dark fw-bold{% else %}btn-outline-secondary{% endif %}">
+      <i class="fas fa-list me-1"></i> All Reports
+    </a>
+  </div>
+
+  <div class="k-card p-4">
+    {% if reports %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Report ID</th>
+              <th>Target Type & Title</th>
+              <th>Reported By</th>
+              <th>Reason</th>
+              <th>Details</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+              <tr>
+                <td>
+                  <span class="badge bg-light text-dark border font-monospace">{{ r.report_code }}</span>
+                </td>
+                <td>
+                  <span class="badge {% if r.target_type == 'inventory' %}bg-success{% elif r.target_type == 'requirement' %}bg-warning text-dark{% else %}bg-primary{% endif %} mb-1">
+                    {{ r.target_type|capitalize }}
+                  </span>
+                  <div class="fw-bold text-dark">{{ r.target_title or ('Item #' ~ r.target_id) }}</div>
+                  {% if r.target_owner %}
+                    <small class="text-muted">Owner: {{ r.target_owner.name }} ({{ r.target_owner.custom_id }})</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ r.reporter.name if r.reporter else 'Anonymous' }}</strong>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ r.reporter.custom_id if r.reporter else '' }}</div>
+                </td>
+                <td>
+                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">{{ r.reason }}</span>
+                </td>
+                <td>
+                  <div class="text-muted" style="max-width: 250px;">
+                    {{ r.details or 'No additional remarks provided.' }}
+                  </div>
+                </td>
+                <td>
+                  {% if r.status == 'pending' %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half me-1"></i> Pending</span>
+                  {% elif r.status == 'resolved' %}
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i> {{ r.action_taken|replace('_', ' ')|title }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary"><i class="fas fa-ban me-1"></i> Dismissed</span>
+                  {% endif %}
+                </td>
+                <td class="text-muted text-nowrap">
+                  {{ r.created_at.strftime('%d %b, %I:%M %p') }}
+                </td>
+                <td class="text-end">
+                  {% if r.status == 'pending' %}
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-bold" data-bs-toggle="modal" data-bs-target="#actionModal{{ r.id }}">
+                      <i class="fas fa-gavel me-1"></i> Moderate
+                    </button>
+                  {% else %}
+                    <small class="text-muted fst-italic">Resolved</small>
+                  {% endif %}
+                </td>
+              </tr>
+
+              <!-- MODAL FOR MODERATION ACTION -->
+              {% if r.status == 'pending' %}
+                <div class="modal fade" id="actionModal{{ r.id }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+                      <div class="modal-header bg-danger text-white">
+                        <h6 class="modal-title fw-bold"><i class="fas fa-shield-alt me-2"></i> Moderate Listing #{{ r.report_code }}</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form method="POST" action="{{ url_for('admin.resolve_report', report_id=r.id) }}">
+                        <div class="modal-body p-4">
+                          <div class="p-3 bg-light rounded-3 mb-3 border">
+                            <div class="fw-bold text-dark">{{ r.target_title }}</div>
+                            <div class="small text-danger mt-1"><strong>Reason:</strong> {{ r.reason }}</div>
+                            {% if r.details %}
+                              <div class="small text-muted mt-1"><strong>Details:</strong> {{ r.details }}</div>
+                            {% endif %}
+                          </div>
+
+                          <label class="form-label fw-bold small">Choose Moderation Action:</label>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="action" id="actionRemove{{ r.id }}" value="remove_listing" checked>
+                            <label class="form-check-label text-danger fw-bold" for="actionRemove{{ r.id }}">
+                              <i class="fas fa-trash-alt me-1"></i> Take Down / Remove Listing from Marketplace
+                            </label>
+                            <small class="text-muted d-block ms-4">Immediately deletes the reported produce or requirement card.</small>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="action" id="actionWarn{{ r.id }}" value="warn_owner">
+                            <label class="form-check-label text-warning text-dark fw-bold" for="actionWarn{{ r.id }}">
+                              <i class="fas fa-exclamation-triangle me-1"></i> Send Official Warning Notification to Owner
+                            </label>
+                            <small class="text-muted d-block ms-4">Keeps listing active but issues an official compliance reminder.</small>
+                          </div>
+                          <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="action" id="actionDismiss{{ r.id }}" value="dismiss">
+                            <label class="form-check-label text-secondary fw-semibold" for="actionDismiss{{ r.id }}">
+                              <i class="fas fa-times-circle me-1"></i> Dismiss Report (No Infringement Found)
+                            </label>
+                          </div>
+
+                          <div class="mb-2">
+                            <label class="form-label fw-bold small">Admin Remarks / Notes (Optional):</label>
+                            <textarea name="admin_notes" class="form-control" rows="2" placeholder="e.g. Verified price discrepancy with APMC mandi benchmark."></textarea>
+                          </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-danger fw-bold px-4">Execute Action</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-check-double fa-3x text-success mb-3"></i>
+        <h5>All Clean! No Reported Listings</h5>
+        <p class="small">There are currently no flagged produce or requirement items under this filter.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

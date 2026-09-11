@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Profit, Cost & Yield Calculator - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fas fa-calculator text-success me-2"></i> Farmer Profit, Cultivation Cost & ROI Calculator
+      </h3>
+      <p class="text-muted small mb-0">
+        Estimate your input costs, projected gross harvest revenues, net farm profits, and breakeven prices before sowing.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('farmer.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <button type="button" class="btn btn-outline-success btn-sm" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print / Save Report
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    
+    <!-- LEFT COLUMN: Input Form & Crop Presets -->
+    <div class="col-lg-5">
+      <div class="k-card p-4 shadow-sm h-100">
+        <h5 class="fw-bold text-success mb-3">
+          <i class="fas fa-sliders-h me-2"></i> 1. Select Crop & Land Parameters
+        </h5>
+
+        <!-- Quick Crop Presets -->
+        <label class="form-label fw-semibold small text-muted">Quick Load Benchmark Cost Presets:</label>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button type="button" class="btn btn-sm btn-outline-success crop-preset-btn active" onclick="loadCropPreset('wheat')">🌾 Wheat</button>
+          <button type="button" class="btn btn-sm btn-outline-success crop-preset-btn" onclick="loadCropPreset('onion')">🧅 Red Onion</button>
+          <button type="button" class="btn btn-sm btn-outline-success crop-preset-btn" onclick="loadCropPreset('tomato')">🍅 Tomato</button>
+          <button type="button" class="btn btn-sm btn-outline-success crop-preset-btn" onclick="loadCropPreset('soybean')">🌱 Soybean</button>
+          <button type="button" class="btn btn-sm btn-outline-success crop-preset-btn" onclick="loadCropPreset('cotton')">☁️ Cotton</button>
+          <button type="button" class="btn btn-sm btn-outline-success crop-preset-btn" onclick="loadCropPreset('potato')">🥔 Potato</button>
+        </div>
+
+        <form id="profitCalcForm" oninput="calculateProfit()">
+          
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small">Crop Name</label>
+              <input type="text" id="calcCropName" class="form-control form-control-sm" value="Wheat" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small">Cultivation Land (Acres)</label>
+              <input type="number" step="0.1" id="calcAcres" class="form-control form-control-sm" value="{{ profile.farm_size_acres if profile and profile.farm_size_acres else 2.5 }}" required>
+            </div>
+          </div>
+
+          <h6 class="fw-bold text-dark border-bottom pb-2 mt-4 mb-3 small text-uppercase tracking-wider">
+            <i class="fas fa-coins text-warning me-1"></i> Per-Acre Input Costs (₹)
+          </h6>
+
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small text-muted">Seeds & Saplings (₹/acre)</label>
+              <input type="number" id="costSeeds" class="form-control form-control-sm" value="2500">
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Fertilizers & Nutrients (₹/acre)</label>
+              <input type="number" id="costFertilizers" class="form-control form-control-sm" value="4000">
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small text-muted">Pesticides & Crop Protection (₹/acre)</label>
+              <input type="number" id="costPesticides" class="form-control form-control-sm" value="1800">
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Irrigation & Power (₹/acre)</label>
+              <input type="number" id="costIrrigation" class="form-control form-control-sm" value="2000">
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small text-muted">Field Labor & Weeding (₹/acre)</label>
+              <input type="number" id="costLabor" class="form-control form-control-sm" value="5000">
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Tractor & Machine Rental (₹/acre)</label>
+              <input type="number" id="costMachinery" class="form-control form-control-sm" value="3000">
+            </div>
+          </div>
+
+          <h6 class="fw-bold text-dark border-bottom pb-2 mt-4 mb-3 small text-uppercase tracking-wider">
+            <i class="fas fa-chart-line text-success me-1"></i> Expected Yield & Market Rates
+          </h6>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small text-muted">Expected Yield (Quintals/acre)</label>
+              <input type="number" step="0.5" id="calcYield" class="form-control form-control-sm" value="20.0">
+              <small class="text-muted" style="font-size:0.7rem;">1 Quintal = 100 kg</small>
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Selling Price (₹/Quintal)</label>
+              <input type="number" step="10" id="calcPrice" class="form-control form-control-sm" value="2275">
+              <small class="text-success" style="font-size:0.7rem;">Official MSP / APMC Benchmark</small>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 pt-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="resetCalculator()">
+              <i class="fas fa-undo me-1"></i> Reset
+            </button>
+            <button type="button" class="btn btn-sm btn-success w-100 fw-bold" onclick="calculateProfit()">
+              <i class="fas fa-sync-alt me-1"></i> Recalculate
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Financial Analytics & ROI Dashboard -->
+    <div class="col-lg-7">
+      <div class="k-card p-4 shadow-sm mb-4">
+        <h5 class="fw-bold text-dark mb-3">
+          <i class="fas fa-chart-pie text-primary me-2"></i> Financial Harvest Projection
+        </h5>
+
+        <!-- Top 3 Big Metric Cards -->
+        <div class="row g-3 mb-4 text-center">
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <span class="text-muted small d-block">Total Input Cost</span>
+              <h4 class="fw-bold text-danger mb-0 mt-1" id="resTotalCost">₹45,750</h4>
+              <small class="text-muted" id="resCostPerAcre">₹18,300 / acre</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <span class="text-muted small d-block">Gross Harvest Revenue</span>
+              <h4 class="fw-bold text-primary mb-0 mt-1" id="resGrossRevenue">₹1,13,750</h4>
+              <small class="text-muted" id="resTotalYield">50 Quintals Total</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-success bg-opacity-10 rounded-3 border border-success">
+              <span class="text-success fw-semibold small d-block">Net Farmer Profit</span>
+              <h3 class="fw-extrabold text-success mb-0 mt-1" id="resNetProfit">₹68,000</h3>
+              <small class="text-success fw-bold" id="resProfitPerAcre">₹27,200 / acre</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Financial Metrics -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6 col-md-3 text-center">
+            <div class="p-2 border rounded-3 bg-white">
+              <small class="text-muted d-block">ROI (Return)</small>
+              <strong class="fs-5 text-success" id="resROI">+148.6%</strong>
+            </div>
+          </div>
+          <div class="col-sm-6 col-md-3 text-center">
+            <div class="p-2 border rounded-3 bg-white">
+              <small class="text-muted d-block">Breakeven Rate</small>
+              <strong class="fs-6 text-dark" id="resBreakevenRate">₹915 / Qtl</strong>
+            </div>
+          </div>
+          <div class="col-sm-6 col-md-3 text-center">
+            <div class="p-2 border rounded-3 bg-white">
+              <small class="text-muted d-block">Breakeven Yield</small>
+              <strong class="fs-6 text-dark" id="resBreakevenYield">8.0 Qtl/acre</strong>
+            </div>
+          </div>
+          <div class="col-sm-6 col-md-3 text-center">
+            <div class="p-2 border rounded-3 bg-white">
+              <small class="text-muted d-block">Profit Margin</small>
+              <strong class="fs-6 text-success" id="resProfitMargin">59.8%</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Cost Breakdown Bar -->
+        <h6 class="fw-bold text-dark mb-2 small">Cost Breakdown per Acre:</h6>
+        <div class="progress mb-3" style="height: 22px; border-radius: 8px;">
+          <div id="barSeeds" class="progress-bar bg-success" role="progressbar" style="width: 15%" title="Seeds">Seeds</div>
+          <div id="barFert" class="progress-bar bg-primary" role="progressbar" style="width: 25%" title="Fertilizers">Fertilizer</div>
+          <div id="barPest" class="progress-bar bg-warning text-dark" role="progressbar" style="width: 12%" title="Pesticides">Crop Prot.</div>
+          <div id="barLabor" class="progress-bar bg-danger" role="progressbar" style="width: 30%" title="Labor">Labor</div>
+          <div id="barOther" class="progress-bar bg-secondary" role="progressbar" style="width: 18%" title="Irrig & Machine">Other</div>
+        </div>
+
+        <!-- AI Agricultural Optimization Advisory -->
+        <div class="p-3 bg-light rounded-3 border">
+          <h6 class="fw-bold text-dark mb-1">
+            <i class="fas fa-brain text-success me-1"></i> Krishi Kendra Advisory & Optimization Tips
+          </h6>
+          <ul class="small text-muted mb-0 ps-3 mt-2" id="advisoryList">
+            <li><strong>High ROI Crop:</strong> This crop yields a strong profit margin above the minimum 30% baseline.</li>
+            <li><strong>Labor Cost Tip:</strong> Labor accounts for ~27% of your cost. Consider community machinery sharing under Krishi Kendra to save up to ₹1,500/acre.</li>
+            <li><strong>Pre-Contract Option:</strong> Post an advance requirement response to lock in guaranteed prices before harvesting.</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const CROP_PRESETS = {
+  wheat: { name: 'Wheat', seeds: 2500, fert: 4000, pest: 1800, irrig: 2000, labor: 5000, mach: 3000, yield: 20.0, price: 2275 },
+  onion: { name: 'Red Onion', seeds: 6000, fert: 7500, pest: 3500, irrig: 4000, labor: 12000, mach: 4500, yield: 95.0, price: 1850 },
+  tomato: { name: 'Tomato', seeds: 8000, fert: 10000, pest: 5000, irrig: 5000, labor: 14000, mach: 5000, yield: 140.0, price: 1600 },
+  soybean: { name: 'Soybean', seeds: 3200, fert: 3800, pest: 2200, irrig: 1500, labor: 4500, mach: 3200, yield: 12.0, price: 4892 },
+  cotton: { name: 'Cotton', seeds: 4500, fert: 6000, pest: 4000, irrig: 3000, labor: 8000, mach: 3500, yield: 14.0, price: 7121 },
+  potato: { name: 'Potato', seeds: 15000, fert: 8000, pest: 3500, irrig: 3500, labor: 9000, mach: 4500, yield: 110.0, price: 1450 }
+};
+
+function loadCropPreset(cropKey) {
+  document.querySelectorAll('.crop-preset-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const p = CROP_PRESETS[cropKey];
+  if (!p) return;
+
+  document.getElementById('calcCropName').value = p.name;
+  document.getElementById('costSeeds').value = p.seeds;
+  document.getElementById('costFertilizers').value = p.fert;
+  document.getElementById('costPesticides').value = p.pest;
+  document.getElementById('costIrrigation').value = p.irrig;
+  document.getElementById('costLabor').value = p.labor;
+  document.getElementById('costMachinery').value = p.mach;
+  document.getElementById('calcYield').value = p.yield;
+  document.getElementById('calcPrice').value = p.price;
+
+  calculateProfit();
+}
+
+function calculateProfit() {
+  const acres = Math.max(0.1, parseFloat(document.getElementById('calcAcres').value) || 1);
+  const seeds = parseFloat(document.getElementById('costSeeds').value) || 0;
+  const fert = parseFloat(document.getElementById('costFertilizers').value) || 0;
+  const pest = parseFloat(document.getElementById('costPesticides').value) || 0;
+  const irrig = parseFloat(document.getElementById('costIrrigation').value) || 0;
+  const labor = parseFloat(document.getElementById('costLabor').value) || 0;
+  const mach = parseFloat(document.getElementById('costMachinery').value) || 0;
+
+  const yieldPerAcre = parseFloat(document.getElementById('calcYield').value) || 0;
+  const pricePerQtl = parseFloat(document.getElementById('calcPrice').value) || 0;
+
+  const costPerAcre = seeds + fert + pest + irrig + labor + mach;
+  const totalCost = costPerAcre * acres;
+
+  const totalYield = yieldPerAcre * acres;
+  const grossRevenue = totalYield * pricePerQtl;
+  const netProfit = grossRevenue - totalCost;
+  const profitPerAcre = netProfit / acres;
+
+  const roi = totalCost > 0 ? ((netProfit / totalCost) * 100) : 0;
+  const breakevenRate = totalYield > 0 ? (totalCost / totalYield) : 0;
+  const breakevenYield = (pricePerQtl > 0 && acres > 0) ? (totalCost / (pricePerQtl * acres)) : 0;
+  const profitMargin = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100) : 0;
+
+  // Update UI Elements
+  document.getElementById('resTotalCost').textContent = '₹' + Math.round(totalCost).toLocaleString('en-IN');
+  document.getElementById('resCostPerAcre').textContent = '₹' + Math.round(costPerAcre).toLocaleString('en-IN') + ' / acre';
+  document.getElementById('resGrossRevenue').textContent = '₹' + Math.round(grossRevenue).toLocaleString('en-IN');
+  document.getElementById('resTotalYield').textContent = Math.round(totalYield) + ' Quintals Total';
+
+  const profitEl = document.getElementById('resNetProfit');
+  profitEl.textContent = '₹' + Math.round(netProfit).toLocaleString('en-IN');
+  profitEl.className = 'mb-0 mt-1 ' + (netProfit >= 0 ? 'text-success fw-extrabold fs-3' : 'text-danger fw-extrabold fs-3');
+
+  document.getElementById('resProfitPerAcre').textContent = '₹' + Math.round(profitPerAcre).toLocaleString('en-IN') + ' / acre';
+  
+  const roiEl = document.getElementById('resROI');
+  roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
+  roiEl.className = 'fs-5 ' + (roi >= 0 ? 'text-success' : 'text-danger');
+
+  document.getElementById('resBreakevenRate').textContent = '₹' + Math.round(breakevenRate).toLocaleString('en-IN') + ' / Qtl';
+  document.getElementById('resBreakevenYield').textContent = breakevenYield.toFixed(1) + ' Qtl/acre';
+  document.getElementById('resProfitMargin').textContent = profitMargin.toFixed(1) + '%';
+
+  // Update Progress Bars
+  if (costPerAcre > 0) {
+    document.getElementById('barSeeds').style.width = ((seeds / costPerAcre) * 100) + '%';
+    document.getElementById('barFert').style.width = ((fert / costPerAcre) * 100) + '%';
+    document.getElementById('barPest').style.width = ((pest / costPerAcre) * 100) + '%';
+    document.getElementById('barLabor').style.width = ((labor / costPerAcre) * 100) + '%';
+    document.getElementById('barOther').style.width = (((irrig + mach) / costPerAcre) * 100) + '%';
+  }
+}
+
+function resetCalculator() {
+  document.getElementById('profitCalcForm').reset();
+  loadCropPreset('wheat');
+}
+
+// Initial calculation on load
+document.addEventListener('DOMContentLoaded', calculateProfit);
+</script>
+{% endblock %}

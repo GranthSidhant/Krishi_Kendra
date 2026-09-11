@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, jsonify
 from app.routes.auth import admin_required
-from app.models import User, Category, Product, ColdStorage, GovernmentScheme, Dispute, AuditLog, Order
+from app.models import User, Category, Product, ColdStorage, GovernmentScheme, Dispute, AuditLog, Order, Report, Inventory, Requirement
 from app.extensions import db
 from app.services.audit_service import AuditService
 from app.services.notification_service import NotificationService
@@ -15,6 +15,7 @@ def dashboard():
     total_farmers = User.query.filter_by(role='farmer').count()
     total_buyers = User.query.filter_by(role='buyer').count()
     pending_verifications = User.query.filter_by(verification_status='pending').count()
+    pending_reports = Report.query.filter_by(status='pending').count()
     open_disputes = Dispute.query.filter_by(status='open').count()
     active_orders = Order.query.filter(Order.status.in_(['confirmed', 'processing', 'transport_assigned', 'in_transit'])).count()
     total_cold_storages = ColdStorage.query.count()
@@ -30,6 +31,7 @@ def dashboard():
             'total_farmers': total_farmers,
             'total_buyers': total_buyers,
             'pending_verifications': pending_verifications,
+            'pending_reports': pending_reports,
             'open_disputes': open_disputes,
             'active_orders': active_orders,
             'total_cold_storages': total_cold_storages
@@ -329,4 +331,72 @@ def update_transport_status(booking_id):
     db.session.commit()
     flash(f"Transport booking #{booking.booking_code} updated to {new_status}.", 'success')
     return redirect(url_for('admin.requests_list'))
+
+
+# ----------------------------------------------------
+# Listing Moderation & Flagged Reports Hub
+# ----------------------------------------------------
+from app.models import Report, Inventory, Requirement
+
+@admin_bp.route('/moderation')
+@admin_required
+def moderation_list():
+    status_filter = request.args.get('status', 'pending')
+    query = Report.query
+    if status_filter != 'all':
+        query = query.filter_by(status=status_filter)
+    reports = query.order_by(Report.created_at.desc()).all()
+    pending_count = Report.query.filter_by(status='pending').count()
+    return render_template('admin/moderation.html', reports=reports, status_filter=status_filter, pending_count=pending_count)
+
+
+@admin_bp.route('/moderation/<int:report_id>/action', methods=['POST'])
+@admin_required
+def resolve_report(report_id):
+    report = Report.query.get_or_404(report_id)
+    action = request.form.get('action', 'dismiss') # 'remove_listing', 'warn_owner', 'dismiss'
+    admin_notes = request.form.get('admin_notes', '').strip()
+
+    report.admin_notes = admin_notes
+    report.resolved_by_admin_id = g.user.id
+    report.resolved_at = datetime.utcnow()
+
+    if action == 'remove_listing':
+        report.status = 'resolved'
+        report.action_taken = 'listing_removed'
+        if report.target_type == 'inventory':
+            inv = Inventory.query.get(report.target_id)
+            if inv:
+                inv.status = 'sold_out' # or deactivate
+                db.session.delete(inv)
+        elif report.target_type == 'requirement':
+            req = Requirement.query.get(report.target_id)
+            if req:
+                req.status = 'closed'
+                db.session.delete(req)
+        flash(f"Report #{report.report_code} resolved. The reported listing was taken down.", 'warning')
+        AuditService.log("REPORT_LISTING_REMOVED", g.user.id, 'Report', report.id, f"Removed {report.target_type} #{report.target_id} following report #{report.report_code}")
+
+    elif action == 'warn_owner':
+        report.status = 'resolved'
+        report.action_taken = 'warning_sent'
+        if report.target_owner_id:
+            NotificationService.send(
+                user_id=report.target_owner_id,
+                title="⚠️ Listing Policy Reminder",
+                message=f"Your post '{report.target_title}' was reviewed following a user report. Please ensure accurate prices and produce availability.",
+                link_url='#'
+            )
+        flash(f"Report #{report.report_code} resolved. Policy warning sent to owner.", 'info')
+        AuditService.log("REPORT_WARNING_SENT", g.user.id, 'Report', report.id, f"Sent warning for report #{report.report_code}")
+
+    else: # dismiss
+        report.status = 'dismissed'
+        report.action_taken = 'dismissed'
+        flash(f"Report #{report.report_code} dismissed as invalid or resolved.", 'secondary')
+        AuditService.log("REPORT_DISMISSED", g.user.id, 'Report', report.id, f"Dismissed report #{report.report_code}")
+
+    db.session.commit()
+    return redirect(url_for('admin.moderation_list'))
+
 

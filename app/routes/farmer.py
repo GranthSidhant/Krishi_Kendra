@@ -303,3 +303,47 @@ def logistics():
     user = g.user
     active_orders = Order.query.filter_by(farmer_id=user.id).all()
     return render_template('farmer/logistics.html', user=user, orders=active_orders)
+
+
+# ----------------------------------------------------
+# Farmer Profit, Cost & ROI Calculator
+# ----------------------------------------------------
+@farmer_bp.route('/profit-calculator')
+@farmer_required
+def profit_calculator():
+    user = g.user
+    profile = user.farmer_profile
+    return render_template('farmer/profit_calculator.html', user=user, profile=profile)
+
+
+# ----------------------------------------------------
+# Browse Buyer Requirements & Advance Pre-Orders
+# ----------------------------------------------------
+@farmer_bp.route('/requirements')
+@farmer_required
+def browse_requirements():
+    user = g.user
+    filter_type = request.args.get('filter', 'all') # 'all', 'pre_order', 'immediate'
+    commodity = request.args.get('commodity', '').strip()
+    
+    query = Requirement.query.filter_by(status='open')
+    if filter_type == 'pre_order':
+        query = query.filter_by(is_pre_order=True)
+    elif filter_type == 'immediate':
+        query = query.filter_by(is_pre_order=False)
+        
+    if commodity:
+        query = query.filter(Requirement.product_name.ilike(f"%{commodity}%"))
+        
+    requirements = query.order_by(Requirement.created_at.desc()).all()
+    pre_order_count = Requirement.query.filter_by(status='open', is_pre_order=True).count()
+
+    return render_template(
+        'farmer/browse_requirements.html',
+        user=user,
+        requirements=requirements,
+        filter_type=filter_type,
+        commodity=commodity,
+        pre_order_count=pre_order_count
+    )
+

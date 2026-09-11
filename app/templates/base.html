@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Google Fonts: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet Map CSS (Free OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   {% block extra_css %}{% endblock %}
@@ -92,6 +94,14 @@
           <li class="nav-item">
             <a class="nav-link {% if 'schemes.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-1"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a>
           </li>
+          {% if current_user and current_user.role == 'farmer' %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'farmer.browse_requirements' %}active fw-bold text-warning{% endif %}" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-1 text-warning"></i> <span>Buyer Demands</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'farmer.profit_calculator' %}active fw-bold text-success{% endif %}" href="{{ url_for('farmer.profit_calculator') }}"><i class="fas fa-calculator me-1 text-success"></i> <span>Profit Calc</span></a>
+            </li>
+          {% endif %}
           {% if current_user %}
             <li class="nav-item">
               <a class="nav-link {% if 'requests.' in (request.endpoint or '') %}active fw-bold text-success{% endif %}" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-1"></i> <span data-i18n="nav_requests">My Requests</span></a>
@@ -99,8 +109,41 @@
           {% endif %}
         </ul>
 
-        <!-- Right Side Nav: Language, Chat, Notifications, User -->
+        <!-- Right Side Nav: Weather, Language, Chat, Notifications, User -->
         <div class="d-flex align-items-center gap-2">
+          
+          <!-- Live Real-Time Weather Widget Pill -->
+          <div class="dropdown" id="weatherWidgetDropdown">
+            <button class="btn btn-sm btn-light border d-flex align-items-center gap-1.5 px-2.5 py-1 shadow-xs rounded-pill" type="button" data-bs-toggle="dropdown" id="weatherWidgetBtn" title="Live Agricultural Weather & Rain Forecast">
+              <span id="navWeatherIcon" class="fs-6">⛅</span>
+              <span id="navWeatherTemp" class="fw-bold small text-dark">--°C</span>
+              <span id="navWeatherLoc" class="text-muted small d-none d-md-inline">Nashik</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow-lg p-3 border-0" style="min-width: 320px; border-radius: 16px;">
+              <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                <div>
+                  <h6 class="fw-bold mb-0 text-dark" id="popWeatherLoc"><i class="fas fa-map-marker-alt text-danger me-1"></i> Live Weather</h6>
+                  <small class="text-muted" id="popWeatherDesc">Fetching live weather...</small>
+                </div>
+                <div class="fs-1" id="popWeatherIcon">⛅</div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="fs-3 fw-extrabold text-success" id="popWeatherTemp">--°C</div>
+                <div class="text-muted small text-end">
+                  <div>Humidity: <strong id="popWeatherHum" class="text-dark">--%</strong></div>
+                  <div>Wind: <strong id="popWeatherWind" class="text-dark">-- km/h</strong></div>
+                </div>
+              </div>
+              <div class="p-2.5 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 mb-3 small text-dark">
+                <i class="fas fa-shield-alt text-success me-1"></i> <span id="popWeatherAdvisory">Favorable conditions for routine farm activities.</span>
+              </div>
+              <div class="fw-bold small text-muted mb-2 text-uppercase" style="font-size:0.75rem;">5-Day Agricultural Forecast:</div>
+              <div class="d-flex justify-content-between text-center small text-muted" id="popWeatherForecast">
+                <!-- Forecast Days populated dynamically -->
+              </div>
+            </div>
+          </div>
+
           <!-- Language Selector -->
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
@@ -164,9 +207,13 @@
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-2 text-primary"></i> <span data-i18n="nav_requests">My Service Requests</span></a></li>
                 {% if current_user.role == 'farmer' %}
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-2 text-warning"></i> Buyer Demands & Pre-Orders</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.profit_calculator') }}"><i class="fas fa-calculator me-2 text-success"></i> Crop Profit Calculator</a></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.visiting_card') }}"><i class="fas fa-id-card me-2 text-success"></i> My Visiting Card</a></li>
                 {% elif current_user.role == 'buyer' %}
                   <li><a class="dropdown-item" href="{{ url_for('buyer.visiting_card') }}"><i class="fas fa-id-card me-2 text-warning"></i> My Visiting Card</a></li>
+                {% elif current_user.role == 'admin' %}
+                  <li><a class="dropdown-item" href="{{ url_for('admin.moderation_list') }}"><i class="fas fa-flag me-2 text-danger"></i> Flagged Moderation Hub</a></li>
                 {% endif %}
                 <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="fas fa-user-cog me-2"></i> Profile & Privacy</a></li>
                 <li><hr class="dropdown-divider"></li>
@@ -335,12 +382,178 @@
     </div>
   </footer>
 
+  <!-- Shared Report Listing Modal -->
+  <div class="modal fade" id="reportListingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header bg-danger text-white py-3">
+          <h6 class="modal-title fw-bold"><i class="fas fa-flag me-2"></i> Report Listing / Content</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="reportListingForm" onsubmit="submitReportForm(event)">
+          <input type="hidden" id="reportTargetType" value="inventory">
+          <input type="hidden" id="reportTargetId" value="0">
+          <div class="modal-body p-4">
+            <div class="p-2.5 bg-light rounded-3 mb-3 border small">
+              <span class="text-muted d-block">Reporting item:</span>
+              <strong class="text-dark d-block" id="reportTargetTitleDisplay">Selected Produce Item</strong>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Reason for Reporting *</label>
+              <select id="reportReasonSelect" class="form-select form-select-sm" required>
+                <option value="" disabled selected>Choose reason...</option>
+                <option value="Unrealistic / Fraudulent Price">Unrealistic / Fraudulent Price</option>
+                <option value="Expired / Already Sold Out">Expired / Already Sold Out</option>
+                <option value="Spam / Fake Listing">Spam / Fake Listing</option>
+                <option value="Quality & Grade Misrepresentation">Quality & Grade Misrepresentation</option>
+                <option value="Inappropriate / Misleading Content">Inappropriate / Misleading Content</option>
+                <option value="Other">Other Policy Violation</option>
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label fw-bold small">Additional Details (Optional)</label>
+              <textarea id="reportDetailsInput" class="form-control form-control-sm" rows="3" placeholder="Provide any details to help Agriculture Officers investigate..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-sm btn-danger fw-bold px-3" id="submitReportBtn">Submit Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Bootstrap 5 Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Main Scripts -->
   <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='js/voice_assistant.js') }}"></script>
+
+  <!-- Global Weather Widget & Report Script -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Live Weather Fetching
+    function initWeather() {
+      let url = '/api/weather';
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+          () => fetchWeather(null, null)
+        );
+      } else {
+        fetchWeather(null, null);
+      }
+    }
+
+    function fetchWeather(lat, lon) {
+      let query = '';
+      if (lat && lon) query = `?lat=${lat}&lon=${lon}`;
+      fetch(`/api/weather${query}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data || !data.success) return;
+          const navIcon = document.getElementById('navWeatherIcon');
+          const navTemp = document.getElementById('navWeatherTemp');
+          const navLoc = document.getElementById('navWeatherLoc');
+
+          if (navIcon) navIcon.textContent = data.weather_icon;
+          if (navTemp) navTemp.textContent = `${data.temperature}°C`;
+          if (navLoc) navLoc.textContent = data.location;
+
+          const popLoc = document.getElementById('popWeatherLoc');
+          const popDesc = document.getElementById('popWeatherDesc');
+          const popIcon = document.getElementById('popWeatherIcon');
+          const popTemp = document.getElementById('popWeatherTemp');
+          const popHum = document.getElementById('popWeatherHum');
+          const popWind = document.getElementById('popWeatherWind');
+          const popAdv = document.getElementById('popWeatherAdvisory');
+          const popFore = document.getElementById('popWeatherForecast');
+
+          if (popLoc) popLoc.innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> ${data.location}`;
+          if (popDesc) popDesc.textContent = `${data.weather_desc} • Feels like ${data.feels_like}°C`;
+          if (popIcon) popIcon.textContent = data.weather_icon;
+          if (popTemp) popTemp.textContent = `${data.temperature}°C`;
+          if (popHum) popHum.textContent = `${data.humidity}%`;
+          if (popWind) popWind.textContent = `${data.wind_speed} km/h`;
+          if (popAdv) popAdv.textContent = data.agri_advisory;
+
+          if (popFore && data.forecast && data.forecast.length > 0) {
+            popFore.innerHTML = data.forecast.map(f => `
+              <div class="p-1 border rounded bg-light flex-grow-1 mx-0.5">
+                <div class="text-xs fw-bold text-dark">${f.date.length > 5 ? f.date.substring(5) : f.date}</div>
+                <div class="fs-6 my-1">${f.icon}</div>
+                <div class="text-xs fw-semibold text-dark">${f.max_temp}°</div>
+                <div class="text-muted" style="font-size:0.65rem;">${f.rain_prob}% 🌧️</div>
+              </div>
+            `).join('');
+          }
+        })
+        .catch(err => console.log('Weather widget note:', err));
+    }
+
+    initWeather();
+  });
+
+  // 2. Global Report Modal Trigger
+  function openReportModal(targetType, targetId, targetTitle) {
+    document.getElementById('reportTargetType').value = targetType;
+    document.getElementById('reportTargetId').value = targetId;
+    document.getElementById('reportTargetTitleDisplay').textContent = targetTitle || `${targetType.toUpperCase()} #${targetId}`;
+    document.getElementById('reportReasonSelect').selectedIndex = 0;
+    document.getElementById('reportDetailsInput').value = '';
+
+    const modalEl = document.getElementById('reportListingModal');
+    if (modalEl) {
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
+
+  function submitReportForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitReportBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+    const payload = {
+      target_type: document.getElementById('reportTargetType').value,
+      target_id: parseInt(document.getElementById('reportTargetId').value),
+      reason: document.getElementById('reportReasonSelect').value,
+      details: document.getElementById('reportDetailsInput').value
+    };
+
+    fetch('/api/report/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = 'Submit Report';
+        if (data.success) {
+          const modalEl = document.getElementById('reportListingModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          alert(`Report #${data.report_code} submitted successfully. Our Agriculture Moderation team will review this.`);
+        } else {
+          alert(data.error || 'Failed to submit report. Please log in first.');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = 'Submit Report';
+        alert('Could not submit report. Please try again.');
+      });
+  }
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

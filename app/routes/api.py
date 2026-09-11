@@ -76,7 +76,8 @@ def user_popup(user_id):
         'custom_id': user.custom_id,
         'name': user.name,
         'role': user.role.capitalize(),
-        'profile_image': user.profile_image,
+        'profile_image': user.avatar_src,
+        'avatar_emoji': user.avatar_emoji,
         'is_verified': user.is_verified,
         'district': profile.district if profile else '',
         'state': profile.state if profile else '',
@@ -86,3 +87,85 @@ def user_popup(user_id):
         'bio': getattr(profile, 'bio', getattr(profile, 'description', ''))
     }
     return jsonify(data)
+
+
+# ----------------------------------------------------
+# Real-Time Live Weather API
+# ----------------------------------------------------
+from app.services.weather_service import WeatherService
+
+@api_bp.route('/weather')
+def get_weather():
+    lat = request.args.get('lat', type=float)
+    lon = request.args.get('lon', type=float)
+    district = request.args.get('district', '').strip()
+    
+    if not district and g.user:
+        profile = g.user.farmer_profile if g.user.role == 'farmer' else g.user.buyer_profile
+        if profile and profile.district:
+            district = profile.district
+
+    weather_data = WeatherService.fetch_live_weather(lat=lat, lon=lon, district=district)
+    return jsonify(weather_data)
+
+
+# ----------------------------------------------------
+# Report & Flagging Submission API
+# ----------------------------------------------------
+import random
+from app.models import Report, Inventory, Requirement
+from app.extensions import db
+
+@api_bp.route('/report/submit', methods=['POST'])
+def submit_report():
+    if not g.user:
+        return jsonify({'success': False, 'error': 'Please log in to submit a report.'}), 401
+    
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    target_type = data.get('target_type', 'inventory') # 'inventory', 'requirement', 'user'
+    target_id = int(data.get('target_id', 0))
+    reason = data.get('reason', '').strip()
+    details = data.get('details', '').strip()
+
+    if not target_id or not reason:
+        return jsonify({'success': False, 'error': 'Target item and reason are required.'}), 400
+
+    target_title = ''
+    target_owner_id = None
+
+    if target_type == 'inventory':
+        inv = Inventory.query.get(target_id)
+        if inv:
+            target_title = f"{inv.product_name} ({inv.available_quantity} {inv.unit} @ ₹{inv.expected_price_per_unit})"
+            target_owner_id = inv.farmer_id
+    elif target_type == 'requirement':
+        req = Requirement.query.get(target_id)
+        if req:
+            target_title = f"Requirement: {req.product_name} ({req.required_quantity} {req.unit})"
+            target_owner_id = req.buyer_id
+    elif target_type == 'user':
+        u = User.query.get(target_id)
+        if u:
+            target_title = f"User: {u.name} ({u.custom_id})"
+            target_owner_id = u.id
+
+    report_code = f"RPT-2026-{random.randint(1000, 9999)}"
+    report = Report(
+        report_code=report_code,
+        reporter_id=g.user.id,
+        target_type=target_type,
+        target_id=target_id,
+        target_title=target_title,
+        target_owner_id=target_owner_id,
+        reason=reason,
+        details=details,
+        status='pending'
+    )
+    db.session.add(report)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'report_code': report.report_code,
+        'message': 'Report received and submitted to Krishi Kendra Admin Moderation.'
+    })

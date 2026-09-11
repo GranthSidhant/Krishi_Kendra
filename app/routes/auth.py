@@ -337,6 +337,8 @@ def profile():
                 farmer_prof.address = request.form.get('address', farmer_prof.address or '')
                 farmer_prof.district = request.form.get('district', farmer_prof.district or '')
                 farmer_prof.state = request.form.get('state', farmer_prof.state or '')
+                farmer_prof.farm_latitude = safe_float(request.form.get('farm_latitude'), farmer_prof.farm_latitude or 19.9975)
+                farmer_prof.farm_longitude = safe_float(request.form.get('farm_longitude'), farmer_prof.farm_longitude or 73.7898)
                 farmer_prof.google_maps_link = request.form.get('google_maps_link', farmer_prof.google_maps_link or '')
                 farmer_prof.crops_grown = request.form.get('crops_grown', farmer_prof.crops_grown or '')
                 farmer_prof.farm_size_acres = safe_float(request.form.get('farm_size_acres'), farmer_prof.farm_size_acres or 3.0)
