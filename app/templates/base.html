@@ -92,6 +92,11 @@
           <li class="nav-item">
             <a class="nav-link {% if 'schemes.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-1"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a>
           </li>
+          {% if current_user %}
+            <li class="nav-item">
+              <a class="nav-link {% if 'requests.' in (request.endpoint or '') %}active fw-bold text-success{% endif %}" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-1"></i> <span data-i18n="nav_requests">My Requests</span></a>
+            </li>
+          {% endif %}
         </ul>
 
         <!-- Right Side Nav: Language, Chat, Notifications, User -->
@@ -153,6 +158,7 @@
                   <div class="text-muted small">{{ current_user.custom_id }} ({{ current_user.role.capitalize() }})</div>
                 </li>
                 <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-2 text-primary"></i> <span data-i18n="nav_requests">My Service Requests</span></a></li>
                 {% if current_user.role == 'farmer' %}
                   <li><a class="dropdown-item" href="{{ url_for('farmer.visiting_card') }}"><i class="fas fa-id-card me-2 text-success"></i> My Visiting Card</a></li>
                 {% elif current_user.role == 'buyer' %}

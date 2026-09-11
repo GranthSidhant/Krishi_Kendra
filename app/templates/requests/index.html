@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}My Service Requests - Krishi Kendra{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <!-- Header Banner -->
+  <div class="p-4 bg-dark text-white rounded-4 shadow-sm mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3" style="background: linear-gradient(135deg, #1b5e20 0%, #0d47a1 100%) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h3 class="fw-bold mb-0"><i class="fas fa-clipboard-list me-2"></i> <span data-i18n="heading_my_requests">My Service Requests Hub</span></h3>
+        <span class="badge bg-light text-dark fw-semibold px-2 py-1"><i class="fas fa-user-check me-1 text-success"></i> {{ user.name }} ({{ user.role.capitalize() }})</span>
+      </div>
+      <p class="text-white-50 small mb-0">Track all your Cold Storage reservations, Transport vehicle bookings, and Admin escalation tickets in one place.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-warning fw-bold px-3 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#adminTicketModal">
+        <i class="fas fa-headset me-1"></i> <span>Contact Admin / Support</span>
+      </button>
+      <button type="button" class="btn btn-light fw-bold px-3 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#transportModal">
+        <i class="fas fa-truck me-1 text-primary"></i> <span>Book Transport</span>
+      </button>
+      <a href="{{ url_for('cold_storage.index') }}" class="btn btn-outline-light fw-bold px-3 py-2">
+        <i class="fas fa-snowflake me-1 text-info"></i> <span>Find Cold Storage</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Metric Counters -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="k-card p-3 d-flex justify-content-between align-items-center border-start border-4 border-info">
+        <div>
+          <div class="text-muted small fw-semibold">Cold Storage Requests</div>
+          <div class="stat-value text-info">{{ cold_storage_bookings|length }}</div>
+        </div>
+        <div class="p-3 bg-info-subtle text-info rounded-circle">
+          <i class="fas fa-snowflake fa-2x"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="k-card p-3 d-flex justify-content-between align-items-center border-start border-4 border-primary">
+        <div>
+          <div class="text-muted small fw-semibold">Transport / Logistics</div>
+          <div class="stat-value text-primary">{{ transport_bookings|length }}</div>
+        </div>
+        <div class="p-3 bg-primary-subtle text-primary rounded-circle">
+          <i class="fas fa-truck-moving fa-2x"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="k-card p-3 d-flex justify-content-between align-items-center border-start border-4 border-warning">
+        <div>
+          <div class="text-muted small fw-semibold">Admin Support Tickets</div>
+          <div class="stat-value text-warning">{{ admin_tickets|length }}</div>
+        </div>
+        <div class="p-3 bg-warning-subtle text-warning rounded-circle">
+          <i class="fas fa-shield-alt fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-pills nav-fill gap-2 p-1 bg-light rounded-3 mb-4 shadow-sm border" id="requestTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link fw-bold {% if active_tab == 'cold_storage' %}active bg-info text-white{% else %}text-dark{% endif %}" id="cold-tab" data-bs-toggle="pill" data-bs-target="#coldTabContent">
+        <i class="fas fa-snowflake me-2"></i> Cold Storage Requests ({{ cold_storage_bookings|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold {% if active_tab == 'transport' %}active bg-primary text-white{% else %}text-dark{% endif %}" id="transport-tab" data-bs-toggle="pill" data-bs-target="#transportTabContent">
+        <i class="fas fa-truck me-2"></i> Transport & Logistics ({{ transport_bookings|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold {% if active_tab == 'admin_requests' %}active bg-warning text-dark{% else %}text-dark{% endif %}" id="admin-tab" data-bs-toggle="pill" data-bs-target="#adminTabContent">
+        <i class="fas fa-headset me-2"></i> Admin Support & Grievances ({{ admin_tickets|length }})
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Contents -->
+  <div class="tab-content" id="requestTabsContent">
+
+    <!-- 1. COLD STORAGE TAB -->
+    <div class="tab-pane fade {% if active_tab == 'cold_storage' %}show active{% endif %}" id="coldTabContent">
+      <div class="k-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-snowflake text-info me-2"></i> Cold Storage Space Requests</h5>
+          <a href="{{ url_for('cold_storage.index') }}" class="btn btn-sm btn-info text-white fw-bold">
+            <i class="fas fa-plus-circle me-1"></i> Book Cold Storage
+          </a>
+        </div>
+
+        {% if cold_storage_bookings %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Cold Storage Facility</th>
+                  <th>Produce</th>
+                  <th>Quantity</th>
+                  <th>Duration</th>
+                  <th>Estimated Cost</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in cold_storage_bookings %}
+                <tr>
+                  <td><strong>#CS-{{ b.id }}</strong></td>
+                  <td>
+                    <strong>{{ b.facility.name }}</strong>
+                    <div class="text-muted">{{ b.facility.district }}, {{ b.facility.state }}</div>
+                  </td>
+                  <td><span class="badge bg-light text-dark border">{{ b.produce_name }}</span></td>
+                  <td><strong>{{ b.quantity_quintals }} Quintals</strong></td>
+                  <td>{{ b.duration_months }} Months</td>
+                  <td class="fw-bold text-success">₹{{ b.estimated_total_cost }}</td>
+                  <td>
+                    {% if b.status == 'requested' %}
+                      <span class="badge bg-warning text-dark">Requested (Pending)</span>
+                    {% elif b.status == 'confirmed' %}
+                      <span class="badge bg-primary">Space Allocated</span>
+                    {% elif b.status == 'in_storage' %}
+                      <span class="badge bg-success">In Storage</span>
+                    {% elif b.status == 'cancelled' %}
+                      <span class="badge bg-danger">Cancelled</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ b.status.capitalize() }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ b.created_at.strftime('%d %b %Y') }}</td>
+                  <td class="text-end">
+                    <div class="d-flex justify-content-end gap-1">
+                      <a href="tel:{{ b.facility.contact_phone }}" class="btn btn-sm btn-outline-info" title="Call Operator">
+                        <i class="fas fa-phone"></i>
+                      </a>
+                      {% if b.status in ['requested', 'confirmed'] %}
+                        <form method="POST" action="{{ url_for('requests.cancel_cold_storage_booking', booking_id=b.id) }}" onsubmit="return confirm('Cancel this storage request?');" class="d-inline">
+                          <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancel Request">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-snowflake fa-3x text-info opacity-50 mb-3"></i>
+            <h5>No Cold Storage Requests Yet</h5>
+            <p>Prevent post-harvest perishability loss by booking temperature-controlled warehouse space near you.</p>
+            <a href="{{ url_for('cold_storage.index') }}" class="btn btn-info text-white fw-bold">
+              <i class="fas fa-search me-1"></i> Explore Facilities & Request Space
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 2. TRANSPORT & LOGISTICS TAB -->
+    <div class="tab-pane fade {% if active_tab == 'transport' %}show active{% endif %}" id="transportTabContent">
+      <div class="k-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-truck text-primary me-2"></i> Vehicle Transport Bookings</h5>
+          <button type="button" class="btn btn-sm btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#transportModal">
+            <i class="fas fa-plus-circle me-1"></i> Book Transport Vehicle
+          </button>
+        </div>
+
+        {% if transport_bookings %}
+          <div class="row g-3">
+            {% for t in transport_bookings %}
+            <div class="col-lg-6">
+              <div class="p-3 bg-light rounded-3 border h-100 d-flex flex-column justify-content-between border-start border-4 {% if t.status == 'driver_assigned' %}border-primary{% elif t.status == 'en_route' %}border-warning{% elif t.status == 'completed' %}border-success{% else %}border-secondary{% endif %}">
+                <div>
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h6 class="fw-bold text-dark mb-0">Booking #{{ t.booking_code }}</h6>
+                      <small class="text-muted">{{ t.produce_type }} ({{ t.quantity_quintals }} Quintals)</small>
+                    </div>
+                    <span class="badge {% if t.status == 'driver_assigned' %}bg-primary{% elif t.status == 'en_route' %}bg-warning text-dark{% elif t.status == 'completed' %}bg-success{% elif t.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %} px-2 py-1">
+                      {{ t.status.replace('_', ' ').capitalize() }}
+                    </span>
+                  </div>
+
+                  <div class="p-2 bg-white rounded border mb-2 small">
+                    <div class="mb-1"><i class="fas fa-map-marker-alt text-success me-1"></i> <strong>Pickup:</strong> {{ t.pickup_address }}</div>
+                    <div><i class="fas fa-flag-checkered text-danger me-1"></i> <strong>Drop:</strong> {{ t.drop_address }}</div>
+                  </div>
+
+                  <div class="row g-2 small text-muted mb-2">
+                    <div class="col-6"><strong>Vehicle:</strong> {{ t.vehicle_type }}</div>
+                    <div class="col-6"><strong>Freight Cost:</strong> <span class="fw-bold text-success">₹{{ t.estimated_cost }}</span></div>
+                    <div class="col-6"><strong>Driver:</strong> {{ t.driver_name }}</div>
+                    <div class="col-6"><strong>Phone:</strong> {{ t.driver_phone }}</div>
+                    <div class="col-6"><strong>Truck No:</strong> {{ t.vehicle_number }}</div>
+                    <div class="col-6"><strong>Pickup Time:</strong> {{ t.scheduled_datetime }}</div>
+                  </div>
+
+                  {% if t.tracking_notes %}
+                    <div class="alert alert-info py-1 px-2 small mb-2">
+                      <i class="fas fa-info-circle me-1"></i> {{ t.tracking_notes }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                  <small class="text-muted">{{ t.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+                  <div class="d-flex gap-2">
+                    <a href="tel:{{ t.driver_phone }}" class="btn btn-sm btn-outline-primary fw-semibold">
+                      <i class="fas fa-phone me-1"></i> Call Driver
+                    </a>
+                    {% if t.status not in ['completed', 'cancelled'] %}
+                      <form method="POST" action="{{ url_for('requests.cancel_transport_booking', booking_id=t.id) }}" onsubmit="return confirm('Cancel this transport booking?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-truck-moving fa-3x text-primary opacity-50 mb-3"></i>
+            <h5>No Transport Bookings Yet</h5>
+            <p>Book mini-trucks, pickups, and refrigerated vehicles directly from your farm gate to wholesale buyers or mandis.</p>
+            <button type="button" class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#transportModal">
+              <i class="fas fa-plus-circle me-1"></i> Book Your First Transport Vehicle
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 3. ADMIN SUPPORT & GRIEVANCE TICKETS TAB -->
+    <div class="tab-pane fade {% if active_tab == 'admin_requests' %}show active{% endif %}" id="adminTabContent">
+      <div class="k-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-shield-alt text-warning me-2"></i> Platform Admin Requests & Grievance Tickets</h5>
+            <small class="text-muted">Direct communications with Krishi Kendra Administration for identity checks, escrow disputes, and schemes</small>
+          </div>
+          <button type="button" class="btn btn-sm btn-warning text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#adminTicketModal">
+            <i class="fas fa-plus-circle me-1"></i> Raise New Ticket
+          </button>
+        </div>
+
+        {% if admin_tickets %}
+          <div class="d-flex flex-column gap-3">
+            {% for ticket in admin_tickets %}
+            <div class="p-3 bg-light rounded-3 border border-start border-4 {% if ticket.status == 'open' %}border-warning{% elif ticket.status == 'in_progress' %}border-primary{% elif ticket.status == 'resolved' %}border-success{% else %}border-secondary{% endif %}">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <span class="badge bg-light text-dark border me-1">{{ ticket.category }}</span>
+                  <span class="badge {% if ticket.priority == 'urgent' %}bg-danger{% elif ticket.priority == 'high' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %} me-2">
+                    Priority: {{ ticket.priority.upper() }}
+                  </span>
+                  <h6 class="fw-bold text-dark d-inline mb-0">#{{ ticket.ticket_code }}: {{ ticket.subject }}</h6>
+                </div>
+                <span class="badge {% if ticket.status == 'open' %}bg-warning text-dark{% elif ticket.status == 'in_progress' %}bg-primary{% elif ticket.status == 'resolved' %}bg-success{% else %}bg-secondary{% endif %} px-2 py-1">
+                  {{ ticket.status.replace('_', ' ').capitalize() }}
+                </span>
+              </div>
+
+              <p class="small text-muted mb-2">{{ ticket.description }}</p>
+
+              <!-- Admin Response Box -->
+              {% if ticket.admin_response %}
+                <div class="p-2 bg-success-subtle rounded small mb-2 border border-success">
+                  <div class="fw-bold text-success"><i class="fas fa-reply me-1"></i> Admin Response:</div>
+                  <div>{{ ticket.admin_response }}</div>
+                  {% if ticket.resolved_at %}
+                    <small class="text-muted d-block mt-1">Resolved on: {{ ticket.resolved_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="p-2 bg-warning-subtle rounded small mb-2 border border-warning text-dark">
+                  <i class="fas fa-clock me-1"></i> <em>Ticket is queued with the administrative helpdesk. An officer will respond within 24 hours.</em>
+                </div>
+              {% endif %}
+
+              <div class="pt-2 border-top d-flex justify-content-between align-items-center small text-muted">
+                <span>Submitted on: {{ ticket.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+                {% if ticket.status in ['open', 'in_progress', 'resolved'] %}
+                  <form method="POST" action="{{ url_for('requests.close_admin_ticket', ticket_id=ticket.id) }}" onsubmit="return confirm('Close this ticket?');">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2">Close Ticket</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-headset fa-3x text-warning opacity-50 mb-3"></i>
+            <h5>No Active Admin Requests</h5>
+            <p>Need assistance with Aadhaar verification, payment escrow release, subsidy application, or lab arbitration?</p>
+            <button type="button" class="btn btn-warning text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#adminTicketModal">
+              <i class="fas fa-paper-plane me-1"></i> Submit a Support Request to Admin
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL: Raise New Admin Support Ticket -->
+<div class="modal fade" id="adminTicketModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-dark text-white" style="background: linear-gradient(135deg, #1b5e20 0%, #0d47a1 100%) !important;">
+        <h5 class="modal-title fw-bold"><i class="fas fa-headset me-2"></i> Raise Admin Support Ticket</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('requests.create_admin_ticket') }}">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Request Category</label>
+            <select name="category" class="form-select" required>
+              <option value="KYC & Verification Help">Identity / Land Record / Aadhaar Verification</option>
+              <option value="Payment & Escrow Release Dispute">Payment & Escrow Release Dispute</option>
+              <option value="Govt Scheme & Subsidy Assistance">Government Scheme & Subsidy Application Help</option>
+              <option value="Quality & Mandi Lab Arbitration">Produce Quality & Mandi Lab Arbitration</option>
+              <option value="Logistics & Driver Issue">Logistics & Driver Non-Arrival Escalation</option>
+              <option value="Account & Profile Details Change">Bank Account & Registered Phone Modification</option>
+              <option value="General Support">General Platform Support Query</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Priority</label>
+            <select name="priority" class="form-select">
+              <option value="medium" selected>Medium (Standard 24-hour response)</option>
+              <option value="high">High (Urgent trade / payout issue)</option>
+              <option value="low">Low (General guidance / question)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Subject / Short Summary</label>
+            <input type="text" name="subject" class="form-control" placeholder="e.g. Escrow payout pending for Order #ORD-8801" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Detailed Description & Evidence</label>
+            <textarea name="description" class="form-control" rows="4" placeholder="Explain your request in detail. Include Order codes, Mandi receipt numbers, or phone numbers if applicable." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success fw-bold">
+            <i class="fas fa-paper-plane me-1"></i> Submit Ticket
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Book New Transport -->
+<div class="modal fade" id="transportModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="fas fa-truck me-2"></i> Book Transport Vehicle</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('requests.create_transport_booking') }}">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Link with Confirmed Order (Optional)</label>
+            <select name="order_id" class="form-select">
+              <option value="">-- Standalone Transport Booking --</option>
+              {% for o in user_orders %}
+                <option value="{{ o.id }}">#{{ o.order_code }} - {{ o.quantity }} {{ o.unit }} of {{ o.product_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pickup Location (Farm Gate / Warehouse)</label>
+            <input type="text" name="pickup_address" class="form-control" value="{{ user.farmer_profile.farm_location_name if user.farmer_profile else '' }} {{ user.farmer_profile.district if user.farmer_profile else '' }}" placeholder="Farm gate or loading location" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Destination / Drop-off Location</label>
+            <input type="text" name="drop_address" class="form-control" placeholder="Buyer warehouse, Cold storage, or APMC Mandi" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Produce Type</label>
+              <input type="text" name="produce_type" class="form-control" value="Fresh Farm Produce" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Quantity (Quintals)</label>
+              <input type="number" name="quantity_quintals" class="form-control" value="10" min="1" step="0.5" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Vehicle Type</label>
+            <select name="vehicle_type" class="form-select">
+              <option value="Mini Truck (Tata Ace / Bolero - up to 1.5 MT)" selected>Mini Truck (Tata Ace / Bolero - up to 1.5 MT)</option>
+              <option value="Pickup Vehicle (Mahindra Maxi Truck - up to 2.5 MT)">Pickup Vehicle (up to 2.5 MT)</option>
+              <option value="Medium 6-Wheeler Truck (up to 7 MT)">Medium 6-Wheeler Truck (up to 7 MT)</option>
+              <option value="10-Ton Heavy Multi-Axle Truck">10-Ton Heavy Multi-Axle Truck</option>
+              <option value="Refrigerated Cold-Chain Truck (0°C to 4°C)">Refrigerated Cold-Chain Truck (Controlled Temp)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scheduled Pickup Date & Time</label>
+            <input type="datetime-local" name="scheduled_datetime" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-bold">
+            <i class="fas fa-check-circle me-1"></i> Confirm Booking
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

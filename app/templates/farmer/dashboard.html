@@ -21,7 +21,10 @@
         </div>
       </div>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('requests.index') }}" class="btn btn-light text-success fw-bold px-3 py-2 shadow-sm">
+        <i class="fas fa-clipboard-list me-1"></i> <span data-i18n="nav_requests">My Requests</span>
+      </a>
       <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-warning fw-bold px-3 py-2 shadow-sm">
         <i class="fas fa-plus-circle me-1"></i> <span data-i18n="btn_add_produce">Add Produce</span>
       </a>
@@ -107,15 +110,15 @@
         </a>
       </div>
       <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.mandi_rates') }}" class="btn btn-light border btn-farmer-action text-danger w-100 shadow-sm">
-          <i class="fas fa-chart-line"></i>
-          <span>Live Mandi Rates</span>
+        <a href="{{ url_for('requests.index') }}" class="btn btn-light border btn-farmer-action text-warning w-100 shadow-sm">
+          <i class="fas fa-clipboard-list"></i>
+          <span>My Requests</span>
         </a>
       </div>
       <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.logistics') }}" class="btn btn-light border btn-farmer-action text-warning w-100 shadow-sm">
-          <i class="fas fa-truck"></i>
-          <span>Book Transport</span>
+        <a href="{{ url_for('farmer.mandi_rates') }}" class="btn btn-light border btn-farmer-action text-danger w-100 shadow-sm">
+          <i class="fas fa-chart-line"></i>
+          <span>Live Mandi Rates</span>
         </a>
       </div>
       <div class="col-lg-3 col-md-4 col-6">

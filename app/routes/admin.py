@@ -267,8 +267,66 @@ def resolve_dispute(dispute_id):
     return redirect(url_for('admin.disputes'))
 
 
+from app.models import User, Category, Product, ColdStorage, GovernmentScheme, Dispute, AuditLog, Order, AdminTicket, ColdStorageBooking, TransportBooking
+
 @admin_bp.route('/audit-logs')
 @admin_required
 def audit_logs():
     logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(100).all()
     return render_template('admin/audit_logs.html', logs=logs)
+
+
+@admin_bp.route('/requests')
+@admin_required
+def requests_list():
+    tickets = AdminTicket.query.order_by(AdminTicket.created_at.desc()).all()
+    cold_bookings = ColdStorageBooking.query.order_by(ColdStorageBooking.created_at.desc()).all()
+    transport_bookings = TransportBooking.query.order_by(TransportBooking.created_at.desc()).all()
+    return render_template('admin/requests.html', tickets=tickets, cold_bookings=cold_bookings, transport_bookings=transport_bookings)
+
+
+@admin_bp.route('/requests/tickets/<int:ticket_id>/respond', methods=['POST'])
+@admin_required
+def respond_ticket(ticket_id):
+    ticket = AdminTicket.query.get_or_404(ticket_id)
+    response_text = request.form.get('admin_response', '').strip()
+    status = request.form.get('status', 'resolved')
+
+    ticket.admin_response = response_text
+    ticket.status = status
+    ticket.resolved_by_admin_id = g.user.id
+    ticket.resolved_at = datetime.utcnow()
+
+    NotificationService.send(
+        user_id=ticket.user_id,
+        title=f"Admin Support Update: #{ticket.ticket_code}",
+        message=f"Your ticket '{ticket.subject}' was updated by the Agriculture Officer: {response_text[:120]}...",
+        link_url=url_for('requests.index', tab='admin_requests')
+    )
+    AuditService.log("ADMIN_TICKET_RESPONDED", g.user.id, 'AdminTicket', ticket.id, f"Responded to ticket #{ticket.ticket_code} - Status: {status}")
+    db.session.commit()
+    flash(f"Response logged for ticket #{ticket.ticket_code}.", 'success')
+    return redirect(url_for('admin.requests_list'))
+
+
+@admin_bp.route('/requests/cold-storage/<int:booking_id>/update-status', methods=['POST'])
+@admin_required
+def update_cold_storage_status(booking_id):
+    booking = ColdStorageBooking.query.get_or_404(booking_id)
+    new_status = request.form.get('status', 'confirmed')
+    booking.status = new_status
+    db.session.commit()
+    flash(f"Cold Storage request #{booking.id} updated to {new_status}.", 'success')
+    return redirect(url_for('admin.requests_list'))
+
+
+@admin_bp.route('/requests/transport/<int:booking_id>/update-status', methods=['POST'])
+@admin_required
+def update_transport_status(booking_id):
+    booking = TransportBooking.query.get_or_404(booking_id)
+    new_status = request.form.get('status', 'driver_assigned')
+    booking.status = new_status
+    db.session.commit()
+    flash(f"Transport booking #{booking.booking_code} updated to {new_status}.", 'success')
+    return redirect(url_for('admin.requests_list'))
+

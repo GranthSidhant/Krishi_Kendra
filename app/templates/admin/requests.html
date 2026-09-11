@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Service Requests & Support Tickets - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1"><i class="fas fa-tasks text-primary me-2"></i> All User Service Requests & Admin Support Tickets</h3>
+      <p class="text-muted small mb-0">Review and triage Cold Storage space requests, Transport vehicle bookings, and platform Grievance tickets.</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i> Back to Admin Dashboard
+    </a>
+  </div>
+
+  <!-- Tabs for Admin Triage -->
+  <ul class="nav nav-pills mb-4" id="adminReqTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active fw-bold" id="adm-tickets-tab" data-bs-toggle="pill" data-bs-target="#admTicketsTab">
+        <i class="fas fa-shield-alt me-1"></i> Support Tickets ({{ tickets|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold" id="adm-cold-tab" data-bs-toggle="pill" data-bs-target="#admColdTab">
+        <i class="fas fa-snowflake me-1"></i> Cold Storage Bookings ({{ cold_bookings|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold" id="adm-transport-tab" data-bs-toggle="pill" data-bs-target="#admTransportTab">
+        <i class="fas fa-truck me-1"></i> Transport Bookings ({{ transport_bookings|length }})
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="adminReqTabsContent">
+
+    <!-- TAB 1: SUPPORT TICKETS -->
+    <div class="tab-pane fade show active" id="admTicketsTab">
+      <div class="k-card p-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-ticket-alt text-warning me-2"></i> Platform Grievances & Helpdesk Inquiries</h5>
+
+        {% if tickets %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th>Ticket</th>
+                  <th>User</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Subject & Details</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                  <th class="text-end">Respond</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in tickets %}
+                <tr>
+                  <td><strong>#{{ t.ticket_code }}</strong></td>
+                  <td>
+                    <strong>{{ t.user.name }}</strong>
+                    <div class="text-muted">{{ t.user.role.capitalize() }} ({{ t.user.custom_id }})</div>
+                  </td>
+                  <td><span class="badge bg-light text-dark border">{{ t.category }}</span></td>
+                  <td>
+                    <span class="badge {% if t.priority == 'urgent' %}bg-danger{% elif t.priority == 'high' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                      {{ t.priority.upper() }}
+                    </span>
+                  </td>
+                  <td style="max-width: 320px;">
+                    <div class="fw-bold">{{ t.subject }}</div>
+                    <div class="text-muted text-truncate">{{ t.description }}</div>
+                    {% if t.admin_response %}
+                      <div class="text-success small mt-1"><i class="fas fa-check me-1"></i> <strong>Officer:</strong> {{ t.admin_response }}</div>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge {% if t.status == 'open' %}bg-warning text-dark{% elif t.status == 'in_progress' %}bg-primary{% elif t.status == 'resolved' %}bg-success{% else %}bg-secondary{% endif %}">
+                      {{ t.status.replace('_', ' ').capitalize() }}
+                    </span>
+                  </td>
+                  <td>{{ t.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#respondModal{{ t.id }}">
+                      <i class="fas fa-reply me-1"></i> Reply
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Respond Modal -->
+                <div class="modal fade" id="respondModal{{ t.id }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content shadow">
+                      <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold"><i class="fas fa-reply me-2"></i> Respond to Ticket #{{ t.ticket_code }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form method="POST" action="{{ url_for('admin.respond_ticket', ticket_id=t.id) }}">
+                        <div class="modal-body p-4">
+                          <div class="p-2 bg-light rounded mb-3 small">
+                            <strong>User:</strong> {{ t.user.name }} ({{ t.user.phone }})<br>
+                            <strong>Category:</strong> {{ t.category }}<br>
+                            <strong>Subject:</strong> {{ t.subject }}<br>
+                            <strong>Details:</strong> {{ t.description }}
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Admin Response / Decision</label>
+                            <textarea name="admin_response" class="form-control" rows="4" placeholder="Enter official officer decision, verification approval status, or guidance..." required>{{ t.admin_response }}</textarea>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Update Ticket Status</label>
+                            <select name="status" class="form-select">
+                              <option value="resolved" {% if t.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                              <option value="in_progress" {% if t.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                              <option value="closed" {% if t.status == 'closed' %}selected{% endif %}>Closed</option>
+                              <option value="open" {% if t.status == 'open' %}selected{% endif %}>Open</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-primary fw-bold">Save & Send Notification</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
+            <h5>All clear! No pending support tickets.</h5>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TAB 2: COLD STORAGE BOOKINGS -->
+    <div class="tab-pane fade" id="admColdTab">
+      <div class="k-card p-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-snowflake text-info me-2"></i> All Cold Storage Space Allocations</h5>
+        
+        {% if cold_bookings %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Farmer</th>
+                  <th>Facility</th>
+                  <th>Produce</th>
+                  <th>Quantity</th>
+                  <th>Duration</th>
+                  <th>Est Cost</th>
+                  <th>Status</th>
+                  <th class="text-end">Update</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in cold_bookings %}
+                <tr>
+                  <td><strong>#CS-{{ b.id }}</strong></td>
+                  <td><strong>{{ b.farmer.name }}</strong> ({{ b.farmer.custom_id }})</td>
+                  <td>{{ b.facility.name }} ({{ b.facility.district }})</td>
+                  <td>{{ b.produce_name }}</td>
+                  <td>{{ b.quantity_quintals }} Quintals</td>
+                  <td>{{ b.duration_months }} Months</td>
+                  <td class="fw-bold text-success">₹{{ b.estimated_total_cost }}</td>
+                  <td>
+                    <form method="POST" action="{{ url_for('admin.update_cold_storage_status', booking_id=b.id) }}" class="d-flex gap-1">
+                      <select name="status" class="form-select form-select-sm">
+                        <option value="requested" {% if b.status == 'requested' %}selected{% endif %}>Requested</option>
+                        <option value="confirmed" {% if b.status == 'confirmed' %}selected{% endif %}>Space Allocated</option>
+                        <option value="in_storage" {% if b.status == 'in_storage' %}selected{% endif %}>In Storage</option>
+                        <option value="released" {% if b.status == 'released' %}selected{% endif %}>Released</option>
+                        <option value="cancelled" {% if b.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                      </select>
+                      <button type="submit" class="btn btn-sm btn-outline-info">Save</button>
+                    </form>
+                  </td>
+                  <td class="text-end">
+                    <a href="tel:{{ b.facility.contact_phone }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-phone"></i></a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted text-center py-4">No cold storage bookings found.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TAB 3: TRANSPORT BOOKINGS -->
+    <div class="tab-pane fade" id="admTransportTab">
+      <div class="k-card p-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-truck text-primary me-2"></i> All Vehicle Transport Bookings</h5>
+        
+        {% if transport_bookings %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th>Code</th>
+                  <th>User</th>
+                  <th>Route</th>
+                  <th>Produce & Qty</th>
+                  <th>Vehicle</th>
+                  <th>Driver & Phone</th>
+                  <th>Freight</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in transport_bookings %}
+                <tr>
+                  <td><strong>#{{ t.booking_code }}</strong></td>
+                  <td><strong>{{ t.user.name }}</strong> ({{ t.user.role.capitalize() }})</td>
+                  <td style="max-width: 200px;" class="text-truncate">
+                    <strong>From:</strong> {{ t.pickup_address }}<br>
+                    <strong>To:</strong> {{ t.drop_address }}
+                  </td>
+                  <td>{{ t.produce_type }} ({{ t.quantity_quintals }} Qtl)</td>
+                  <td>{{ t.vehicle_type }}</td>
+                  <td>{{ t.driver_name }} ({{ t.driver_phone }})</td>
+                  <td class="fw-bold text-success">₹{{ t.estimated_cost }}</td>
+                  <td>
+                    <form method="POST" action="{{ url_for('admin.update_transport_status', booking_id=t.id) }}" class="d-flex gap-1">
+                      <select name="status" class="form-select form-select-sm">
+                        <option value="requested" {% if t.status == 'requested' %}selected{% endif %}>Requested</option>
+                        <option value="driver_assigned" {% if t.status == 'driver_assigned' %}selected{% endif %}>Driver Assigned</option>
+                        <option value="en_route" {% if t.status == 'en_route' %}selected{% endif %}>En Route</option>
+                        <option value="completed" {% if t.status == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="cancelled" {% if t.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                      </select>
+                      <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted text-center py-4">No transport bookings found.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

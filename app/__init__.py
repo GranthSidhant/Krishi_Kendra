@@ -57,6 +57,7 @@ def create_app(config_class=Config):
     from app.routes.marketplace import marketplace_bp
     from app.routes.schemes import schemes_bp
     from app.routes.api import api_bp
+    from app.routes.requests import requests_bp
 
     flask_app.register_blueprint(main_bp)
     flask_app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -69,6 +70,7 @@ def create_app(config_class=Config):
     flask_app.register_blueprint(marketplace_bp, url_prefix='/marketplace')
     flask_app.register_blueprint(schemes_bp, url_prefix='/schemes')
     flask_app.register_blueprint(api_bp, url_prefix='/api')
+    flask_app.register_blueprint(requests_bp, url_prefix='/requests')
 
     with flask_app.app_context():
         try:

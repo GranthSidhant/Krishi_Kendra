@@ -491,3 +491,57 @@ class Notification(db.Model):
     link_url = db.Column(db.String(255), default='#')
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class TransportBooking(db.Model):
+    __tablename__ = 'transport_bookings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    booking_code = db.Column(db.String(32), unique=True, nullable=False, index=True) # e.g. TRP-2026-901
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id', ondelete='SET NULL'), nullable=True)
+    
+    pickup_address = db.Column(db.String(255), nullable=False)
+    drop_address = db.Column(db.String(255), nullable=False)
+    produce_type = db.Column(db.String(100), default='Farm Produce')
+    quantity_quintals = db.Column(db.Float, default=10.0)
+    vehicle_type = db.Column(db.String(50), default='Mini Truck (Tata Ace)')
+    scheduled_datetime = db.Column(db.String(50), default='')
+    
+    transport_partner = db.Column(db.String(100), default='Gramin Express Logistics')
+    driver_name = db.Column(db.String(80), default='Ramesh Shinde')
+    driver_phone = db.Column(db.String(20), default='+91 98231 44556')
+    vehicle_number = db.Column(db.String(30), default='MH-15-EG-4402')
+    estimated_cost = db.Column(db.Float, default=1250.0)
+    
+    status = db.Column(db.String(30), default='requested') # requested, driver_assigned, en_route, completed, cancelled
+    tracking_notes = db.Column(db.Text, default='Driver will contact before pickup.')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', foreign_keys=[user_id], backref='transport_bookings')
+    order = db.relationship('Order', foreign_keys=[order_id])
+
+
+class AdminTicket(db.Model):
+    __tablename__ = 'admin_tickets'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_code = db.Column(db.String(32), unique=True, nullable=False, index=True) # e.g. TKT-2026-101
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    
+    category = db.Column(db.String(80), nullable=False) # 'KYC & Verification', 'Payment & Escrow Dispute', 'Govt Scheme & Subsidy Help', 'Quality & Mandi Lab Arbitration', 'Logistics Issue', 'Account & Profile Support', 'General Query'
+    subject = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    priority = db.Column(db.String(20), default='medium') # low, medium, high, urgent
+    
+    status = db.Column(db.String(30), default='open') # open, in_progress, resolved, closed
+    admin_response = db.Column(db.Text, default='')
+    resolved_by_admin_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship('User', foreign_keys=[user_id], backref='admin_tickets')
+    resolved_by = db.relationship('User', foreign_keys=[resolved_by_admin_id])
+
