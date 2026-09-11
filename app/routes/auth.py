@@ -378,7 +378,32 @@ def profile():
                     user.verification_status = 'pending'
                     user.is_verified = False
 
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception as e_commit:
+                db.session.rollback()
+                err_str = str(e_commit)
+                # If database column is still VARCHAR(255) in PostgreSQL, automatically alter it to TEXT and retry
+                if 'StringDataRightTruncation' in err_str or 'value too long' in err_str:
+                    try:
+                        with db.engine.connect() as conn:
+                            conn.execute(db.text("ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;"))
+                            conn.execute(db.text("ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;"))
+                            conn.commit()
+                        # Re-apply attributes and commit
+                        user = db.session.get(User, g.user.id)
+                        if avatar_choice:
+                            user.profile_image = avatar_choice
+                        elif 'profile_image_file' in request.files and user.profile_image:
+                            pass # already set
+                        db.session.commit()
+                    except Exception as e_retry:
+                        db.session.rollback()
+                        current_app.logger.error(f"Failed retry after schema upgrade: {e_retry}")
+                        raise e_commit
+                else:
+                    raise e_commit
+
             flash('Profile and Avatar updated successfully!', 'success')
             return redirect(url_for('auth.profile'))
         except Exception as e:

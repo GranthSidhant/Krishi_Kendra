@@ -75,6 +75,15 @@ def create_app(config_class=Config):
     with flask_app.app_context():
         try:
             db.create_all()
+            try:
+                with db.engine.connect() as conn:
+                    if db.engine.name == 'postgresql':
+                        conn.execute(db.text("ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;"))
+                        conn.execute(db.text("ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;"))
+                        conn.execute(db.text("ALTER TABLE messages ALTER COLUMN metadata_json TYPE TEXT;"))
+                        conn.commit()
+            except Exception as e_mig:
+                flask_app.logger.warning(f"Schema migration note: {e_mig}")
         except Exception as e:
             flask_app.logger.error(f"Error initializing database tables: {e}")
 
