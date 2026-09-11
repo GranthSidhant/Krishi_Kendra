@@ -3,13 +3,22 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
+IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'krishi-kendra-sih2026-super-secret-key-xyz987')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'instance' / 'krishi_kendra.db'}")
+    
+    # In Vercel serverless, the filesystem is read-only except /tmp
+    if IS_VERCEL:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{Path('/tmp') / 'krishi_kendra.db'}")
+        UPLOAD_FOLDER = Path('/tmp') / 'uploads'
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'instance' / 'krishi_kendra.db'}")
+        UPLOAD_FOLDER = BASE_DIR / 'app' / 'static' / 'uploads'
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Uploads
-    UPLOAD_FOLDER = BASE_DIR / 'app' / 'static' / 'uploads'
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     

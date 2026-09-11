@@ -5,6 +5,14 @@ from seed.sample_data import seed_all_sample_data
 
 app = create_app()
 
+# Auto-seed database if empty (ensures demo data is available on Vercel/production)
+with app.app_context():
+    try:
+        if User.query.count() == 0:
+            seed_all_sample_data(app)
+    except Exception as e:
+        print(f"Auto-seed check note: {e}")
+
 @app.cli.command("seed")
 def seed_command():
     """Seeds the database with sample demonstration data."""
@@ -12,11 +20,6 @@ def seed_command():
     print("Database seeded successfully via CLI.")
 
 if __name__ == '__main__':
-    # Check if DB is empty, auto-seed for instant demo readiness
-    with app.app_context():
-        if User.query.count() == 0:
-            print("Empty database detected. Auto-seeding sample data for Krishi Kendra...")
-            seed_all_sample_data(app)
 
     if len(sys.argv) > 1 and sys.argv[1] == 'seed':
         with app.app_context():
