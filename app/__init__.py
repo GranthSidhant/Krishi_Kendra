@@ -4,26 +4,26 @@ from config import Config
 from app.extensions import db, jwt, cors
 
 def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
+    flask_app = Flask(__name__)
+    flask_app.config.from_object(config_class)
 
     # Ensure uploads and instance directories exist
     try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(flask_app.config['UPLOAD_FOLDER'], exist_ok=True)
         if not os.environ.get('VERCEL'):
-            os.makedirs(os.path.join(app.root_path, '..', 'instance'), exist_ok=True)
+            os.makedirs(os.path.join(flask_app.root_path, '..', 'instance'), exist_ok=True)
     except Exception as e:
-        app.logger.warning(f"Directory creation note: {e}")
+        flask_app.logger.warning(f"Directory creation note: {e}")
 
     # Initialize extensions
-    db.init_app(app)
-    jwt.init_app(app)
-    cors.init_app(app)
+    db.init_app(flask_app)
+    jwt.init_app(flask_app)
+    cors.init_app(flask_app)
 
     # User loader & context processor
     from app.models import User, Notification
 
-    @app.before_request
+    @flask_app.before_request
     def load_logged_in_user():
         user_id = session.get('user_id')
         if user_id is None:
@@ -31,18 +31,18 @@ def create_app(config_class=Config):
         else:
             g.user = db.session.get(User, user_id)
 
-    @app.context_processor
+    @flask_app.context_processor
     def inject_globals():
-        current_lang = session.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
+        current_lang = session.get('language', flask_app.config.get('DEFAULT_LANGUAGE', 'en'))
         unread_notifs = 0
         if g.user:
             unread_notifs = Notification.query.filter_by(user_id=g.user.id, is_read=False).count()
         return {
             'current_user': g.user,
             'current_lang': current_lang,
-            'available_languages': app.config.get('LANGUAGES', {}),
+            'available_languages': flask_app.config.get('LANGUAGES', {}),
             'unread_notifications_count': unread_notifs,
-            'dev_otp_mode': app.config.get('DEV_OTP_MODE', True)
+            'dev_otp_mode': flask_app.config.get('DEV_OTP_MODE', True)
         }
 
     # Register Blueprints
@@ -58,19 +58,22 @@ def create_app(config_class=Config):
     from app.routes.schemes import schemes_bp
     from app.routes.api import api_bp
 
-    app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(farmer_bp, url_prefix='/farmer')
-    app.register_blueprint(buyer_bp, url_prefix='/buyer')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(chat_bp, url_prefix='/chat')
-    app.register_blueprint(orders_bp, url_prefix='/orders')
-    app.register_blueprint(cold_storage_bp, url_prefix='/cold-storage')
-    app.register_blueprint(marketplace_bp, url_prefix='/marketplace')
-    app.register_blueprint(schemes_bp, url_prefix='/schemes')
-    app.register_blueprint(api_bp, url_prefix='/api')
+    flask_app.register_blueprint(main_bp)
+    flask_app.register_blueprint(auth_bp, url_prefix='/auth')
+    flask_app.register_blueprint(farmer_bp, url_prefix='/farmer')
+    flask_app.register_blueprint(buyer_bp, url_prefix='/buyer')
+    flask_app.register_blueprint(admin_bp, url_prefix='/admin')
+    flask_app.register_blueprint(chat_bp, url_prefix='/chat')
+    flask_app.register_blueprint(orders_bp, url_prefix='/orders')
+    flask_app.register_blueprint(cold_storage_bp, url_prefix='/cold-storage')
+    flask_app.register_blueprint(marketplace_bp, url_prefix='/marketplace')
+    flask_app.register_blueprint(schemes_bp, url_prefix='/schemes')
+    flask_app.register_blueprint(api_bp, url_prefix='/api')
 
-    with app.app_context():
-        db.create_all()
+    with flask_app.app_context():
+        try:
+            db.create_all()
+        except Exception as e:
+            flask_app.logger.error(f"Error initializing database tables: {e}")
 
-    return app
+    return flask_app

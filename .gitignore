@@ -1,0 +1,21 @@
+# Environment variables
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local SQLite databases & instances
+instance/
+*.db
+*.sqlite3
+
+# Uploaded static files
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+!app/static/uploads/default_avatar.png
+
+# Vercel
+.vercel

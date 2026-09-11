@@ -128,51 +128,57 @@ def verify_otp():
         phone = reg_data['phone']
 
         if OTPService.verify_otp(phone, entered_otp):
-            # Create user and profile
-            user = User(
-                custom_id=reg_data['custom_id'],
-                name=reg_data['name'],
-                phone=reg_data['phone'],
-                role=reg_data['role'],
-                preferred_language=reg_data['preferred_language'],
-                gov_id_type=reg_data['gov_id_type'] if reg_data['gov_id_type'] else None,
-                gov_id_masked=reg_data['gov_id_masked'],
-                verification_status=reg_data['verification_status'],
-                is_verified=False
-            )
-            user.set_password(reg_data['password'])
-            db.session.add(user)
-            db.session.flush()
-
-            if user.role == 'farmer':
-                farmer_profile = FarmerProfile(
-                    user_id=user.id,
-                    state=reg_data['state'],
-                    district=reg_data['district'],
-                    crops_grown='Wheat, Onion, Tomato',
-                    farm_location_name=f"{user.name}'s Farm"
+            try:
+                # Create user and profile
+                user = User(
+                    custom_id=reg_data.get('custom_id'),
+                    name=reg_data.get('name'),
+                    phone=reg_data.get('phone'),
+                    role=reg_data.get('role', 'farmer'),
+                    preferred_language=reg_data.get('preferred_language', 'en'),
+                    gov_id_type=reg_data.get('gov_id_type') if reg_data.get('gov_id_type') else None,
+                    gov_id_masked=reg_data.get('gov_id_masked'),
+                    verification_status=reg_data.get('verification_status', 'none'),
+                    is_verified=False
                 )
-                db.session.add(farmer_profile)
-            elif user.role == 'buyer':
-                buyer_profile = BuyerProfile(
-                    user_id=user.id,
-                    business_name=f"{user.name} Trading",
-                    state=reg_data['state'],
-                    district=reg_data['district']
-                )
-                db.session.add(buyer_profile)
+                user.set_password(reg_data.get('password', ''))
+                db.session.add(user)
+                db.session.flush()
 
-            db.session.commit()
-            OTPService.clear_otp(phone)
-            session.pop('reg_data', None)
-            
-            # Auto log-in
-            session['user_id'] = user.id
-            session['role'] = user.role
-            session['language'] = user.preferred_language
-            
-            flash(f'Welcome to Krishi Kendra, {user.name}! Your Unique ID is {user.custom_id}.', 'success')
-            return redirect_user_dashboard(user)
+                if user.role == 'farmer':
+                    farmer_profile = FarmerProfile(
+                        user_id=user.id,
+                        state=reg_data.get('state', 'Maharashtra'),
+                        district=reg_data.get('district', 'Nashik'),
+                        crops_grown='Wheat, Onion, Tomato',
+                        farm_location_name=f"{user.name}'s Farm"
+                    )
+                    db.session.add(farmer_profile)
+                elif user.role == 'buyer':
+                    buyer_profile = BuyerProfile(
+                        user_id=user.id,
+                        business_name=f"{user.name} Trading",
+                        state=reg_data.get('state', 'Maharashtra'),
+                        district=reg_data.get('district', 'Nashik')
+                    )
+                    db.session.add(buyer_profile)
+
+                db.session.commit()
+                OTPService.clear_otp(phone)
+                session.pop('reg_data', None)
+                
+                # Auto log-in
+                session['user_id'] = user.id
+                session['role'] = user.role
+                session['language'] = user.preferred_language
+                
+                flash(f'Welcome to Krishi Kendra, {user.name}! Your Unique ID is {user.custom_id}.', 'success')
+                return redirect_user_dashboard(user)
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Registration DB error: {e}")
+                flash(f'Registration could not be completed. Please try again: {str(e)}', 'danger')
+                return redirect(url_for('auth.register'))
         else:
             flash('Invalid OTP. Please enter the correct code (e.g. 123456).', 'danger')
 
@@ -188,24 +194,29 @@ def login():
         login_id = request.form.get('login_id', '').strip() # Can be phone or custom ID
         password = request.form.get('password', '')
 
-        user = User.query.filter((User.phone == login_id) | (User.custom_id == login_id)).first()
+        try:
+            user = User.query.filter((User.phone == login_id) | (User.custom_id == login_id)).first()
 
-        if user and user.check_password(password):
-            if not user.is_active:
-                flash('Your account has been suspended by the administrator.', 'danger')
-                return render_template('auth/login.html')
+            if user and user.check_password(password):
+                if not user.is_active:
+                    flash('Your account has been suspended by the administrator.', 'danger')
+                    return render_template('auth/login.html')
+                    
+                session['user_id'] = user.id
+                session['role'] = user.role
+                session['language'] = user.preferred_language
+                flash(f'Logged in successfully as {user.name} ({user.role.capitalize()}).', 'success')
                 
-            session['user_id'] = user.id
-            session['role'] = user.role
-            session['language'] = user.preferred_language
-            flash(f'Logged in successfully as {user.name} ({user.role.capitalize()}).', 'success')
-            
-            next_page = request.args.get('next')
-            if next_page:
-                return redirect(next_page)
-            return redirect_user_dashboard(user)
-        else:
-            flash('Invalid Phone / ID or Password. Please try again.', 'danger')
+                next_page = request.args.get('next')
+                if next_page:
+                    return redirect(next_page)
+                return redirect_user_dashboard(user)
+            else:
+                flash('Invalid Phone / ID or Password. Please try again.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Login DB error: {e}")
+            flash('A database connection error occurred. Please try again.', 'danger')
 
     return render_template('auth/login.html')
 
