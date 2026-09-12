@@ -109,7 +109,7 @@ def create_app(config_class=Config):
                         except Exception:
                             pass
 
-                    # General column migrations for requirements, transport_bookings, etc.
+                    # General column migrations for requirements, transport_bookings, orders, deliveries, etc.
                     migration_sqls = [
                         "ALTER TABLE requirements ADD COLUMN is_pre_order BOOLEAN DEFAULT 0;",
                         "ALTER TABLE requirements ADD COLUMN target_harvest_timeline VARCHAR(100);",
@@ -118,6 +118,22 @@ def create_app(config_class=Config):
                         "ALTER TABLE transport_bookings ADD COLUMN pool_code VARCHAR(50);",
                         "ALTER TABLE transport_bookings ADD COLUMN pickup_latitude FLOAT;",
                         "ALTER TABLE transport_bookings ADD COLUMN pickup_longitude FLOAT;",
+                        "ALTER TABLE orders ADD COLUMN escrow_txn_id VARCHAR(50);",
+                        "ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50) DEFAULT 'UPI_ESCROW';",
+                        "ALTER TABLE orders ADD COLUMN paid_at TIMESTAMP;",
+                        "ALTER TABLE orders ADD COLUMN payout_txn_id VARCHAR(50);",
+                        "ALTER TABLE orders ADD COLUMN payout_released_at TIMESTAMP;",
+                        "ALTER TABLE orders ADD COLUMN inventory_id INTEGER;",
+                        "ALTER TABLE orders ADD COLUMN buyer_rating INTEGER;",
+                        "ALTER TABLE orders ADD COLUMN buyer_review TEXT;",
+                        "ALTER TABLE orders ADD COLUMN farmer_rating INTEGER;",
+                        "ALTER TABLE orders ADD COLUMN farmer_review TEXT;",
+                        "ALTER TABLE deliveries ADD COLUMN pickup_otp VARCHAR(10);",
+                        "ALTER TABLE deliveries ADD COLUMN delivery_otp VARCHAR(10);",
+                        "ALTER TABLE deliveries ADD COLUMN pickup_verified_at TIMESTAMP;",
+                        "ALTER TABLE deliveries ADD COLUMN delivery_verified_at TIMESTAMP;",
+                        "ALTER TABLE deliveries ADD COLUMN vehicle_category VARCHAR(30) DEFAULT 'mini_truck';",
+                        "ALTER TABLE deliveries ADD COLUMN distance_km FLOAT DEFAULT 0.0;",
                     ]
                     for stmt in migration_sqls:
                         try:
