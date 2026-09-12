@@ -417,6 +417,19 @@ def test_live_heartbeat_and_chat_badges(app, client):
     assert res_all.get_json()['unread_notifications'] == 0
 
 
+def test_favicon_route(client):
+    """Test that favicon routes return valid vector svg asset"""
+    res_ico = client.get('/favicon.ico')
+    assert res_ico.status_code == 200
+    assert 'image/svg+xml' in res_ico.content_type
+    assert b'<svg' in res_ico.data
+
+    res_svg = client.get('/static/favicon.svg')
+    assert res_svg.status_code == 200
+    assert b'<svg' in res_svg.data
+
+
+
 
 
 

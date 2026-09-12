@@ -1,8 +1,17 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, g, flash, jsonify
+import os
+from flask import Blueprint, render_template, request, session, redirect, url_for, g, flash, jsonify, send_from_directory, current_app
 from app.models import Product, MandiRate, ColdStorage, GovernmentScheme, User, FarmerProfile, BuyerProfile, Notification
 from app.extensions import db
 
 main_bp = Blueprint('main', __name__)
+
+@main_bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(current_app.root_path, 'static'),
+        'favicon.svg',
+        mimetype='image/svg+xml'
+    )
 
 @main_bp.route('/')
 def index():
