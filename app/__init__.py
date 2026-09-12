@@ -105,6 +105,8 @@ def create_app(config_class=Config):
                             ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;
                             ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;
                             ALTER TABLE messages ALTER COLUMN metadata_json TYPE TEXT;
+                            ALTER TABLE inventories ALTER COLUMN quality_grade TYPE VARCHAR(100);
+                            ALTER TABLE requirements ALTER COLUMN required_quality TYPE VARCHAR(100);
                             
                             ALTER TABLE requirements 
                                 ADD COLUMN IF NOT EXISTS is_pre_order BOOLEAN DEFAULT FALSE,
