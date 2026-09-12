@@ -112,6 +112,8 @@
                   <i class="fas fa-tools me-1"></i> <span>Services & Tools</span>
                 </a>
                 <ul class="dropdown-menu shadow">
+                  <li><a class="dropdown-item" href="{{ url_for('main.market_impact') }}"><i class="fas fa-balance-scale me-2 text-success"></i> <span>Market Comparison & Impact</span></a></li>
+                  <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.crop_doctor') }}"><i class="fas fa-microscope me-2 text-muted"></i> <span>AI Crop Doctor</span></a></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-2 text-muted"></i> <span>Buyer Demands (Pre-Orders)</span></a></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.profit_calculator') }}"><i class="fas fa-calculator me-2 text-muted"></i> <span>Crop Profit Calculator</span></a></li>
@@ -143,6 +145,8 @@
                   <i class="fas fa-layer-group me-1"></i> <span>Explore</span>
                 </a>
                 <ul class="dropdown-menu shadow">
+                  <li><a class="dropdown-item" href="{{ url_for('main.market_impact') }}"><i class="fas fa-balance-scale me-2 text-primary"></i> <span>Market Comparison & Impact</span></a></li>
+                  <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-2 text-muted"></i> <span data-i18n="nav_cold_storage">Cold Storage Network</span></a></li>
                   <li><a class="dropdown-item" href="{{ url_for('marketplace.index') }}"><i class="fas fa-store me-2 text-muted"></i> <span data-i18n="nav_marketplace">Farm Supplies</span></a></li>
                   <li><a class="dropdown-item" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-2 text-muted"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a></li>
@@ -157,11 +161,17 @@
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('admin.moderation_list') }}"><i class="fas fa-flag me-1"></i> Moderation Hub</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'main.market_impact' %}active{% endif %}" href="{{ url_for('main.market_impact') }}"><i class="fas fa-balance-scale me-1 text-success"></i> <span>Impact & Comparison</span></a>
+              </li>
             {% endif %}
 
           {% else %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('buyer.browse') }}"><i class="fas fa-search me-1"></i> <span>Browse Produce</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'main.market_impact' %}active{% endif %}" href="{{ url_for('main.market_impact') }}"><i class="fas fa-balance-scale me-1 text-success"></i> <span class="fw-bold">Market Impact & Comparison</span></a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-1"></i> <span data-i18n="nav_cold_storage">Cold Storage</span></a>
