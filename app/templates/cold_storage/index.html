@@ -42,9 +42,9 @@
             <span class="badge bg-info text-white">Verified</span>
           </div>
 
-          <small class="text-muted d-block mb-3">
-            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ s.address }}, {{ s.district }}, {{ s.state }}
-          </small>
+          <a href="javascript:void(0);" class="text-decoration-none text-muted d-inline-block mb-3 hover-primary" onclick="openLocationMap({ title: '{{ s.name|replace("'", "\\'") }}', subtitle: 'Cold Storage ({{ s.available_capacity_mt }}/{{ s.total_capacity_mt }} MT Available)', address: '{{ s.address|replace("'", "\\'") }}, {{ s.district|replace("'", "\\'") }}, {{ s.state|replace("'", "\\'") }}', phone: '{{ s.contact_phone }}', tag: '❄️ Cold Storage Facility' })">
+            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ s.address }}, {{ s.district }}, {{ s.state }} <i class="fas fa-map text-info small ms-1" title="Click to view interactive map"></i>
+          </a>
 
           <div class="p-3 bg-light rounded-3 mb-3 small">
             <div class="d-flex justify-content-between mb-1">
@@ -74,6 +74,9 @@
           <a href="{{ url_for('cold_storage.book', storage_id=s.id) }}" class="btn btn-info text-white fw-bold flex-grow-1">
             <i class="fas fa-calendar-check me-1"></i> Request Storage
           </a>
+          <button type="button" class="btn btn-outline-info" title="View Map & Directions" onclick="openLocationMap({ title: '{{ s.name|replace("'", "\\'") }}', subtitle: 'Cold Storage Facility ({{ s.available_capacity_mt }} MT Free)', address: '{{ s.address|replace("'", "\\'") }}, {{ s.district|replace("'", "\\'") }}, {{ s.state|replace("'", "\\'") }}', phone: '{{ s.contact_phone }}', tag: '❄️ Cold Storage Warehouse' })">
+            <i class="fas fa-map-marked-alt"></i>
+          </button>
           <a href="tel:{{ s.contact_phone }}" class="btn btn-outline-secondary" title="Call Operator">
             <i class="fas fa-phone"></i>
           </a>
@@ -97,6 +100,7 @@
               <th>Duration</th>
               <th>Est. Cost</th>
               <th>Status</th>
+              <th>Location</th>
             </tr>
           </thead>
           <tbody>
@@ -111,6 +115,11 @@
                 <span class="badge {% if b.status == 'approved' %}bg-success{% else %}bg-warning text-dark{% endif %}">
                   {{ b.status.capitalize() }}
                 </span>
+              </td>
+              <td>
+                <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-2" onclick="openLocationMap({ title: '{{ b.facility.name|replace("'", "\\'") }}', subtitle: 'Booked Cold Storage Facility', address: '{{ b.facility.address|replace("'", "\\'") }}, {{ b.facility.district|replace("'", "\\'") }}, {{ b.facility.state|replace("'", "\\'") }}', phone: '{{ b.facility.contact_phone }}', tag: '❄️ Cold Storage' })">
+                  <i class="fas fa-map-marker-alt me-1"></i> Map
+                </button>
               </td>
             </tr>
             {% endfor %}

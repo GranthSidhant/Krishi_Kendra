@@ -430,6 +430,62 @@
     </div>
   </div>
 
+  <!-- Universal Interactive Location & Navigation Map Modal -->
+  <div class="modal fade" id="locationMapModal" tabindex="-1" aria-labelledby="locationMapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white py-3" style="background: linear-gradient(135deg, #1b5e20 0%, #0d47a1 100%) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-white text-dark p-2 rounded-circle fs-6"><i class="fas fa-map-marked-alt text-success"></i></span>
+            <div>
+              <h6 class="modal-title fw-bold mb-0" id="locationMapModalLabel">Location & Route Navigation</h6>
+              <small class="text-white-50" id="locationMapModalSubtitle">Interactive APMC / Facility / Origin Map Preview</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-0">
+          <!-- Info Bar -->
+          <div class="p-3 bg-light border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+            <div>
+              <div class="fw-bold text-dark fs-6" id="locationMapTitle">Selected Location</div>
+              <div class="text-muted small" id="locationMapAddress"><i class="fas fa-map-marker-alt text-danger me-1"></i> Address</div>
+            </div>
+            <div id="locationMapExtraBadge" class="badge bg-success-subtle text-success border border-success px-2.5 py-1.5 fw-semibold small">
+              Verified Hub
+            </div>
+          </div>
+
+          <!-- Leaflet Map Container -->
+          <div id="locationMapContainer" style="height: 380px; width: 100%; position: relative; background: #e9ecef; z-index: 1;">
+            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+              <i class="fas fa-spinner fa-spin fa-2x me-2"></i> Loading map...
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light d-flex flex-wrap justify-content-between align-items-center gap-2 py-2.5 px-3">
+          <div class="d-flex align-items-center gap-2">
+            <a id="locationMapCallBtn" href="#" class="btn btn-sm btn-outline-success fw-bold d-none">
+              <i class="fas fa-phone-alt me-1"></i> <span id="locationMapCallLabel">Call</span>
+            </a>
+            <span class="text-muted small d-none d-md-inline"><i class="fas fa-info-circle me-1"></i> OpenStreetMap + GPS Directions</span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <a id="locationMapAppleBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-dark fw-semibold">
+              <i class="fas fa-compass me-1"></i> Directions
+            </a>
+            <a id="locationMapGmapsBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success fw-bold px-3 shadow-xs">
+              <i class="fas fa-location-arrow me-1"></i> Open Live GPS in Google Maps
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Leaflet Map JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Bootstrap 5 Bundle JS -->
@@ -439,8 +495,168 @@
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='js/voice_assistant.js') }}"></script>
 
-  <!-- Global Weather Widget & Report Script -->
+  <!-- Global Weather Widget, Report & Location Map Script -->
   <script>
+  // 1. Universal Interactive Map Modal Helper (Leaflet + OSM + Google/Apple GPS Navigation)
+  let globalLeafletMapInstance = null;
+  let globalLeafletMarker = null;
+
+  const KNOWN_DISTRICT_COORDS = {
+    'nashik': [19.9975, 73.7898],
+    'lasalgaon': [20.1472, 74.2257],
+    'pimpalgaon': [20.1691, 73.9856],
+    'pune': [18.5204, 73.8567],
+    'nagpur': [21.1458, 79.0882],
+    'mumbai': [19.0760, 72.8777],
+    'navi mumbai': [19.0330, 73.0297],
+    'aurangabad': [19.8762, 75.3433],
+    'chhatrapati sambhajinagar': [19.8762, 75.3433],
+    'solapur': [17.6599, 75.9064],
+    'kolhapur': [16.7050, 74.2433],
+    'ahmednagar': [19.0948, 74.7480],
+    'delhi': [28.7041, 77.1025],
+    'jaipur': [26.9124, 75.7873],
+    'ludhiana': [30.9010, 75.8573],
+    'karnal': [29.6857, 76.9905],
+    'bhopal': [23.2599, 77.4126],
+    'indore': [22.7196, 75.8577],
+    'lucknow': [26.8467, 80.9462],
+    'varanasi': [25.3176, 82.9739],
+    'patna': [25.5941, 85.1376],
+    'ahmedabad': [23.0225, 72.5714],
+    'surat': [21.1702, 72.8311],
+    'rajkot': [22.3039, 70.8022],
+    'bengaluru': [12.9716, 77.5946],
+    'bangalore': [12.9716, 77.5946],
+    'chennai': [13.0827, 80.2707],
+    'hyderabad': [17.3850, 78.4867],
+    'vijayawada': [16.5062, 80.6480],
+    'kolkata': [22.5726, 88.3639],
+    'agra': [27.1767, 78.0081],
+    'amritsar': [31.6340, 74.8723],
+    'guntur': [16.3067, 80.4365]
+  };
+
+  function resolveCoordinatesFromText(text, fallbackLat, fallbackLon) {
+    if (fallbackLat && fallbackLon && !isNaN(parseFloat(fallbackLat)) && !isNaN(parseFloat(fallbackLon))) {
+      return [parseFloat(fallbackLat), parseFloat(fallbackLon)];
+    }
+    if (!text) return [19.9975, 73.7898]; // Default Nashik Agri Hub
+    const lower = text.toLowerCase();
+    for (const [district, coords] of Object.entries(KNOWN_DISTRICT_COORDS)) {
+      if (lower.includes(district)) {
+        return coords;
+      }
+    }
+    return [19.9975, 73.7898];
+  }
+
+  window.openLocationMap = function(options) {
+    if (!options) options = {};
+    const title = options.title || 'Location Preview';
+    const subtitle = options.subtitle || 'Agricultural Facility / Origin';
+    const address = options.address || 'India';
+    const phone = options.phone || null;
+    const tag = options.tag || 'Verified Agricultural Location';
+    
+    // Resolve coordinates
+    const coords = resolveCoordinatesFromText((options.address || '') + ' ' + (options.title || ''), options.lat, options.lon);
+    const lat = coords[0];
+    const lon = coords[1];
+
+    // Update Modal DOM
+    const titleEl = document.getElementById('locationMapTitle');
+    const subEl = document.getElementById('locationMapModalSubtitle');
+    const addrEl = document.getElementById('locationMapAddress');
+    const tagEl = document.getElementById('locationMapExtraBadge');
+    const gmapsBtn = document.getElementById('locationMapGmapsBtn');
+    const appleBtn = document.getElementById('locationMapAppleBtn');
+    const callBtn = document.getElementById('locationMapCallBtn');
+    const callLabel = document.getElementById('locationMapCallLabel');
+
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = subtitle;
+    if (addrEl) addrEl.innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> ${address}`;
+    if (tagEl) tagEl.textContent = tag;
+
+    // Direct External Navigation Links
+    const query = encodeURIComponent(`${title}, ${address}`);
+    if (gmapsBtn) {
+      gmapsBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&query=${query}`;
+    }
+    if (appleBtn) {
+      appleBtn.href = `https://maps.apple.com/?daddr=${lat},${lon}&q=${query}`;
+    }
+
+    if (callBtn) {
+      if (phone) {
+        callBtn.href = `tel:${phone}`;
+        if (callLabel) callLabel.textContent = `Call (${phone})`;
+        callBtn.classList.remove('d-none');
+      } else {
+        callBtn.classList.add('d-none');
+      }
+    }
+
+    // Show Modal
+    const modalEl = document.getElementById('locationMapModal');
+    if (!modalEl) return;
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+
+    // Initialize or Update Leaflet Map when modal is visible
+    setTimeout(() => {
+      if (typeof L === 'undefined') return;
+      const container = document.getElementById('locationMapContainer');
+      if (!container) return;
+
+      if (!globalLeafletMapInstance) {
+        container.innerHTML = '';
+        globalLeafletMapInstance = L.map('locationMapContainer', {
+          zoomControl: true,
+          attributionControl: true
+        }).setView([lat, lon], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(globalLeafletMapInstance);
+      } else {
+        globalLeafletMapInstance.setView([lat, lon], 13);
+        globalLeafletMapInstance.invalidateSize();
+      }
+
+      if (globalLeafletMarker) {
+        globalLeafletMarker.remove();
+      }
+
+      const customIcon = L.divIcon({
+        className: 'custom-map-pin',
+        html: `<div style="background:#1b5e20; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; font-size:16px;">📍</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 34],
+        popupAnchor: [0, -34]
+      });
+
+      globalLeafletMarker = L.marker([lat, lon], { icon: customIcon }).addTo(globalLeafletMapInstance);
+      globalLeafletMarker.bindPopup(`
+        <div style="font-family:inherit; min-width:180px; padding:2px;">
+          <strong style="color:#1b5e20; font-size:14px;">${title}</strong>
+          <div style="font-size:12px; color:#555; margin-top:2px;">${subtitle}</div>
+          <div style="font-size:11px; color:#777; margin-top:4px;">📍 ${address}</div>
+          <div style="margin-top:8px;">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="display:inline-block; font-size:11px; color:#fff; background:#1b5e20; padding:4px 8px; border-radius:4px; text-decoration:none; font-weight:bold;">🧭 Start GPS Navigation</a>
+          </div>
+        </div>
+      `).openPopup();
+
+      setTimeout(() => {
+        if (globalLeafletMapInstance) globalLeafletMapInstance.invalidateSize();
+      }, 250);
+    }, 200);
+  };
+
+  // 2. Global Weather Widget & Report Script
   document.addEventListener('DOMContentLoaded', () => {
     // 1. Live Weather Fetching
     function initWeather() {

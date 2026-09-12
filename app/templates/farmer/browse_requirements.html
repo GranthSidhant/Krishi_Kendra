@@ -86,8 +86,10 @@
 
               <!-- Crop Title -->
               <h5 class="fw-bold text-dark mb-1">{{ req.product_name }}</h5>
-              <div class="text-muted small mb-3">
-                <i class="fas fa-map-marker-alt text-danger me-1"></i> Delivery: <strong>{{ req.delivery_district }}, {{ req.delivery_state }}</strong>
+              <div class="small mb-3">
+                <a href="javascript:void(0);" class="text-decoration-none text-muted hover-primary" onclick="openLocationMap({ title: 'Delivery Hub: {{ req.product_name|replace("'", "\\'") }}', subtitle: 'Buyer Delivery Hub ({{ req.required_quantity }} {{ req.unit }} Needed)', address: '{{ req.delivery_district|replace("'", "\\'") }}, {{ req.delivery_state|replace("'", "\\'") }}', tag: '📦 Buyer Delivery Destination' })">
+                  <i class="fas fa-map-marker-alt text-danger me-1"></i> Delivery: <strong>{{ req.delivery_district }}, {{ req.delivery_state }}</strong> <i class="fas fa-map text-primary small ms-1" title="View Hub Location"></i>
+                </a>
               </div>
 
               <!-- Key Specs -->

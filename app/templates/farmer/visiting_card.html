@@ -48,7 +48,11 @@
         <div>
           <h4 class="fw-extrabold mb-0 text-dark">{{ user.name }}</h4>
           <div class="text-success fw-bold small">ID: {{ user.custom_id }}</div>
-          <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Nashik' }}, {{ profile.state if profile else 'Maharashtra' }}</div>
+          <div class="small mt-1">
+            <a href="javascript:void(0);" class="text-decoration-none text-muted hover-primary" onclick="openLocationMap({ title: '{{ user.name|replace("'", "\\'") }}\'s Farm Base', subtitle: 'District: {{ (profile.district if profile else "Nashik")|replace("'", "\\'") }} ({{ profile.farm_size_acres if profile else "3.5" }} Acres)', address: '{{ (profile.district if profile else "Nashik")|replace("'", "\\'") }}, {{ (profile.state if profile else "Maharashtra")|replace("'", "\\'") }}', tag: '🚜 Farmer Base Location' })">
+              <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Nashik' }}, {{ profile.state if profile else 'Maharashtra' }} <i class="fas fa-map-marked-alt text-success small ms-1"></i>
+            </a>
+          </div>
         </div>
       </div>
 

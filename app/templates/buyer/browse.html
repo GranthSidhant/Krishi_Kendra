@@ -88,7 +88,11 @@
                 {% if item.farmer.is_verified %}
                   <i class="fas fa-check-circle text-success small ms-1" title="Verified Farmer"></i>
                 {% endif %}
-                <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ item.location_district }}, {{ item.location_state }}</div>
+                <div class="small">
+                  <a href="javascript:void(0);" class="text-decoration-none text-muted hover-primary" onclick="openLocationMap({ title: '{{ item.farmer.name|replace("'", "\\'") }}\'s Farm Origin', subtitle: '{{ item.product_name|replace("'", "\\'") }} ({{ item.available_quantity }} {{ item.unit }} Available)', address: '{{ item.location_district|replace("'", "\\'") }}, {{ item.location_state|replace("'", "\\'") }}', tag: '🌱 Farm Gate Origin' })">
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ item.location_district }}, {{ item.location_state }} <i class="fas fa-map text-success small ms-1" title="View Farm Region on Map"></i>
+                  </a>
+                </div>
               </div>
             </div>
 

@@ -36,7 +36,11 @@
         <div>
           <h4 class="fw-bold mb-0 text-dark">{{ card_user.name }}</h4>
           <div class="fw-bold small {% if card_user.role == 'farmer' %}text-success{% else %}text-warning{% endif %}">ID: {{ card_user.custom_id }}</div>
-          <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Nashik' }}, {{ profile.state if profile else 'Maharashtra' }}</div>
+          <div class="small mt-1">
+            <a href="javascript:void(0);" class="text-decoration-none text-muted hover-primary" onclick="openLocationMap({ title: '{{ card_user.name|replace("'", "\\'") }} ({{ card_user.role.capitalize() }})', subtitle: 'District: {{ (profile.district if profile else "Nashik")|replace("'", "\\'") }}', address: '{{ (profile.district if profile else "Nashik")|replace("'", "\\'") }}, {{ (profile.state if profile else "Maharashtra")|replace("'", "\\'") }}', tag: '🏷️ Verified Profile Location' })">
+              <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Nashik' }}, {{ profile.state if profile else 'Maharashtra' }} <i class="fas fa-map-marked-alt text-success small ms-1"></i>
+            </a>
+          </div>
         </div>
       </div>
 

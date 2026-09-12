@@ -48,7 +48,11 @@
         <div>
           <h4 class="fw-extrabold mb-0 text-dark">{{ user.name }}</h4>
           <div class="text-warning fw-bold small">ID: {{ user.custom_id }}</div>
-          <div class="text-muted small"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Mumbai' }}, {{ profile.state if profile else 'Maharashtra' }}</div>
+          <div class="small mt-1">
+            <a href="javascript:void(0);" class="text-decoration-none text-muted hover-primary" onclick="openLocationMap({ title: '{{ (profile.business_name if profile else "Agricultural Trade Corp")|replace("'", "\\'") }} ({{ user.name|replace("'", "\\'") }})', subtitle: 'Category: {{ (profile.business_type if profile else "Wholesale Trader")|replace("'", "\\'") }}', address: '{{ (profile.district if profile else "Mumbai")|replace("'", "\\'") }}, {{ (profile.state if profile else "Maharashtra")|replace("'", "\\'") }}', tag: '🏢 Buyer Business Hub' })">
+              <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ profile.district if profile else 'Mumbai' }}, {{ profile.state if profile else 'Maharashtra' }} <i class="fas fa-map-marked-alt text-warning small ms-1"></i>
+            </a>
+          </div>
         </div>
       </div>
 

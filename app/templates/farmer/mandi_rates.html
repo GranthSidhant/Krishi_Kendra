@@ -50,13 +50,14 @@
         <thead class="table-light">
           <tr>
             <th>Commodity</th>
-            <th>Mandi / Market</th>
+            <th>Mandi / APMC Market</th>
             <th>District, State</th>
             <th>Min Price</th>
             <th>Max Price</th>
             <th>Modal (Avg) Price</th>
             <th>Price per kg</th>
             <th>Daily Trend</th>
+            <th>Map</th>
           </tr>
         </thead>
         <tbody>
@@ -67,8 +68,14 @@
                 <strong class="text-success">{{ r.commodity }}</strong>
                 <div class="text-muted small">{{ r.variety }}</div>
               </td>
-              <td><strong>{{ r.market_name }}</strong></td>
-              <td>{{ r.district }}, {{ r.state }}</td>
+              <td>
+                <a href="javascript:void(0);" class="text-decoration-none text-dark fw-bold hover-primary" onclick="openLocationMap({ title: '{{ r.market_name|replace("'", "\\'") }} Mandi', subtitle: '{{ r.commodity }} - Modal Rate: ₹{{ r.modal_price }}/{{ r.unit }}', address: '{{ r.market_name|replace("'", "\\'") }}, {{ r.district|replace("'", "\\'") }}, {{ r.state|replace("'", "\\'") }}', tag: '🌾 APMC Mandi Market Yard' })">
+                  <i class="fas fa-store text-success me-1"></i> {{ r.market_name }}
+                </a>
+              </td>
+              <td>
+                <span class="text-muted">{{ r.district }}, {{ r.state }}</span>
+              </td>
               <td class="text-muted">₹{{ r.min_price }}</td>
               <td class="text-muted">₹{{ r.max_price }}</td>
               <td class="fw-bold fs-6 text-dark">₹{{ r.modal_price }}/{{ r.unit }}</td>
@@ -84,11 +91,16 @@
                   <span class="badge bg-secondary-subtle text-secondary"><i class="fas fa-minus me-1"></i> Stable</span>
                 {% endif %}
               </td>
+              <td>
+                <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-2" title="View Mandi Location & GPS Route" onclick="openLocationMap({ title: '{{ r.market_name|replace("'", "\\'") }} Mandi Yard', subtitle: 'APMC Benchmark ({{ r.commodity }}: ₹{{ r.modal_price }}/{{ r.unit }})', address: '{{ r.market_name|replace("'", "\\'") }}, {{ r.district|replace("'", "\\'") }}, {{ r.state|replace("'", "\\'") }}', tag: '🌾 Mandi Yard Navigation' })">
+                  <i class="fas fa-map-marker-alt me-1"></i> Map
+                </button>
+              </td>
             </tr>
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No mandi rate records matching your search.</td>
+              <td colspan="9" class="text-center py-4 text-muted">No mandi rate records matching your search.</td>
             </tr>
           {% endif %}
         </tbody>
