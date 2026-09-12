@@ -298,80 +298,188 @@
     </div>
   </div>
 
-  <!-- ==================== SECTION 4: AI/ML & GOOGLE GEMINI VISION ==================== -->
+  <!-- ==================== SECTION 4: AI/ML & PREDICTION ENGINES ==================== -->
   <div class="tech-card p-4 mb-4 shadow-sm" id="aiml-section">
     <div class="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center">
       <div>
         <h4 class="fw-bold text-dark mb-1">
-          <i class="fas fa-brain text-danger me-2"></i> 4. AI/ML Layer: Google Gemini 2.5 Flash (`google-genai` SDK)
+          <i class="fas fa-brain text-danger me-2"></i> 4. AI/ML, Multimodal Vision & Predictive Models
         </h4>
         <p class="text-muted small mb-0">
-          Multimodal plant pathology vision, natural language intent extraction, and time-series mandi forecasting.
+          Detailed mathematical formulation of our 3 prediction engines: Mandi Price Forecasting, Cold Storage ROI Optimization, and Gemini Pathology Vision.
         </p>
       </div>
-      <span class="tech-badge bg-danger text-white">Multimodal Intelligence</span>
+      <span class="tech-badge bg-danger text-white">Predictive Intelligence</span>
+    </div>
+
+    <!-- 60-Second High-Scoring Jury Pitch Callout Box -->
+    <div class="p-3.5 bg-dark text-white rounded-3 border border-warning border-opacity-50 mb-4">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="badge bg-warning text-dark fw-bold">Jury Pitch Script</span>
+        <h6 class="fw-bold text-warning mb-0"><i class="fas fa-bullhorn me-1"></i> 60-Second Answer: "How does Prediction work on Krishi Kendra?"</h6>
+      </div>
+      <p class="small text-white text-opacity-90 fst-italic mb-0" style="line-height: 1.6;">
+        "Distinguished Jury, Krishi Kendra deploys prediction at three critical levels: (1) <strong>Mandi Price & Storage ROI Prediction:</strong> Our Time-Series engine projects 7-day modal price trajectories with confidence intervals calibrated by crop volatility indexes (e.g. 5.5% for Tomato vs 1.2% for Wheat). It computes the exact net financial ROI of cold storage, advising farmers whether holding their crop for 10 days will yield extra profit after subtracting rental costs. (2) <strong>Multimodal Pathology Prediction:</strong> Powered by Google Gemini 2.5 Flash, our Crop Doctor analyzes leaf photos to predict pathogens, disease severity, and urgency windows with 90%+ confidence. (3) <strong>Deal Fairness Prediction:</strong> During negotiations, our algorithm analyzes buyer bids against live APMC rates, predicting the optimal counter-offer to prevent middleman exploitation."
+      </p>
+    </div>
+
+    <!-- Prediction Architecture Workflow Diagram -->
+    <div class="bg-light p-3.5 rounded-3 border mb-4">
+      <h6 class="fw-bold text-dark mb-2"><i class="fas fa-project-diagram text-primary me-1"></i> Multi-Tier Prediction Flow Architecture:</h6>
+      <pre class="bg-dark text-success p-3 rounded-3 small mb-0 font-monospace" style="overflow-x: auto; font-size: 0.78rem;">
+[ Live Agmarknet APMC Feeds ] ──► [ Volatility & Perishability Matrix ] ──► [ 7-Day Price Trajectory & Cold Storage ROI ]
+[ Farmer Crop Leaf Photos   ] ──► [ Google Gemini 2.5 Flash Vision     ] ──► [ Pathogen Name, Confidence %, Remedy & Dosage ]
+[ Buyer Offer Bids in Chat  ] ──► [ APMC Benchmark Comparison Engine   ] ──► [ Deal Fairness Rating & Counter-Offer Guidance ]</pre>
     </div>
 
     <div class="row g-4 mb-4">
+      <!-- Engine 1 -->
       <div class="col-lg-6">
-        <h6 class="fw-bold text-dark"><i class="fas fa-chart-line text-primary me-1"></i> A. Mandi Price & Cold Storage ROI Prediction Engine</h6>
-        <p class="small text-muted mb-2">
-          Engineered in <span class="code-pill">app/services/price_forecast_service.py</span> to prevent distress selling:
-        </p>
-        <div class="p-3 bg-light rounded-3 border small text-muted mb-3">
-          <ul class="mb-0 ps-3">
-            <li class="mb-1"><strong>7-Day Time-Series Trajectory:</strong> Ingests live APMC modal prices and directional trends (<span class="code-pill">up</span>, <span class="code-pill">down</span>, <span class="code-pill">stable</span>) to project 7-day price curves with minimum, modal, and maximum confidence intervals.</li>
-            <li class="mb-1"><strong>Commodity Volatility Matrix:</strong> Calibrates price elasticity based on crop perishability (e.g., Tomato: 5.5% high volatility, Onion: 3.5%, Wheat: 1.2% low volatility).</li>
-            <li class="mb-1"><strong>Net Storage Optimization Algorithm:</strong> Computes cumulative cold storage rental costs (₹0.45 - ₹1.20/day/Qtl) against projected 10-day price appreciation.</li>
-            <li><strong>Actionable Advisory Output:</strong> If projected gain exceeds storage costs by &ge; 5%, triggers 🟢 <em>"HOLD & STORE"</em> with net extra profit calculation; otherwise advises 🟠 <em>"SELL NOW"</em>.</li>
+        <div class="p-3 bg-light rounded-3 border h-100">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-chart-line text-primary me-1"></i> 1. Mandi Price Trajectory & Storage ROI Model</h6>
+          <p class="small text-muted mb-2">
+            Engineered in <span class="code-pill">app/services/price_forecast_service.py</span>:
+          </p>
+          <ul class="small text-muted ps-3 mb-3">
+            <li class="mb-1.5"><strong>Momentum Trajectory:</strong> Ingests daily APMC modal rates ($P_{\text{modal}}$) and calculates 7-day projections using directional drift factors ($\mu = +1.8\%$ for upward, $-1.5\%$ for downward, $+0.8\%$ for stable).</li>
+            <li class="mb-1.5"><strong>Confidence Interval Formula:</strong>
+              <div class="bg-white p-2 rounded border font-monospace text-dark mt-1 mb-1">
+                P_min = P_modal * (1.0 - Volatility)<br>
+                P_max = P_modal * (1.0 + Volatility)
+              </div>
+            </li>
+            <li class="mb-1.5"><strong>Cold Storage ROI Optimization Formula:</strong>
+              <div class="bg-white p-2 rounded border font-monospace text-dark mt-1 mb-1">
+                Gross Gain = P_projected_10d - P_current<br>
+                Storage Cost = Daily Rental Rate * 10 Days<br>
+                Net Gain = Gross Gain - Storage Cost
+              </div>
+            </li>
+            <li><strong>Decision Trigger:</strong> If <span class="code-pill">Net Gain &ge; 5%</span> and crop has storage potential &rarr; 🟢 <strong>"HOLD & STORE"</strong>; else &rarr; 🟠 <strong>"SELL NOW"</strong>.</li>
           </ul>
         </div>
       </div>
 
+      <!-- Engine 2 -->
       <div class="col-lg-6">
-        <h6 class="fw-bold text-dark"><i class="fas fa-microscope text-success me-1"></i> B. Multimodal AI Crop Pathology & Disease Prediction</h6>
-        <p class="small text-muted mb-2">
-          Powered by Google Gemini 2.5 Flash multimodal vision in <span class="code-pill">app/services/crop_doctor_service.py</span>:
-        </p>
-        <div class="p-3 bg-light rounded-3 border small text-muted mb-3">
-          <ul class="mb-0 ps-3">
-            <li class="mb-1"><strong>Visual Symptom Recognition:</strong> Identifies necrotic spots, target-board lesions, fungal mycelium, and pest damage from raw leaf photos.</li>
-            <li class="mb-1"><strong>Pathology Classification & Confidence:</strong> Predicts exact pathogen name (e.g. <em>Alternaria solani</em>, <em>Phytophthora infestans</em>) with confidence percentage (e.g. 94%).</li>
-            <li class="mb-1"><strong>Severity & Urgency Scoring:</strong> Classifies damage into Mild, Moderate, or Severe with action window countdown (e.g., <em>"Act within 48 hours"</em>).</li>
-            <li><strong>Prescriptive Remedy:</strong> Generates dual treatments: organic bio-controls (Neem oil, Trichoderma) and chemical sprays with exact dilution ratios (g/L).</li>
+        <div class="p-3 bg-light rounded-3 border h-100">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-microscope text-success me-1"></i> 2. Multimodal AI Crop Pathology Prediction</h6>
+          <p class="small text-muted mb-2">
+            Powered by Google Gemini 2.5 Flash in <span class="code-pill">app/services/crop_doctor_service.py</span>:
+          </p>
+          <ul class="small text-muted ps-3 mb-3">
+            <li class="mb-1.5"><strong>Visual Feature Extraction:</strong> Extracts pathology patterns (target-board concentric lesions for Early Blight, water-soaked chlorotic spots for Late Blight).</li>
+            <li class="mb-1.5"><strong>Confidence & Severity Score:</strong> Predicts certainty percentage (e.g., 94%) and classifies severity (Mild, Moderate, Severe, Critical).</li>
+            <li class="mb-1.5"><strong>Action Window Countdown:</strong> Recommends urgency timeline (e.g., <em>"Act within 24–48 hours to prevent fruit rot"</em>).</li>
+            <li><strong>Dual Remedial Prescription:</strong> Generates organic bio-pesticides (Neem oil @ 5ml/L, Trichoderma) and chemical sprays with exact g/L water dilution.</li>
           </ul>
         </div>
       </div>
     </div>
 
+    <!-- Commodity Volatility Matrix Table -->
+    <div class="mb-4">
+      <h6 class="fw-bold text-dark mb-2"><i class="fas fa-table text-secondary me-1"></i> Commodity Volatility & Storage Cost Parameters (Built into System):</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered small mb-0 bg-white">
+          <thead class="table-light">
+            <tr>
+              <th>Commodity</th>
+              <th>Volatility Index (&sigma;)</th>
+              <th>Perishability</th>
+              <th>Storage Potential</th>
+              <th>Cold Storage Benchmark Fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold">Tomato (टमाटर)</td>
+              <td><span class="badge bg-danger">5.5% (High)</span></td>
+              <td>High</td>
+              <td><span class="badge bg-success">Yes</span></td>
+              <td>₹1.20 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Red Onion (प्याज)</td>
+              <td><span class="badge bg-warning text-dark">3.5% (Medium)</span></td>
+              <td>Medium</td>
+              <td><span class="badge bg-success">Yes</span></td>
+              <td>₹0.85 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Garlic (लहसुन)</td>
+              <td><span class="badge bg-warning text-dark">4.0% (Medium)</span></td>
+              <td>Medium</td>
+              <td><span class="badge bg-success">Yes</span></td>
+              <td>₹0.90 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Potato (आलू)</td>
+              <td><span class="badge bg-info text-dark">2.5% (Low-Med)</span></td>
+              <td>Low-Med</td>
+              <td><span class="badge bg-success">Yes</span></td>
+              <td>₹0.65 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Wheat (गेहूं)</td>
+              <td><span class="badge bg-secondary">1.2% (Low)</span></td>
+              <td>None (Dry Grain)</td>
+              <td><span class="badge bg-light text-dark border">Dry Warehouse</span></td>
+              <td>₹0.45 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Basmati Rice (चावल)</td>
+              <td><span class="badge bg-secondary">1.0% (Low)</span></td>
+              <td>None (Dry Grain)</td>
+              <td><span class="badge bg-light text-dark border">Dry Warehouse</span></td>
+              <td>₹0.45 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Soybean (सोयाबीन)</td>
+              <td><span class="badge bg-secondary">2.0% (Low)</span></td>
+              <td>None (Oilseed)</td>
+              <td><span class="badge bg-light text-dark border">Dry Warehouse</span></td>
+              <td>₹0.50 / day / Quintal</td>
+            </tr>
+            <tr>
+              <td class="fw-bold">Cotton (कपास)</td>
+              <td><span class="badge bg-secondary">1.8% (Low)</span></td>
+              <td>None (Fiber)</td>
+              <td><span class="badge bg-light text-dark border">Dry Warehouse</span></td>
+              <td>₹0.50 / day / Quintal</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Engine 3 & Engine 4 -->
     <div class="row g-4">
       <div class="col-lg-6">
-        <h6 class="fw-bold text-dark"><i class="fas fa-handshake text-warning me-1"></i> C. Deal Fairness & Price Valuation Prediction</h6>
-        <p class="small text-muted mb-2">
-          Engineered in <span class="code-pill">app/services/deal_analysis_service.py</span> to protect farmers during negotiations:
-        </p>
-        <div class="p-3 bg-light rounded-3 border small text-muted">
-          <ul class="mb-0 ps-3">
+        <div class="p-3 bg-light rounded-3 border h-100">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-handshake text-warning me-1"></i> 3. Deal Fairness & Valuation Prediction</h6>
+          <p class="small text-muted mb-2">
+            Engineered in <span class="code-pill">app/services/deal_analysis_service.py</span>:
+          </p>
+          <ul class="small text-muted ps-3 mb-0">
             <li class="mb-1">Compares incoming buyer counter-offers against the active district APMC benchmark.</li>
-            <li class="mb-1">Calculates valuation delta percentage and flags lowball offers with high-visibility warning badges.</li>
-            <li>Predicts the optimal counter-offer price to maximize closing speed while guaranteeing fair profit margin.</li>
+            <li class="mb-1">Calculates valuation delta percentage and flags predatory bids with alert warnings.</li>
+            <li>Predicts the optimal counter-offer price to maximize closing probability while protecting farmer margins.</li>
           </ul>
         </div>
       </div>
 
       <div class="col-lg-6">
-        <h6 class="fw-bold text-dark"><i class="fas fa-microphone-alt text-primary me-1"></i> D. Kisan Saarthi Conversational Voice Agent</h6>
-        <p class="small text-muted mb-2">
-          Multi-turn conversational assistant grounded on real-time database records in <span class="code-pill">app/services/ai_voice_service.py</span>:
-        </p>
-        <div class="p-3 bg-light rounded-3 border small text-muted">
-          <ul class="mb-0 ps-3">
-            <li class="mb-1"><strong>Real-Time DB Grounding:</strong> Ingests live mandi rates, active cold storage capacity, and user inventory into LLM context.</li>
-            <li class="mb-1"><strong>Strict Language Matching:</strong> Automatically detects user language and responds in matching English, Hindi, or Marathi.</li>
-            <li><strong>Action Deep-Linking:</strong> Returns executable routing buttons (<span class="code-pill">/impact</span>, <span class="code-pill">/farmer/crop-doctor</span>) alongside speech.</li>
+        <div class="p-3 bg-light rounded-3 border h-100">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-microphone-alt text-primary me-1"></i> 4. Kisan Saarthi Multilingual Voice Agent</h6>
+          <p class="small text-muted mb-2">
+            Multi-turn assistant in <span class="code-pill">app/services/ai_voice_service.py</span>:
+          </p>
+          <ul class="small text-muted ps-3 mb-2">
+            <li class="mb-1"><strong>Real-Time DB Grounding:</strong> Ingests live mandi rates and inventory into LLM context.</li>
+            <li class="mb-1"><strong>Language-Aware Output:</strong> Strictly formulates responses in user's query language (English, Hindi, Marathi).</li>
+            <li><strong>Action Deep-Linking:</strong> Returns routing buttons (<span class="code-pill">/impact</span>, <span class="code-pill">/farmer/crop-doctor</span>) with speech.</li>
           </ul>
-        </div>
-        <div class="mt-2">
           <a href="https://ai.google.dev/docs" target="_blank" class="doc-link">Google Gemini GenAI SDK Documentation <i class="fas fa-external-link-alt"></i></a>
         </div>
       </div>
