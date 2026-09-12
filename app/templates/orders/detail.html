@@ -5,117 +5,150 @@
 {% block content %}
 <div class="container py-4">
 
+  <!-- Order Header -->
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
         <h3 class="fw-bold text-dark mb-0">Order #{{ order.order_code }}</h3>
-        <span class="badge {% if order.status in ['delivered', 'completed'] %}bg-success{% elif order.status == 'in_transit' %}bg-warning text-dark{% else %}bg-primary{% endif %} fs-6 px-3 py-2">
-          {{ order.status.replace('_', ' ').capitalize() }}
+        <span class="badge {% if order.status in ['delivered', 'completed'] %}bg-success{% elif order.status == 'in_transit' %}bg-warning text-dark{% elif order.status == 'transport_assigned' %}bg-info text-dark{% else %}bg-primary{% endif %} fs-6 px-3 py-2">
+          {{ order.status.replace('_', ' ').title() }}
         </span>
+        {% if order.payment_status == 'in_escrow' %}
+          <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fas fa-shield-alt me-1"></i> Escrow Locked</span>
+        {% elif order.payment_status == 'released' %}
+          <span class="badge bg-success text-white px-2 py-1"><i class="fas fa-check-circle me-1"></i> Payment Settled</span>
+        {% endif %}
       </div>
-      <small class="text-muted">Placed on {{ order.created_at.strftime('%d %B %Y, %I:%M %p') }}</small>
+      <small class="text-muted">Initiated on {{ order.created_at.strftime('%d %B %Y, %I:%M %p') }}</small>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
       <a href="{{ url_for('orders.invoice', order_id=order.id) }}" target="_blank" class="btn btn-outline-dark fw-semibold">
-        <i class="fas fa-file-invoice me-1"></i> View Tax Invoice
+        <i class="fas fa-file-invoice me-1"></i> Tax Invoice
       </a>
+      {% if order.payment_status == 'released' %}
+        <a href="{{ url_for('orders.payout_receipt', order_id=order.id) }}" target="_blank" class="btn btn-outline-success fw-semibold">
+          <i class="fas fa-receipt me-1"></i> Payout Certificate
+        </a>
+      {% endif %}
       <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#disputeModal">
-        <i class="fas fa-exclamation-triangle me-1"></i> File Dispute
+        <i class="fas fa-exclamation-triangle me-1"></i> Dispute
       </button>
     </div>
   </div>
 
-  <!-- Fulfilment Milestone Timeline -->
+  <!-- Interactive 6-Stage Milestone Progress Bar -->
   <div class="k-card p-4 mb-4 shadow-sm">
-    <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-route text-success me-2"></i> Fulfilment & Delivery Progress</h5>
-    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-dark mb-0"><i class="fas fa-route text-success me-2"></i> Fulfilment & Escrow Progress</h5>
+      <span class="badge bg-light text-dark border">
+        Step {% if order.status in ['delivered', 'completed'] %}6 of 6{% elif order.status == 'in_transit' %}5 of 6{% elif delivery and delivery.pickup_verified_at %}4 of 6{% elif order.status == 'transport_assigned' %}3 of 6{% elif order.escrow_txn_id %}2 of 6{% else %}1 of 6{% endif %}
+      </span>
+    </div>
+
     <div class="row text-center g-2">
+      <!-- 1. Confirmed -->
       <div class="col">
-        <div class="p-2 rounded {% if order.status in ['confirmed', 'processing', 'transport_assigned', 'in_transit', 'delivered', 'completed'] %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
-          <i class="fas fa-check-circle fs-4 mb-1"></i>
+        <div class="p-2 rounded bg-success text-white">
+          <i class="fas fa-file-contract fs-5 mb-1"></i>
           <div class="small fw-bold">1. Confirmed</div>
         </div>
       </div>
+      <!-- 2. Escrow Funded -->
       <div class="col">
-        <div class="p-2 rounded {% if order.status in ['processing', 'transport_assigned', 'in_transit', 'delivered', 'completed'] %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
-          <i class="fas fa-boxes fs-4 mb-1"></i>
-          <div class="small fw-bold">2. Packing</div>
+        <div class="p-2 rounded {% if order.escrow_txn_id or order.payment_status in ['in_escrow', 'released', 'completed'] %}bg-success text-white{% else %}bg-warning-subtle text-dark border border-warning{% endif %}">
+          <i class="fas fa-shield-alt fs-5 mb-1"></i>
+          <div class="small fw-bold">2. Escrow Funded</div>
         </div>
       </div>
+      <!-- 3. Vehicle Assigned -->
       <div class="col">
-        <div class="p-2 rounded {% if order.status in ['transport_assigned', 'in_transit', 'delivered', 'completed'] %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
-          <i class="fas fa-truck-loading fs-4 mb-1"></i>
-          <div class="small fw-bold">3. Vehicle Assigned</div>
+        <div class="p-2 rounded {% if delivery or order.status in ['transport_assigned', 'in_transit', 'delivered', 'completed'] %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
+          <i class="fas fa-truck-loading fs-5 mb-1"></i>
+          <div class="small fw-bold">3. Vehicle Allocated</div>
         </div>
       </div>
+      <!-- 4. Farm-Gate Pickup -->
+      <div class="col">
+        <div class="p-2 rounded {% if delivery and (delivery.pickup_verified_at or order.status in ['in_transit', 'delivered', 'completed']) %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
+          <i class="fas fa-qrcode fs-5 mb-1"></i>
+          <div class="small fw-bold">4. Pickup Verified</div>
+        </div>
+      </div>
+      <!-- 5. In Transit -->
       <div class="col">
         <div class="p-2 rounded {% if order.status in ['in_transit', 'delivered', 'completed'] %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
-          <i class="fas fa-shipping-fast fs-4 mb-1"></i>
-          <div class="small fw-bold">4. In Transit</div>
+          <i class="fas fa-shipping-fast fs-5 mb-1"></i>
+          <div class="small fw-bold">5. In Transit</div>
         </div>
       </div>
+      <!-- 6. Delivered & Settled -->
       <div class="col">
         <div class="p-2 rounded {% if order.status in ['delivered', 'completed'] %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
-          <i class="fas fa-box-open fs-4 mb-1"></i>
-          <div class="small fw-bold">5. Delivered</div>
+          <i class="fas fa-hand-holding-usd fs-5 mb-1"></i>
+          <div class="small fw-bold">6. Settled & Released</div>
         </div>
       </div>
-    </div>
-
-    <!-- Status Updater for Demonstration / Logistics -->
-    <div class="mt-4 pt-3 border-top d-flex align-items-center justify-content-between">
-      <span class="small text-muted">Update order milestone state:</span>
-      <form method="POST" action="{{ url_for('orders.update_status', order_id=order.id) }}" class="d-flex gap-2">
-        <select name="status" class="form-select form-select-sm">
-          <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
-          <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Processing / Harvest Packing</option>
-          <option value="transport_assigned" {% if order.status == 'transport_assigned' %}selected{% endif %}>Transport Assigned</option>
-          <option value="in_transit" {% if order.status == 'in_transit' %}selected{% endif %}>In Transit (On the Way)</option>
-          <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered (Release Payment)</option>
-          <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Completed</option>
-        </select>
-        <button type="submit" class="btn btn-sm btn-success">Update</button>
-      </form>
     </div>
   </div>
 
   <div class="row g-4 mb-4">
-    <!-- Order Details -->
+    
+    <!-- Left Column: Trade Details & Escrow Payment -->
     <div class="col-lg-7">
-      <div class="k-card p-4 h-100 shadow-sm">
-        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-list-alt text-primary me-2"></i> Trade Specifications</h5>
+      
+      <!-- Escrow Status & Action Banner -->
+      {% if not order.escrow_txn_id and order.payment_status != 'released' and user.id == order.buyer_id %}
+        <div class="alert alert-warning border-2 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 p-3 shadow-sm mb-4">
+          <div>
+            <h6 class="fw-bold text-dark mb-1"><i class="fas fa-shield-alt text-warning me-2"></i> Escrow Funding Required</h6>
+            <div class="small text-muted">Deposit ₹{{ "{:,.2f}".format(order.total_amount) }} to lock your guaranteed produce booking before dispatch.</div>
+          </div>
+          <button type="button" class="btn btn-warning fw-bold text-dark px-3 text-nowrap" data-bs-toggle="modal" data-bs-target="#escrowPayModal">
+            <i class="fas fa-wallet me-1"></i> Pay Escrow Now
+          </button>
+        </div>
+      {% endif %}
+
+      <!-- Trade Specifications Card -->
+      <div class="k-card p-4 shadow-sm mb-4">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+          <h5 class="fw-bold text-dark mb-0"><i class="fas fa-seedling text-success me-2"></i> Trade Specifications</h5>
+          <span class="badge bg-success-subtle text-success fs-6">₹{{ order.agreed_price_per_unit }}/{{ order.unit }}</span>
+        </div>
         
         <div class="table-responsive">
           <table class="table table-borderless mb-0">
             <tbody>
               <tr>
-                <td class="text-muted">Commodity:</td>
+                <td class="text-muted" style="width: 35%;">Produce:</td>
                 <td class="fw-bold text-dark fs-5">{{ order.product_name }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Agreed Quantity:</td>
+                <td class="text-muted">Total Quantity:</td>
                 <td class="fw-bold">{{ order.quantity }} {{ order.unit }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Agreed Rate:</td>
-                <td class="fw-bold text-success">₹{{ order.agreed_price_per_unit }}/{{ order.unit }}</td>
+                <td class="text-muted">Total Produce Value:</td>
+                <td class="fw-extrabold text-success fs-4">₹{{ "{:,.2f}".format(order.total_amount) }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Total Transaction Amount:</td>
-                <td class="fw-extrabold text-success fs-4">₹{{ order.total_amount }}</td>
-              </tr>
-              <tr>
-                <td class="text-muted">Escrow Payment Security:</td>
+                <td class="text-muted">Smart Escrow Protection:</td>
                 <td>
-                  <span class="badge bg-success-subtle text-success p-2">
-                    <i class="fas fa-shield-alt me-1"></i> {{ order.payment_status.replace('_', ' ').capitalize() }} (Smart Escrow Lock)
-                  </span>
+                  {% if order.escrow_txn_id %}
+                    <span class="badge bg-success text-white p-2">
+                      <i class="fas fa-lock me-1"></i> {{ order.escrow_txn_id }} (Secured)
+                    </span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark p-2">
+                      <i class="fas fa-hourglass-half me-1"></i> Pending Deposit
+                    </span>
+                  {% endif %}
                 </td>
               </tr>
               <tr>
-                <td class="text-muted">Destination Address:</td>
-                <td>{{ order.delivery_address }}</td>
+                <td class="text-muted">Delivery Address:</td>
+                <td class="text-dark">{{ order.delivery_address }}</td>
               </tr>
             </tbody>
           </table>
@@ -127,41 +160,336 @@
           </a>
         </div>
       </div>
+
+      <!-- Post-Trade Mutual Review & Trust Badging Card -->
+      <div class="k-card p-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-dark mb-0"><i class="fas fa-star text-warning me-2"></i> Trade Ratings & Reviews</h5>
+          {% if order.status in ['delivered', 'completed'] %}
+            <button type="button" class="btn btn-sm btn-outline-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#ratingModal">
+              <i class="fas fa-edit me-1"></i> Leave Rating
+            </button>
+          {% endif %}
+        </div>
+
+        <div class="row g-3">
+          <!-- Buyer Review of Farmer -->
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold" style="font-size:0.75rem;">Buyer's Review of Farmer</small>
+              {% if order.buyer_rating %}
+                <div class="text-warning my-1">
+                  {% for _ in range(order.buyer_rating) %}<i class="fas fa-star"></i>{% endfor %}
+                  <span class="text-dark fw-bold ms-1">({{ order.buyer_rating }}/5)</span>
+                </div>
+                <div class="small fst-italic text-dark">"{{ order.buyer_review or 'Produce quality and packing matched expectations.' }}"</div>
+              {% else %}
+                <div class="small text-muted fst-italic mt-1">No rating submitted yet.</div>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Farmer Review of Buyer -->
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold" style="font-size:0.75rem;">Farmer's Review of Buyer</small>
+              {% if order.farmer_rating %}
+                <div class="text-warning my-1">
+                  {% for _ in range(order.farmer_rating) %}<i class="fas fa-star"></i>{% endfor %}
+                  <span class="text-dark fw-bold ms-1">({{ order.farmer_rating }}/5)</span>
+                </div>
+                <div class="small fst-italic text-dark">"{{ order.farmer_review or 'Prompt payment release and smooth weighment.' }}"</div>
+              {% else %}
+                <div class="small text-muted fst-italic mt-1">No rating submitted yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Assigned Logistics & Driver Card -->
+    <!-- Right Column: Transportation & Two-Step OTP Handover Engine -->
     <div class="col-lg-5">
-      <div class="k-card p-4 h-100 shadow-sm border-start border-4 border-warning">
-        <h5 class="fw-bold text-warning mb-3"><i class="fas fa-truck me-2"></i> Assigned Logistics Partner</h5>
-        
+      
+      <!-- Logistics Card -->
+      <div class="k-card p-4 shadow-sm mb-4 border-start border-4 border-success">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-dark mb-0"><i class="fas fa-truck text-success me-2"></i> Logistics & Transporter</h5>
+          <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#assignTransportModal">
+            <i class="fas fa-cog me-1"></i> {% if delivery %}Change Vehicle{% else %}Assign Vehicle{% endif %}
+          </button>
+        </div>
+
         {% if delivery %}
           <div class="p-3 bg-light rounded-3 mb-3">
-            <div class="fw-bold text-dark mb-1">{{ delivery.transport_partner_name }}</div>
-            <div class="small text-muted mb-2">Vehicle Type: <strong>{{ delivery.vehicle_type }}</strong></div>
-            <div class="small text-muted mb-2">Registration: <strong>{{ delivery.vehicle_number }}</strong></div>
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <strong class="text-dark">{{ delivery.vehicle_type }}</strong>
+              <span class="badge bg-dark">{{ delivery.vehicle_number }}</span>
+            </div>
+            <div class="small text-muted mb-2">Transport Partner: <strong>{{ delivery.transport_partner_name }}</strong></div>
+            <div class="small text-muted mb-2">Estimated Freight: <strong>₹{{ "{:,.2f}".format(delivery.estimated_cost) }}</strong> ({{ delivery.distance_km }} km)</div>
             
-            <div class="pt-2 border-top">
-              <div class="small"><strong>Driver Name:</strong> {{ delivery.driver_name }}</div>
-              <div class="mt-2">
-                <a href="tel:{{ delivery.driver_phone }}" class="btn btn-sm btn-success">
-                  <i class="fas fa-phone-alt me-1"></i> Call Driver ({{ delivery.driver_phone }})
-                </a>
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+              <div>
+                <div class="small text-dark fw-bold"><i class="fas fa-user-circle me-1"></i> {{ delivery.driver_name }}</div>
+                <div class="small text-muted">{{ delivery.driver_phone }}</div>
               </div>
+              <a href="tel:{{ delivery.driver_phone }}" class="btn btn-sm btn-success px-3">
+                <i class="fas fa-phone-alt me-1"></i> Call Driver
+              </a>
             </div>
           </div>
 
+          <!-- Two-Step OTP Handover Cards -->
+          <div class="mb-3">
+            
+            <!-- Step A: Farm-Gate Pickup OTP -->
+            <div class="border rounded-3 p-3 mb-2 bg-white">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small fw-bold text-dark"><i class="fas fa-box-open text-primary me-1"></i> 1. Farm-Gate Loading OTP</span>
+                {% if delivery.pickup_verified_at %}
+                  <span class="badge bg-success"><i class="fas fa-check"></i> Verified</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending Pickup</span>
+                {% endif %}
+              </div>
+              
+              {% if user.id == order.farmer_id and not delivery.pickup_verified_at %}
+                <div class="p-2 bg-primary-subtle text-primary rounded text-center my-2">
+                  <div class="small">Provide this OTP to Driver at farm-gate:</div>
+                  <div class="fs-4 fw-bold letter-spacing-2">{{ delivery.pickup_otp }}</div>
+                </div>
+              {% endif %}
+
+              {% if not delivery.pickup_verified_at %}
+                <form method="POST" action="{{ url_for('orders.verify_pickup_otp', order_id=order.id) }}" class="d-flex gap-2 mt-2">
+                  <input type="text" name="pickup_otp" class="form-control form-control-sm" placeholder="Enter 6-digit Pickup OTP" required maxlength="6">
+                  <button type="submit" class="btn btn-sm btn-primary text-nowrap">Verify Pickup</button>
+                </form>
+              {% else %}
+                <small class="text-muted d-block mt-1">Verified on {{ delivery.pickup_verified_at.strftime('%d %b, %I:%M %p') }}</small>
+              {% endif %}
+            </div>
+
+            <!-- Step B: Destination Delivery OTP & Weighment Inspection -->
+            <div class="border rounded-3 p-3 bg-white">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small fw-bold text-dark"><i class="fas fa-clipboard-check text-success me-1"></i> 2. Delivery Inspection OTP</span>
+                {% if delivery.delivery_verified_at or order.status in ['delivered', 'completed'] %}
+                  <span class="badge bg-success"><i class="fas fa-check"></i> Delivered & Settled</span>
+                {% else %}
+                  <span class="badge bg-secondary">Awaiting Arrival</span>
+                {% endif %}
+              </div>
+
+              {% if user.id == order.buyer_id and not delivery.delivery_verified_at %}
+                <div class="p-2 bg-success-subtle text-success rounded text-center my-2">
+                  <div class="small">Give this OTP to Driver ONLY after weighing produce:</div>
+                  <div class="fs-4 fw-bold letter-spacing-2">{{ delivery.delivery_otp }}</div>
+                </div>
+              {% endif %}
+
+              {% if not delivery.delivery_verified_at and order.status != 'delivered' %}
+                <form method="POST" action="{{ url_for('orders.verify_delivery_otp', order_id=order.id) }}" class="d-flex gap-2 mt-2">
+                  <input type="text" name="delivery_otp" class="form-control form-control-sm" placeholder="Enter 6-digit Delivery OTP" required maxlength="6">
+                  <button type="submit" class="btn btn-sm btn-success text-nowrap">Confirm & Release</button>
+                </form>
+              {% else %}
+                <small class="text-muted d-block mt-1">Payment settled on {{ delivery.delivery_verified_at.strftime('%d %b, %I:%M %p') if delivery.delivery_verified_at else order.updated_at.strftime('%d %b, %I:%M %p') }}</small>
+              {% endif %}
+            </div>
+
+          </div>
+
           <div class="small text-muted">
-            <strong>Current Hub Location:</strong> {{ delivery.current_location }}<br>
-            <strong>Estimated Delivery:</strong> {{ delivery.estimated_arrival }}
+            <div><strong>Live Hub Location:</strong> {{ delivery.current_location }}</div>
+            <div><strong>Status Note:</strong> {{ delivery.tracking_notes }}</div>
           </div>
         {% else %}
-          <p class="text-muted">Transport partner assignment in progress.</p>
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-truck-loading fs-1 text-muted opacity-50 mb-2"></i>
+            <p class="small mb-3">No logistics vehicle assigned yet.</p>
+            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#assignTransportModal">
+              <i class="fas fa-plus me-1"></i> Choose Transport Vehicle
+            </button>
+          </div>
         {% endif %}
+      </div>
+
+      <!-- Quick Status Simulation Controls for Demo -->
+      <div class="k-card p-3 shadow-sm bg-light border">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <small class="fw-bold text-muted text-uppercase">Trade Stage Override (Demonstration)</small>
+        </div>
+        <form method="POST" action="{{ url_for('orders.update_status', order_id=order.id) }}" class="d-flex gap-2">
+          <select name="status" class="form-select form-select-sm">
+            <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>1. Confirmed</option>
+            <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>2. Harvest Packing</option>
+            <option value="transport_assigned" {% if order.status == 'transport_assigned' %}selected{% endif %}>3. Transport Assigned</option>
+            <option value="in_transit" {% if order.status == 'in_transit' %}selected{% endif %}>4. In Transit</option>
+            <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>5. Delivered (Release Escrow)</option>
+            <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>6. Completed</option>
+          </select>
+          <button type="submit" class="btn btn-sm btn-dark text-nowrap">Update</button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal 1: Interactive Escrow Payment Checkout (for Buyer) -->
+  <div class="modal fade" id="escrowPayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i> Krishi Kendra Escrow Deposit</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{{ url_for('orders.pay_escrow', order_id=order.id) }}">
+          <div class="modal-body p-4">
+            
+            <div class="text-center mb-3">
+              <div class="text-muted small">Total Produce Amount to Escrow:</div>
+              <h2 class="fw-extrabold text-success mb-1">₹{{ "{:,.2f}".format(order.total_amount) }}</h2>
+              <span class="badge bg-success-subtle text-success border border-success">
+                <i class="fas fa-lock me-1"></i> 100% Protected until Delivery Inspection
+              </span>
+            </div>
+
+            <!-- Simulated UPI QR Code Preview -->
+            <div class="text-center p-3 bg-light rounded-3 mb-3 border">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=krishikendra.escrow@icici%26pn=KrishiKendraEscrow%26am={{ order.total_amount }}%26cu=INR" alt="UPI QR" class="img-fluid rounded border mb-2" style="width: 130px; height: 130px;">
+              <div class="small fw-bold text-dark">Scan with any UPI App (GPay / PhonePe / Paytm / BHIM)</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Select Payment Method</label>
+              <select name="payment_method" class="form-select">
+                <option value="UPI_ESCROW">UPI Instant Escrow (GPay / PhonePe / BHIM)</option>
+                <option value="NET_BANKING">Net Banking (HDFC / SBI / ICICI / Axis)</option>
+                <option value="NEFT_RTGS">Direct Mandi NEFT / RTGS Wire</option>
+                <option value="MANDI_CREDIT">NABARD Mandi Trader Credit Line</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Your UPI ID / Account Reference</label>
+              <input type="text" name="upi_id" class="form-control" value="trader_{{ order.buyer.custom_id }}@okaxis" required>
+            </div>
+
+            <div class="p-2 bg-light rounded small text-muted">
+              <i class="fas fa-info-circle text-primary me-1"></i> Funds remain safely in escrow. Farmer is paid automatically only when you verify physical delivery with the Delivery OTP.
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success fw-bold px-4">Confirm & Lock Escrow</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 
-  <!-- Dispute Modal -->
+  <!-- Modal 2: Assign Logistics Vehicle -->
+  <div class="modal fade" id="assignTransportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title"><i class="fas fa-truck me-2"></i> Assign Logistics & Transport Partner</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{{ url_for('orders.assign_transport', order_id=order.id) }}">
+          <div class="modal-body p-4">
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Select Vehicle Category</label>
+              <div class="row g-2">
+                {% for key, v in vehicle_options.items() %}
+                  <div class="col-sm-6">
+                    <label class="border rounded-3 p-3 d-block cursor-pointer hover-shadow {% if delivery and delivery.vehicle_category == key %}border-success bg-success-subtle{% endif %}">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">{{ v.name.split('(')[0] }}</span>
+                        <input type="radio" name="vehicle_category" value="{{ key }}" {% if (delivery and delivery.vehicle_category == key) or (not delivery and key == 'mini_truck') %}checked{% endif %}>
+                      </div>
+                      <div class="small text-muted">Capacity: <strong>{{ v.capacity_mt }} MT</strong> | Rate: ₹{{ v.rate_per_km }}/km</div>
+                      {% if v.temp_controlled %}
+                        <span class="badge bg-info-subtle text-info mt-1"><i class="fas fa-snowflake me-1"></i> Cold Chain (2°-8°C)</span>
+                      {% endif %}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Driver Name</label>
+                <input type="text" name="driver_name" class="form-control" value="{{ delivery.driver_name if delivery else 'Ramesh Shinde' }}" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Driver Mobile Phone</label>
+                <input type="text" name="driver_phone" class="form-control" value="{{ delivery.driver_phone if delivery else '+91 98231 44556' }}" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Vehicle Registration Number</label>
+                <input type="text" name="vehicle_number" class="form-control" value="{{ delivery.vehicle_number if delivery else 'MH-15-EG-4402' }}" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Estimated Distance (KM)</label>
+                <input type="number" name="distance_km" class="form-control" value="{{ delivery.distance_km if delivery else '45' }}" step="1" required>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success fw-bold px-4">Confirm Logistics</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Post-Trade Rating -->
+  <div class="modal fade" id="ratingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title"><i class="fas fa-star me-2"></i> Rate This Agri-Trade Deal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{{ url_for('orders.rate_order', order_id=order.id) }}">
+          <div class="modal-body p-4">
+            
+            <div class="mb-3 text-center">
+              <label class="form-label fw-bold d-block">Overall Satisfaction</label>
+              <select name="rating" class="form-select form-select-lg text-center fw-bold text-warning w-75 mx-auto">
+                <option value="5">⭐⭐⭐⭐⭐ 5 Stars (Outstanding)</option>
+                <option value="4" selected>⭐⭐⭐⭐ 4 Stars (Very Good)</option>
+                <option value="3">⭐⭐⭐ 3 Stars (Average)</option>
+                <option value="2">⭐⭐ 2 Stars (Needs Improvement)</option>
+                <option value="1">⭐ 1 Star (Poor)</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Comments / Review</label>
+              <textarea name="review" class="form-control" rows="3" placeholder="Describe produce quality, weight accuracy, packaging, and communication..."></textarea>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold text-dark px-4">Submit Rating</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Dispute Modal -->
   <div class="modal fade" id="disputeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg border-0">
@@ -187,7 +515,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger fw-bold">Submit Dispute to Officer</button>
+            <button type="submit" class="btn btn-danger fw-bold">Submit Dispute</button>
           </div>
         </form>
       </div>

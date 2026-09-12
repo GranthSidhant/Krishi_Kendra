@@ -260,12 +260,18 @@ def respond_offer(offer_id):
         db.session.add(order)
         db.session.flush()
 
-        # Create Delivery record
+        from app.services.logistics_service import LogisticsService
+        pickup_otp, delivery_otp = LogisticsService.generate_handover_otps()
+
+        # Create Delivery record with Two-Step OTP
         delivery = Delivery(
             order_id=order.id,
             pickup_address=f"{offer.farmer.farmer_profile.farm_location_name if offer.farmer.farmer_profile else 'Farmer Farm'}, {offer.farmer.farmer_profile.district if offer.farmer.farmer_profile else ''}",
             drop_address=delivery_addr,
             vehicle_type='Mini Truck (Tata Ace)',
+            vehicle_category='mini_truck',
+            pickup_otp=pickup_otp,
+            delivery_otp=delivery_otp,
             current_status='assigned'
         )
         db.session.add(delivery)

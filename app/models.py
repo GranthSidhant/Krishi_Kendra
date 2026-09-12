@@ -279,9 +279,23 @@ class Order(db.Model):
     delivery_address = db.Column(db.String(255), nullable=False)
     delivery_date = db.Column(db.String(30), default='')
     
-    # Flow: confirmed -> processing -> transport_assigned -> in_transit -> delivered -> completed
+    # Flow: created -> escrow_pending -> confirmed -> processing -> transport_assigned -> in_transit -> delivered -> completed
     status = db.Column(db.String(30), default='confirmed')
     payment_status = db.Column(db.String(30), default='in_escrow') # pending, in_escrow, released, completed
+    
+    # Escrow & Payout Settlement Details
+    escrow_txn_id = db.Column(db.String(50), nullable=True) # e.g. ESC-TXN-2026-9821
+    payment_method = db.Column(db.String(50), default='UPI_ESCROW') # UPI_ESCROW, NET_BANKING, NEFT_RTGS, MANDI_CREDIT
+    paid_at = db.Column(db.DateTime, nullable=True)
+    payout_txn_id = db.Column(db.String(50), nullable=True) # e.g. PAYOUT-HDFC-2026-4401
+    payout_released_at = db.Column(db.DateTime, nullable=True)
+    inventory_id = db.Column(db.Integer, db.ForeignKey('inventories.id', ondelete='SET NULL'), nullable=True)
+    
+    # Mutual Post-Trade Ratings & Feedback (1 to 5 stars)
+    buyer_rating = db.Column(db.Integer, nullable=True)
+    buyer_review = db.Column(db.Text, nullable=True)
+    farmer_rating = db.Column(db.Integer, nullable=True)
+    farmer_review = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -289,6 +303,7 @@ class Order(db.Model):
     # Relationships
     buyer = db.relationship('User', foreign_keys=[buyer_id], backref='buyer_orders')
     farmer = db.relationship('User', foreign_keys=[farmer_id], backref='farmer_orders')
+    offer = db.relationship('Offer', foreign_keys=[offer_id], backref='confirmed_order', uselist=False)
     delivery = db.relationship('Delivery', backref='order', uselist=False, cascade='all, delete-orphan')
 
 
@@ -301,11 +316,19 @@ class Delivery(db.Model):
     pickup_address = db.Column(db.String(255), default='')
     drop_address = db.Column(db.String(255), default='')
     vehicle_type = db.Column(db.String(50), default='Mini Truck (Tata Ace)') # Mini Truck, Pickup, Medium Truck, Refrigerated
+    vehicle_category = db.Column(db.String(30), default='mini_truck') # mini_truck, medium_truck, tractor, cold_reefer, self_pickup
     transport_partner_name = db.Column(db.String(100), default='Gramin Express Logistics')
     driver_name = db.Column(db.String(80), default='Ramesh Shinde')
     driver_phone = db.Column(db.String(20), default='+91 98231 44556')
     vehicle_number = db.Column(db.String(30), default='MH-15-EG-4402')
     estimated_cost = db.Column(db.Float, default=1250.0)
+    distance_km = db.Column(db.Float, default=45.0)
+    
+    # Two-Step Secure Handover OTPs
+    pickup_otp = db.Column(db.String(10), default='482109') # Farmer gives to driver at loading
+    delivery_otp = db.Column(db.String(10), default='791244') # Buyer gives to driver after inspecting produce
+    pickup_verified_at = db.Column(db.DateTime, nullable=True)
+    delivery_verified_at = db.Column(db.DateTime, nullable=True)
     
     current_status = db.Column(db.String(30), default='assigned') # requested, assigned, picked_up, in_transit, delivered
     current_location = db.Column(db.String(150), default='Nashik Highway Hub')
