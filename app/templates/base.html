@@ -296,6 +296,67 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- Global Footer -->
+  <footer class="bg-dark text-white pt-4 pb-3 border-top mt-5">
+    <div class="container-fluid px-lg-5">
+      <div class="row g-4 mb-4">
+        <div class="col-lg-4 col-md-6">
+          <div class="d-flex align-items-center mb-2">
+            <i class="fas fa-leaf text-success fs-4 me-2"></i>
+            <h5 class="fw-bold text-white mb-0">KRISHI <span class="text-success">KENDRA</span></h5>
+          </div>
+          <p class="small text-white text-opacity-75 mb-3">
+            Direct farmer-to-buyer agricultural marketplace with closed-loop digital escrow, multimodal AI crop diagnostics, and real-time Mandi price integrity.
+          </p>
+          <div class="d-flex gap-2">
+            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2.5 py-1.5 rounded-pill small">
+              <i class="fas fa-award me-1"></i> SIH 2026 Innovation
+            </span>
+            <span class="badge bg-primary bg-opacity-25 text-info border border-primary border-opacity-25 px-2.5 py-1.5 rounded-pill small">
+              <i class="fas fa-shield-alt me-1"></i> 100% Escrow Protected
+            </span>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-6">
+          <h6 class="fw-bold text-success text-uppercase small mb-3">Evaluation & Docs</h6>
+          <ul class="list-unstyled small text-white text-opacity-75 mb-0 d-flex flex-column gap-1.5">
+            <li><a href="{{ url_for('main.market_impact') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-balance-scale me-1 text-warning"></i> Market Impact & Edge</a></li>
+            <li><a href="{{ url_for('main.tech_stack_docs') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-layer-group me-1 text-primary"></i> Tech Stack & Jury Q&A</a></li>
+            <li><a href="{{ url_for('farmer.profit_calculator') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-calculator me-1 text-success"></i> Profit Calculator</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-3 col-6">
+          <h6 class="fw-bold text-success text-uppercase small mb-3">Farmer Services</h6>
+          <ul class="list-unstyled small text-white text-opacity-75 mb-0 d-flex flex-column gap-1.5">
+            <li><a href="{{ url_for('farmer.crop_doctor') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-microscope me-1 text-success"></i> AI Crop Doctor</a></li>
+            <li><a href="{{ url_for('farmer.mandi_rates') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-chart-line me-1 text-info"></i> Live Mandi Rates</a></li>
+            <li><a href="{{ url_for('cold_storage.index') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-snowflake me-1 text-primary"></i> Cold Storage Network</a></li>
+            <li><a href="{{ url_for('schemes.index') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-landmark me-1 text-warning"></i> Govt Schemes & PM-KISAN</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <h6 class="fw-bold text-success text-uppercase small mb-3">Direct Marketplace</h6>
+          <ul class="list-unstyled small text-white text-opacity-75 mb-0 d-flex flex-column gap-1.5">
+            <li><a href="{{ url_for('buyer.browse') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-search me-1 text-success"></i> Browse Farm Produce</a></li>
+            <li><a href="{{ url_for('marketplace.index') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-store me-1 text-warning"></i> Farm Supplies & Seeds</a></li>
+            <li><a href="{{ url_for('auth.register') }}" class="text-white text-opacity-75 text-decoration-none hover-white"><i class="fas fa-user-plus me-1 text-info"></i> Join Krishi Kendra</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-top border-secondary border-opacity-25 pt-3 d-flex flex-column flex-md-row justify-content-between align-items-center small text-white text-opacity-50">
+        <div>&copy; 2026 Krishi Kendra. Built for Farmer Empowerment & Fair Agricultural Trade.</div>
+        <div class="mt-2 mt-md-0">
+          <a href="{{ url_for('main.tech_stack_docs') }}" class="text-white text-opacity-75 text-decoration-none me-3">Tech Architecture</a>
+          <a href="{{ url_for('main.market_impact') }}" class="text-white text-opacity-75 text-decoration-none">Economic Impact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
   <!-- Fixed Mobile Bottom Navigation Bar (Screens < 992px) -->
   {% if current_user %}
   <nav class="mobile-bottom-nav">

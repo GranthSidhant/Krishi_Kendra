@@ -171,6 +171,11 @@ def market_impact():
 
     return render_template('market_impact.html', preset_commodities=preset_commodities)
 
+@main_bp.route('/tech-stack')
+@main_bp.route('/docs/architecture')
+def tech_stack_docs():
+    return render_template('tech_stack_docs.html')
+
 @main_bp.route('/set-language/<lang>')
 def set_language(lang):
     if lang in ['en', 'hi', 'mr', 'ta', 'te']:

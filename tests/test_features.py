@@ -343,6 +343,22 @@ def test_market_impact_page(client):
     assert "Red Onion (लाल प्याज)" in html
     assert "Live 3-Way Economic Comparison Simulator" in html
 
+def test_tech_stack_docs_page(client):
+    """Test the Technical Architecture and Jury Q&A Docs page"""
+    res = client.get('/tech-stack')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+    assert "Technical Stack, APIs &amp; Jury Q&amp;A Reference" in html or "Technical Stack, APIs & Jury Q&A Reference" in html
+    assert "PostgreSQL" in html
+    assert "SQLAlchemy ORM" in html
+    assert "Vanilla CSS" in html
+    assert "Google Gemini" in html
+    
+    # Test alias route
+    res_alias = client.get('/docs/architecture')
+    assert res_alias.status_code == 200
+
+
 
 
 
