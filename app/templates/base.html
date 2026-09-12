@@ -202,19 +202,20 @@
 
           {% if current_user %}
             <!-- Chat Link -->
-            <a href="{{ url_for('chat.chat_list') }}" class="btn btn-sm btn-outline-primary position-relative" title="Conversations & Offers">
+            <a href="{{ url_for('chat.chat_list') }}" id="navChatBtn" class="btn btn-sm btn-outline-primary position-relative" title="Conversations & Offers">
               <i class="fas fa-comments"></i>
+              <span id="navChatUnreadBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not unread_messages_count or unread_messages_count == 0 %}d-none{% endif %}">
+                {{ unread_messages_count if unread_messages_count else 0 }}
+              </span>
             </a>
 
             <!-- Notifications Dropdown -->
             <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown" title="Notifications">
+              <button class="btn btn-sm btn-outline-secondary position-relative" id="navNotifBtn" type="button" data-bs-toggle="dropdown" title="Notifications">
                 <i class="fas fa-bell"></i>
-                {% if unread_notifications_count > 0 %}
-                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                    {{ unread_notifications_count }}
-                  </span>
-                {% endif %}
+                <span id="navNotifUnreadBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not unread_notifications_count or unread_notifications_count == 0 %}d-none{% endif %}">
+                  {{ unread_notifications_count if unread_notifications_count else 0 }}
+                </span>
               </button>
               <ul class="dropdown-menu dropdown-menu-end shadow p-2" style="min-width: 280px; max-height: 350px; overflow-y: auto;">
                 <li class="dropdown-header fw-bold">Recent Notifications</li>
@@ -945,7 +946,184 @@
         alert('Could not submit report. Please try again.');
       });
   }
+
+  // 3. Real-Time Live Heartbeat & Instant Message/Offer Toast Notifications
+  {% if current_user %}
+  (function initLiveHeartbeat() {
+    let lastSeenMsgId = parseInt(sessionStorage.getItem('last_seen_msg_id') || '0', 10);
+    let lastSeenNotifId = parseInt(sessionStorage.getItem('last_seen_notif_id') || '0', 10);
+    let isFirstCheck = true;
+
+    // Web Audio soft harmonic chime synthesizer
+    function playNotificationChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); // D5
+        osc1.frequency.exponentialRampToValueAtTime(880.00, now + 0.12); // A5
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(880.00, now + 0.05);
+        osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.22); // D6
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now + 0.05);
+        osc1.stop(now + 0.35);
+        osc2.stop(now + 0.35);
+      } catch (e) {
+        // Audio auto-play restrictions gracefully bypassed
+      }
+    }
+
+    function showLiveToast(title, body, linkUrl, badgeText, iconClass, borderAccent) {
+      const container = document.getElementById('liveToastContainer');
+      if (!container) return;
+
+      const toastId = 'toast_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      const isMsg = badgeText === 'Message';
+      const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center text-bg-white border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 14px; overflow: hidden; min-width: 320px; max-width: 390px; border-left: 5px solid ${borderAccent || '#198754'} !important;">
+          <div class="toast-header bg-light border-0 py-2 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge ${isMsg ? 'bg-primary' : 'bg-success'} rounded-pill"><i class="${iconClass || 'fas fa-envelope'} me-1"></i> ${badgeText}</span>
+              <strong class="text-dark text-truncate ms-1" style="max-width: 170px;">${title}</strong>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <small class="text-muted text-xs">Just now</small>
+              <button type="button" class="btn-close ms-1" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+          </div>
+          <div class="toast-body py-2.5 px-3">
+            <p class="mb-2 text-dark small" style="line-height: 1.4;">${body}</p>
+            <div class="d-flex justify-content-end gap-2">
+              <a href="${linkUrl}" class="btn btn-sm ${isMsg ? 'btn-primary' : 'btn-success'} px-3 py-1 fw-bold rounded-pill text-xs shadow-xs">
+                ${isMsg ? '<i class="fas fa-comments me-1"></i> Open Chat' : '<i class="fas fa-external-link-alt me-1"></i> View Details'}
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', toastHtml);
+      const toastEl = document.getElementById(toastId);
+      if (toastEl && window.bootstrap && bootstrap.Toast) {
+        const bsToast = new bootstrap.Toast(toastEl, { delay: 8000 });
+        bsToast.show();
+        playNotificationChime();
+        toastEl.addEventListener('hidden.bs.toast', () => {
+          toastEl.remove();
+        });
+      }
+    }
+
+    function checkLiveHeartbeat() {
+      fetch('/api/live-heartbeat')
+        .then(res => res.json())
+        .then(data => {
+          if (!data || !data.logged_in) return;
+
+          // Update Chat Badge
+          const chatBadge = document.getElementById('navChatUnreadBadge');
+          if (chatBadge) {
+            if (data.unread_messages > 0) {
+              chatBadge.textContent = data.unread_messages;
+              chatBadge.classList.remove('d-none');
+            } else {
+              chatBadge.classList.add('d-none');
+            }
+          }
+
+          // Update Notification Badge
+          const notifBadge = document.getElementById('navNotifUnreadBadge');
+          if (notifBadge) {
+            if (data.unread_notifications > 0) {
+              notifBadge.textContent = data.unread_notifications;
+              notifBadge.classList.remove('d-none');
+            } else {
+              notifBadge.classList.add('d-none');
+            }
+          }
+
+          // Trigger Live Toast for Incoming Chat Message
+          if (data.latest_message && data.latest_message.id) {
+            const currentMsgId = data.latest_message.id;
+            if (!isFirstCheck && currentMsgId > lastSeenMsgId) {
+              const currentPath = window.location.pathname;
+              const threadUrl = data.latest_message.link_url;
+              if (!currentPath.includes(threadUrl)) {
+                let previewText = data.latest_message.text;
+                if (data.latest_message.type === 'offer_card') previewText = '💼 Sent a new trade deal offer';
+                else if (data.latest_message.type === 'counter_card') previewText = '🔄 Sent a counter-offer price';
+                else if (data.latest_message.type === 'voice_note') previewText = '🎙️ Sent an audio voice note';
+
+                showLiveToast(
+                  data.latest_message.sender_name,
+                  previewText,
+                  data.latest_message.link_url,
+                  'Message',
+                  'fas fa-comments',
+                  '#0d6efd'
+                );
+              }
+            }
+            if (currentMsgId > lastSeenMsgId) {
+              lastSeenMsgId = currentMsgId;
+              sessionStorage.setItem('last_seen_msg_id', lastSeenMsgId.toString());
+            }
+          }
+
+          // Trigger Live Toast for Incoming Notifications
+          if (data.latest_notification && data.latest_notification.id) {
+            const currentNotifId = data.latest_notification.id;
+            if (!isFirstCheck && currentNotifId > lastSeenNotifId) {
+              if (!data.latest_notification.title.toLowerCase().includes('message')) {
+                showLiveToast(
+                  data.latest_notification.title,
+                  data.latest_notification.message,
+                  data.latest_notification.link_url,
+                  'Notification',
+                  'fas fa-bell',
+                  '#198754'
+                );
+              }
+            }
+            if (currentNotifId > lastSeenNotifId) {
+              lastSeenNotifId = currentNotifId;
+              sessionStorage.setItem('last_seen_notif_id', lastSeenNotifId.toString());
+            }
+          }
+
+          isFirstCheck = false;
+        })
+        .catch(err => console.debug('Live heartbeat notice:', err));
+    }
+
+    setTimeout(checkLiveHeartbeat, 1200);
+    setInterval(checkLiveHeartbeat, 5000);
+  })();
+  {% endif %}
   </script>
+
+  <!-- Live Floating Toast Notifications Container -->
+  <div id="liveToastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 99999;"></div>
 
   {% block extra_js %}{% endblock %}
 </body>

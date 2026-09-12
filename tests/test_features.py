@@ -359,6 +359,57 @@ def test_tech_stack_docs_page(client):
     assert res_alias.status_code == 200
 
 
+def test_live_heartbeat_and_chat_badges(app, client):
+    """Test live heartbeat API and unread chat counter badge isolation"""
+    # 1. Unauthenticated heartbeat
+    res_guest = client.get('/api/live-heartbeat')
+    assert res_guest.status_code == 200
+    guest_data = res_guest.get_json()
+    assert guest_data['logged_in'] is False
+
+    # 2. Login as buyer and check initial heartbeat
+    client.post('/auth/login', data={'login_id': '9222222222', 'password': 'buyerpass'}, follow_redirects=True)
+    res_buyer = client.get('/api/live-heartbeat')
+    assert res_buyer.status_code == 200
+    buyer_data = res_buyer.get_json()
+    assert buyer_data['logged_in'] is True
+    assert 'unread_messages' in buyer_data
+    assert 'unread_notifications' in buyer_data
+
+    # 3. Farmer sends a message to buyer
+    client.get('/auth/logout', follow_redirects=True)
+    client.post('/auth/login', data={'login_id': '9111111111', 'password': 'farmerpass'}, follow_redirects=True)
+    
+    with app.app_context():
+        from app.models import ChatThread, Message, User
+        farmer = User.query.filter_by(phone='9111111111').first()
+        buyer = User.query.filter_by(phone='9222222222').first()
+        thread = ChatThread.query.filter_by(farmer_id=farmer.id, buyer_id=buyer.id).first()
+        if not thread:
+            thread = ChatThread(farmer_id=farmer.id, buyer_id=buyer.id, subject_product='Wheat')
+            db.session.add(thread)
+            db.session.commit()
+        thread_id = thread.id
+
+    # Send message as farmer
+    res_send = client.post(f'/chat/thread/{thread_id}/send', data={
+        'message_text': 'Hello buyer, I have fresh harvested wheat ready for shipment.'
+    })
+    assert res_send.status_code == 200
+
+    # 4. Login as buyer and check unread count & heartbeat payload
+    client.get('/auth/logout', follow_redirects=True)
+    client.post('/auth/login', data={'login_id': '9222222222', 'password': 'buyerpass'}, follow_redirects=True)
+    
+    res_buyer_hb = client.get('/api/live-heartbeat')
+    assert res_buyer_hb.status_code == 200
+    buyer_hb_data = res_buyer_hb.get_json()
+    assert buyer_hb_data['unread_messages'] >= 1
+    assert buyer_hb_data['latest_message'] is not None
+    assert buyer_hb_data['latest_message']['text'].startswith('Hello buyer')
+
+
+
 
 
 

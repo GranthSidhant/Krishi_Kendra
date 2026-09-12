@@ -1,9 +1,72 @@
-from flask import Blueprint, request, jsonify, g
-from app.models import MandiRate, Product, User
+from flask import Blueprint, request, jsonify, g, url_for, session
+from app.models import MandiRate, Product, User, ChatThread, Message, Notification
 from app.services.mandi_service import MandiService
 from app.services.deal_analysis_service import DealAnalysisService
 
 api_bp = Blueprint('api', __name__)
+
+@api_bp.route('/live-heartbeat')
+def live_heartbeat():
+    if not g.user:
+        return jsonify({
+            'logged_in': False,
+            'unread_messages': 0,
+            'unread_notifications': 0
+        })
+
+    # Unread notifications
+    unread_notifs = Notification.query.filter_by(user_id=g.user.id, is_read=False).count()
+    latest_notif_obj = Notification.query.filter_by(user_id=g.user.id, is_read=False).order_by(Notification.created_at.desc()).first()
+    latest_notif = None
+    if latest_notif_obj:
+        latest_notif = {
+            'id': latest_notif_obj.id,
+            'title': latest_notif_obj.title,
+            'message': latest_notif_obj.message[:140],
+            'link_url': latest_notif_obj.link_url or '#',
+            'time': latest_notif_obj.created_at.strftime('%I:%M %p')
+        }
+
+    # Unread chat messages
+    user_threads = ChatThread.query.filter(
+        (ChatThread.farmer_id == g.user.id) | (ChatThread.buyer_id == g.user.id)
+    ).all()
+    thread_ids = [t.id for t in user_threads]
+    unread_msgs = 0
+    latest_msg = None
+    if thread_ids:
+        unread_msgs = Message.query.filter(
+            Message.thread_id.in_(thread_ids),
+            Message.sender_id != g.user.id,
+            Message.is_read == False
+        ).count()
+        latest_msg_obj = Message.query.filter(
+            Message.thread_id.in_(thread_ids),
+            Message.sender_id != g.user.id,
+            Message.is_read == False
+        ).order_by(Message.created_at.desc()).first()
+        if latest_msg_obj:
+            latest_msg = {
+                'id': latest_msg_obj.id,
+                'thread_id': latest_msg_obj.thread_id,
+                'sender_name': latest_msg_obj.sender.name if latest_msg_obj.sender else 'User',
+                'sender_id': latest_msg_obj.sender_id,
+                'text': latest_msg_obj.message_text[:140],
+                'type': latest_msg_obj.message_type,
+                'metadata': latest_msg_obj.get_metadata(),
+                'time': latest_msg_obj.created_at.strftime('%I:%M %p'),
+                'link_url': url_for('chat.view_thread', thread_id=latest_msg_obj.thread_id)
+            }
+
+    return jsonify({
+        'logged_in': True,
+        'user_id': g.user.id,
+        'user_name': g.user.name,
+        'unread_messages': unread_msgs,
+        'unread_notifications': unread_notifs,
+        'latest_message': latest_msg,
+        'latest_notification': latest_notif
+    })
 
 @api_bp.route('/mandi-rate-lookup')
 def mandi_rate_lookup():

@@ -43,7 +43,7 @@ def create_app(config_class=Config):
         db.session.remove()
 
     # User loader & context processor
-    from app.models import User, Notification
+    from app.models import User, Notification, ChatThread, Message
 
     @flask_app.before_request
     def load_logged_in_user():
@@ -57,13 +57,26 @@ def create_app(config_class=Config):
     def inject_globals():
         current_lang = session.get('language', flask_app.config.get('DEFAULT_LANGUAGE', 'en'))
         unread_notifs = 0
+        unread_msgs = 0
         if g.user:
             unread_notifs = Notification.query.filter_by(user_id=g.user.id, is_read=False).count()
+            user_threads = ChatThread.query.filter(
+                (ChatThread.farmer_id == g.user.id) | (ChatThread.buyer_id == g.user.id)
+            ).all()
+            thread_ids = [t.id for t in user_threads]
+            if thread_ids:
+                unread_msgs = Message.query.filter(
+                    Message.thread_id.in_(thread_ids),
+                    Message.sender_id != g.user.id,
+                    Message.is_read == False
+                ).count()
+
         return {
             'current_user': g.user,
             'current_lang': current_lang,
             'available_languages': flask_app.config.get('LANGUAGES', {}),
             'unread_notifications_count': unread_notifs,
+            'unread_messages_count': unread_msgs,
             'dev_otp_mode': flask_app.config.get('DEV_OTP_MODE', True)
         }
 

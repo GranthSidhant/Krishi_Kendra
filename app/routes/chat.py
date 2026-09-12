@@ -147,14 +147,6 @@ def send_message(thread_id):
     )
     thread.last_message_at = datetime.utcnow()
     db.session.add(msg)
-    
-    recipient_id = thread.buyer_id if user.id == thread.farmer_id else thread.farmer_id
-    NotificationService.send(
-        user_id=recipient_id,
-        title=f"New Message from {user.name}",
-        message=text[:100],
-        link_url=url_for('chat.view_thread', thread_id=thread.id)
-    )
     db.session.commit()
 
     return jsonify({
@@ -226,14 +218,6 @@ def send_voice_note(thread_id):
     )
     thread.last_message_at = datetime.utcnow()
     db.session.add(msg)
-
-    recipient_id = thread.buyer_id if user.id == thread.farmer_id else thread.farmer_id
-    NotificationService.send(
-        user_id=recipient_id,
-        title=f"Voice Note from {user.name}",
-        message=f"{user.name} sent a {duration} voice note.",
-        link_url=url_for('chat.view_thread', thread_id=thread.id)
-    )
     db.session.commit()
 
     return jsonify({
