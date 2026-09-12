@@ -1,9 +1,32 @@
 from flask import Blueprint, request, jsonify, g, url_for, session
+from app.extensions import db
 from app.models import MandiRate, Product, User, ChatThread, Message, Notification
 from app.services.mandi_service import MandiService
 from app.services.deal_analysis_service import DealAnalysisService
 
 api_bp = Blueprint('api', __name__)
+
+@api_bp.route('/notifications/mark-all-read', methods=['POST'])
+def mark_all_notifications_read():
+    if not g.user:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    Notification.query.filter_by(user_id=g.user.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify({'success': True, 'unread_notifications': 0})
+
+@api_bp.route('/notifications/<int:notif_id>/read', methods=['POST'])
+def mark_single_notification_read(notif_id):
+    if not g.user:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    notif = Notification.query.filter_by(id=notif_id, user_id=g.user.id).first()
+    if notif:
+        notif.is_read = True
+        db.session.commit()
+    
+    unread_notifs = Notification.query.filter_by(user_id=g.user.id, is_read=False).count()
+    return jsonify({'success': True, 'unread_notifications': unread_notifs})
 
 @api_bp.route('/live-heartbeat')
 def live_heartbeat():

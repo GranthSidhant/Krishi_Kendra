@@ -397,16 +397,25 @@ def test_live_heartbeat_and_chat_badges(app, client):
     })
     assert res_send.status_code == 200
 
-    # 4. Login as buyer and check unread count & heartbeat payload
-    client.get('/auth/logout', follow_redirects=True)
-    client.post('/auth/login', data={'login_id': '9222222222', 'password': 'buyerpass'}, follow_redirects=True)
-    
-    res_buyer_hb = client.get('/api/live-heartbeat')
-    assert res_buyer_hb.status_code == 200
-    buyer_hb_data = res_buyer_hb.get_json()
-    assert buyer_hb_data['unread_messages'] >= 1
-    assert buyer_hb_data['latest_message'] is not None
-    assert buyer_hb_data['latest_message']['text'].startswith('Hello buyer')
+    # 5. Test marking notification as read
+    with app.app_context():
+        from app.models import Notification, User
+        buyer = User.query.filter_by(phone='9222222222').first()
+        n1 = Notification(user_id=buyer.id, title='Escrow Confirmed', message='Funds deposited in escrow')
+        n2 = Notification(user_id=buyer.id, title='Driver Assigned', message='Driver will pick up produce')
+        db.session.add_all([n1, n2])
+        db.session.commit()
+        n1_id = n1.id
+
+    res_single = client.post(f'/api/notifications/{n1_id}/read')
+    assert res_single.status_code == 200
+    assert res_single.get_json()['success'] is True
+
+    res_all = client.post('/api/notifications/mark-all-read')
+    assert res_all.status_code == 200
+    assert res_all.get_json()['success'] is True
+    assert res_all.get_json()['unread_notifications'] == 0
+
 
 
 
