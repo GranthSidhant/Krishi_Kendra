@@ -1,7 +1,7 @@
 /**
  * Krishi Kendra - Kisan Saarthi (किसान सारथी)
  * Conversational Multilingual AI Voice Copilot powered by Google Gemini AI
- * Features Multi-turn Chat Memory + Stable Voice Synthesis + Dynamic DB Action Navigation
+ * Features Multi-turn Chat Memory + Dynamic Multilingual Voice Synthesis + Context Actions
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,28 +26,57 @@ document.addEventListener('DOMContentLoaded', () => {
   let isListening = false;
   let isMuted = false;
   let conversationHistory = [];
-  let stableVoice = null;
+  let availableVoices = [];
 
-  // 1. Stable Voice Engine (Locks in identical voice every time)
-  function initStableVoice() {
+  // Determine current active interface language
+  function getActiveLang() {
+    return document.documentElement.lang || 'en';
+  }
+
+  // 1. Dynamic Multilingual Voice Engine (Routes audio to native voice per language)
+  function initAvailableVoices() {
     if (!('speechSynthesis' in window)) return;
-    const voices = window.speechSynthesis.getVoices();
-    if (!voices || voices.length === 0) return;
-
-    // Prioritize natural Indian Hindi / Indian English voices
-    const preferred = voices.find(v => (v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.name.includes('Hindi') || v.name.includes('Google हिन्दी')))
-                   || voices.find(v => (v.lang === 'en-IN' || v.name.includes('India') || v.name.includes('Indian')))
-                   || voices.find(v => v.lang.startsWith('en'))
-                   || voices[0];
-
-    if (preferred) {
-      stableVoice = preferred;
-    }
+    availableVoices = window.speechSynthesis.getVoices() || [];
   }
 
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = initStableVoice;
-    initStableVoice();
+    window.speechSynthesis.onvoiceschanged = initAvailableVoices;
+    initAvailableVoices();
+  }
+
+  function getBestVoiceForText(text, targetLang) {
+    if (!availableVoices || availableVoices.length === 0) {
+      initAvailableVoices();
+    }
+    if (!availableVoices || availableVoices.length === 0) return null;
+
+    const hasDevanagari = /[\u0900-\u097F]/.test(text);
+    const hasTamil = /[\u0B80-\u0BFF]/.test(text);
+    const hasTelugu = /[\u0C00-\u0C7F]/.test(text);
+
+    if (hasDevanagari || targetLang === 'hi' || targetLang === 'mr') {
+      return availableVoices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.name.includes('Hindi') || v.name.includes('हिन्दी'))
+          || availableVoices.find(v => v.lang === 'mr-IN' || v.lang.startsWith('mr'))
+          || availableVoices.find(v => v.lang.includes('IN'))
+          || availableVoices[0];
+    }
+
+    if (hasTamil || targetLang === 'ta') {
+      return availableVoices.find(v => v.lang === 'ta-IN' || v.lang.startsWith('ta'))
+          || availableVoices.find(v => v.lang.includes('IN'))
+          || availableVoices[0];
+    }
+
+    if (hasTelugu || targetLang === 'te') {
+      return availableVoices.find(v => v.lang === 'te-IN' || v.lang.startsWith('te'))
+          || availableVoices.find(v => v.lang.includes('IN'))
+          || availableVoices[0];
+    }
+
+    // Default to natural Indian English or standard English
+    return availableVoices.find(v => v.lang === 'en-IN' || v.name.includes('India') || v.name.includes('Indian'))
+        || availableVoices.find(v => v.lang === 'en-US' || v.lang === 'en-GB' || v.lang.startsWith('en'))
+        || availableVoices[0];
   }
 
   // 2. Speech Recognition Setup
@@ -59,13 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    // Detect language or default to Hindi / Indian English
-    const currentLang = document.documentElement.lang || 'hi';
-    recognition.lang = currentLang === 'hi' ? 'hi-IN' : (currentLang === 'mr' ? 'mr-IN' : 'en-IN');
+    // Detect language or default to current page language
+    const currentLang = getActiveLang();
+    recognition.lang = currentLang === 'hi' ? 'hi-IN' : (currentLang === 'mr' ? 'mr-IN' : (currentLang === 'ta' ? 'ta-IN' : (currentLang === 'te' ? 'te-IN' : 'en-IN')));
 
     recognition.onstart = () => {
       isListening = true;
-      updateStatusUI('recording', "Listening... Speak in Hindi, Marathi, or English");
+      const langNotice = currentLang === 'hi' ? "सुन रहा हूँ... बोलिए (हिंदी या अंग्रेजी)" : (currentLang === 'mr' ? "ऐकत आहे... बोला (मराठी किंवा इंग्रजी)" : "Listening... Speak in English or your native language");
+      updateStatusUI('recording', langNotice);
       if (micBtnIcon) {
         micBtnIcon.className = 'fas fa-stop text-white';
         startRecBtn.classList.remove('btn-success');
@@ -101,7 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (micFab) micFab.classList.remove('listening');
     if (!window.speechSynthesis || !window.speechSynthesis.speaking) {
-      updateStatusUI('idle', "Press mic to speak or type in Hindi/English");
+      const currentLang = getActiveLang();
+      const prompt = currentLang === 'hi' ? "माइक दबाकर बोलें या नीचे लिखें" : (currentLang === 'mr' ? "माइक दाबा किंवा खाली लिहा" : "Press mic to speak or type in English/Hindi");
+      updateStatusUI('idle', prompt);
     }
   }
 
@@ -118,6 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Cancel any ongoing speech
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       try {
+        const currentLang = getActiveLang();
+        recognition.lang = currentLang === 'hi' ? 'hi-IN' : (currentLang === 'mr' ? 'mr-IN' : 'en-IN');
         recognition.start();
       } catch (err) {
         console.warn(err);
@@ -168,6 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
     clearHistoryBtn.addEventListener('click', () => {
       conversationHistory = [];
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      const currentLang = getActiveLang();
+      const resetMsg = currentLang === 'hi' ? "बातचीत रीसेट हो गई है। आप नए सवाल पूछ सकते हैं!" : (currentLang === 'mr' ? "संभाषण रीसेट झाले आहे. नवीन प्रश्न विचारा!" : "Conversation reset. You can ask a new question!");
       if (chatStream) {
         chatStream.innerHTML = `
           <div class="chat-msg chat-msg-ai mb-3 d-flex gap-2">
@@ -175,10 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <i class="fas fa-robot text-xs"></i>
             </div>
             <div class="chat-bubble bg-white p-3 rounded-3 shadow-xs border" style="max-width: 85%;">
-              <div class="fw-bold text-success small mb-1"><i class="fas fa-brain me-1"></i> Kisan Saarthi (किसान सारथी)</div>
-              <div class="chat-text text-dark">
-                बातचीत रीसेट हो गई है। आप नए सवाल पूछ सकते हैं!
-              </div>
+              <div class="fw-bold text-success small mb-1"><i class="fas fa-brain me-1"></i> Kisan Saarthi</div>
+              <div class="chat-text text-dark">${resetMsg}</div>
             </div>
           </div>
         `;
@@ -206,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 4. Send Query to Gemini AI with Context & History
+  // 4. Send Query to Gemini AI with Context & Language
   function sendUserQuery(userText) {
     stopListeningUI();
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -217,15 +251,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Append AI Loading Bubble
     const aiBubbleId = 'ai-loading-' + Date.now();
     appendLoadingAIBubble(aiBubbleId);
-    updateStatusUI('speaking', "Kisan Saarthi is consulting real-time agricultural intelligence...");
+    updateStatusUI('speaking', "Consulting agricultural intelligence...");
 
-    // Send payload
+    const currentLang = getActiveLang();
+
+    // Send payload with active language
     fetch('/api/voice-query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: userText,
-        history: conversationHistory
+        history: conversationHistory,
+        language: currentLang
       })
     })
       .then(res => res.json())
@@ -237,17 +274,17 @@ document.addEventListener('DOMContentLoaded', () => {
         conversationHistory.push({ role: 'user', content: userText });
         conversationHistory.push({ role: 'model', content: data.response_text || '' });
 
-        // Speak response out loud if unmuted
+        // Speak response out loud in its matching language
         if (!isMuted && data.response_text) {
-          speakReply(data.response_text);
+          speakReply(data.response_text, data.language || currentLang);
         } else {
-          updateStatusUI('idle', "Press mic to speak or type in Hindi/English");
+          updateStatusUI('idle', "Press mic to speak or type in English/Hindi");
         }
       })
       .catch(err => {
         console.error('AI Voice Error:', err);
         replaceWithAIError(aiBubbleId);
-        updateStatusUI('idle', "Press mic to speak or type in Hindi/English");
+        updateStatusUI('idle', "Press mic to speak or type in English/Hindi");
       });
   }
 
@@ -282,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="fw-bold text-success small mb-1"><i class="fas fa-brain me-1"></i> Kisan Saarthi</div>
         <div class="d-flex align-items-center gap-2 text-muted small">
           <span class="spinner-border spinner-border-sm text-success"></span>
-          <span>Thinking with Live Database & Gemini AI...</span>
+          <span>Consulting Live Mandi & Intelligence...</span>
         </div>
       </div>
     `;
@@ -324,12 +361,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function replaceWithAIError(id) {
     const loadingEl = document.getElementById(id);
     if (!loadingEl) return;
+    const currentLang = getActiveLang();
+    const errorMsg = currentLang === 'hi' ? "क्षमा करें, सर्वर से संपर्क नहीं हो सका। कृपया दोबारा प्रयास करें।" : (currentLang === 'mr' ? "क्षमस्व, सर्व्हरशी संपर्क होऊ शकला नाही. कृपया पुन्हा प्रयत्न करा." : "Sorry, could not connect to server. Please try again.");
     loadingEl.innerHTML = `
       <div class="chat-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
         <i class="fas fa-exclamation text-xs"></i>
       </div>
       <div class="chat-bubble bg-white p-3 rounded-3 shadow-xs border text-danger small" style="max-width: 85%;">
-        क्षमा करें, सर्वर से संपर्क नहीं हो सका। कृपया दोबारा प्रयास करें।
+        ${errorMsg}
       </div>
     `;
     scrollToBottom();
@@ -347,17 +386,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return div.innerHTML;
   }
 
-  // 6. Stable Voice Synthesis
-  function speakReply(text) {
+  // 6. Dynamic Multilingual Voice Synthesis
+  function speakReply(text, targetLang) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
 
-    if (!stableVoice) initStableVoice();
-
+    const voice = getBestVoiceForText(text, targetLang);
     const utterance = new SpeechSynthesisUtterance(text);
-    if (stableVoice) {
-      utterance.voice = stableVoice;
+    
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      const hasDevanagari = /[\u0900-\u097F]/.test(text);
+      utterance.lang = hasDevanagari ? 'hi-IN' : 'en-IN';
     }
+    
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
 
@@ -366,11 +410,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     utterance.onend = () => {
-      updateStatusUI('idle', "Press mic to speak or type in Hindi/English");
+      const currentLang = getActiveLang();
+      const prompt = currentLang === 'hi' ? "माइक दबाकर बोलें या नीचे लिखें" : (currentLang === 'mr' ? "माइक दाबा किंवा खाली लिहा" : "Press mic to speak or type in English/Hindi");
+      updateStatusUI('idle', prompt);
     };
 
     utterance.onerror = () => {
-      updateStatusUI('idle', "Press mic to speak or type in Hindi/English");
+      updateStatusUI('idle', "Press mic to speak or type in English/Hindi");
     };
 
     window.speechSynthesis.speak(utterance);

@@ -388,12 +388,19 @@
             <div class="chat-bubble bg-white p-3 rounded-3 shadow-xs border" style="max-width: 85%;">
               <div class="fw-bold text-success small mb-1"><i class="fas fa-brain me-1"></i> Kisan Saarthi (किसान सारथी)</div>
               <div class="chat-text text-dark">
-                नमस्ते! मैं किसान सारथी हूँ। आप मुझसे मंडी भाव (जैसे: <em>प्याज या गेहूं का रेट</em>), नजदीकी कोल्ड स्टोरेज, सरकारी योजनाएं (PM-KISAN) या अपनी फसल बेचने के बारे में बेझिझक पूछ सकते हैं।
+                {% if session.get('language') == 'hi' %}
+                  नमस्ते! मैं किसान सारथी हूँ। आप मुझसे मंडी भाव (जैसे: <em>प्याज या गेहूं का रेट</em>), नजदीकी कोल्ड स्टोरेज, सरकारी योजनाएं (PM-KISAN) या अपनी फसल बेचने के बारे में बेझिझक पूछ सकते हैं।
+                {% elif session.get('language') == 'mr' %}
+                  नमस्कार! मी किसान सारथी आहे. आपण मला चालू बाजारभाव (उदा: <em>कांदा किंवा गव्हाचे दर</em>), जवळचे कोल्ड स्टोरेज, शासकीय योजना (PM-KISAN) किंवा शेतमाल विक्रीबद्दल विचारू शकता.
+                {% else %}
+                  Hello! I am Kisan Saarthi, your AI agricultural voice copilot. Feel free to ask about live Mandi rates (e.g. <em>Wheat or Onion prices</em>), cold storage availability, government schemes (PM-KISAN), or selling your harvest.
+                {% endif %}
               </div>
               <div class="mt-2.5 d-flex flex-wrap gap-1.5" id="initialActionPills">
-                <a href="/farmer/mandi-rates" class="btn btn-xs btn-outline-success rounded-pill fw-semibold"><i class="fas fa-chart-line me-1"></i> लाइव मंडी भाव</a>
-                <a href="/cold-storage/" class="btn btn-xs btn-outline-primary rounded-pill fw-semibold"><i class="fas fa-snowflake me-1"></i> कोल्ड स्टोरेज</a>
-                <a href="/schemes/" class="btn btn-xs btn-outline-dark rounded-pill fw-semibold"><i class="fas fa-landmark me-1"></i> सरकारी योजनाएं</a>
+                <a href="{{ url_for('farmer.mandi_rates') }}" class="btn btn-xs btn-outline-success rounded-pill fw-semibold"><i class="fas fa-chart-line me-1"></i> {% if session.get('language') == 'hi' %}लाइव मंडी भाव{% elif session.get('language') == 'mr' %}थेट बाजारभाव{% else %}Live Mandi Rates{% endif %}</a>
+                <a href="{{ url_for('cold_storage.index') }}" class="btn btn-xs btn-outline-primary rounded-pill fw-semibold"><i class="fas fa-snowflake me-1"></i> {% if session.get('language') == 'hi' %}कोल्ड स्टोरेज{% elif session.get('language') == 'mr' %}कोल्ड स्टोरेज{% else %}Cold Storage{% endif %}</a>
+                <a href="{{ url_for('schemes.index') }}" class="btn btn-xs btn-outline-dark rounded-pill fw-semibold"><i class="fas fa-landmark me-1"></i> {% if session.get('language') == 'hi' %}सरकारी योजनाएं{% elif session.get('language') == 'mr' %}शासकीय योजना{% else %}Govt Schemes{% endif %}</a>
+                <a href="{{ url_for('main.market_impact') }}" class="btn btn-xs btn-outline-warning text-dark rounded-pill fw-semibold"><i class="fas fa-balance-scale me-1"></i> {% if session.get('language') == 'hi' %}मार्केट तुलना व मुनाफा{% elif session.get('language') == 'mr' %}बाजार तुलना व नफा{% else %}Profit Comparison{% endif %}</a>
               </div>
             </div>
           </div>
@@ -403,7 +410,9 @@
         <div class="px-3 py-2 bg-white border-top border-bottom d-flex align-items-center justify-content-between" id="voiceStatusContainer">
           <div class="d-flex align-items-center gap-2 small">
             <span class="status-indicator-dot" id="voicePulseDot"></span>
-            <span class="text-muted fw-medium" id="voiceStatusText">Press mic to speak or type in Hindi/English</span>
+            <span class="text-muted fw-medium" id="voiceStatusText">
+              {% if session.get('language') == 'hi' %}माइक दबाकर बोलें या नीचे लिखें{% elif session.get('language') == 'mr' %}माइक दाबा किंवा खाली लिहा{% else %}Press mic to speak or type in English/Hindi{% endif %}
+            </span>
           </div>
           <!-- Live Audio Waves Visualizer -->
           <div class="audio-waves" id="audioWaveVisualizer" style="display: none;">
@@ -413,11 +422,25 @@
 
         <!-- Quick Query Suggestion Chips -->
         <div class="px-3 py-2 bg-light d-flex gap-1.5 overflow-x-auto text-nowrap" style="scrollbar-width: thin;">
-          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="नासिक में प्याज का आज का भाव क्या है?">🧅 प्याज भाव</button>
-          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="गेहूं का मंडी रेट क्या चल रहा है?">🌾 गेहूं भाव</button>
-          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="पास में कौन सा कोल्ड स्टोरेज उपलब्ध है?">❄️ कोल्ड स्टोरेज</button>
-          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="PM KISAN योजना की क्या स्थिति है?">🏛️ PM-KISAN</button>
-          <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="नई फसल बेचने के लिए कैसे लिस्ट करें?">📦 फसल बेचें</button>
+          {% if session.get('language') == 'hi' %}
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="नासिक में प्याज का आज का भाव क्या है?">🧅 प्याज भाव</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="गेहूं का मंडी रेट क्या चल रहा है?">🌾 गेहूं भाव</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="पास में कौन सा कोल्ड स्टोरेज उपलब्ध है?">❄️ कोल्ड स्टोरेज</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="PM KISAN योजना की क्या स्थिति है?">🏛️ PM-KISAN</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="पारंपरिक मंडी की तुलना में कितना मुनाफा मिलेगा?">📈 मुनाफा तुलना</button>
+          {% elif session.get('language') == 'mr' %}
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="नाशिक मध्ये कांद्याचा आजचा भाव काय आहे?">🧅 कांदा भाव</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="गव्हाचा बाजारभाव काय चालू आहे?">🌾 गहू भाव</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="जवळचे कोल्ड स्टोरेज कुठे उपलब्ध आहे?">❄️ कोल्ड स्टोरेज</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="PM KISAN योजनेचे काय नियम आहेत?">🏛️ PM-KISAN</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="थेट विक्री केल्यास किती नफा वाढेल?">📈 नफा तुलना</button>
+          {% else %}
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="What is the price of Wheat today?">🌾 Wheat Price</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="What is the current Onion mandi rate?">🧅 Onion Rates</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="Find cold storage facilities near me">❄️ Cold Storages</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="Tell me about PM-KISAN scheme benefits">🏛️ PM-KISAN</button>
+            <button type="button" class="btn btn-xs btn-white border rounded-pill shadow-xs ai-quick-chip" data-query="How much extra profit will I earn on Krishi Kendra?">📈 Profit Edge</button>
+          {% endif %}
         </div>
 
         <!-- Footer Input Controls -->
@@ -429,7 +452,7 @@
 
           <!-- Text Input Form -->
           <form id="voiceTextQueryForm" class="d-flex flex-grow-1 gap-2 m-0">
-            <input type="text" id="voiceTextInput" class="form-control rounded-pill px-3 py-2" placeholder="Ask in Hindi, English, Marathi (e.g. आज आलू का रेट क्या है)..." autocomplete="off">
+            <input type="text" id="voiceTextInput" class="form-control rounded-pill px-3 py-2" placeholder="{% if session.get('language') == 'hi' %}हिंदी या अंग्रेजी में पूछें (उदा: प्याज का भाव क्या है)...{% elif session.get('language') == 'mr' %}मराठी किंवा इंग्रजीत विचारा (उदा: गव्हाचा दर काय आहे)...{% else %}Ask in English or native language (e.g. What is the price of wheat?)...{% endif %}" autocomplete="off">
             <button type="submit" class="btn btn-primary rounded-circle shadow-sm flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 46px; height: 46px;">
               <i class="fas fa-paper-plane"></i>
             </button>

@@ -42,22 +42,27 @@ def voice_query():
     data = request.get_json() or {}
     query = data.get('query', '').strip()
     history = data.get('history', [])
+    req_lang = data.get('language') or session.get('language') or (g.user.preferred_language if g.user else 'en')
+    
     if not query:
+        default_msgs = {
+            'hi': 'नमस्ते! मैं किसान सारथी हूँ। आप मुझसे मंडी भाव, कोल्ड स्टोरेज, सरकारी योजनाएं या अपनी फसल लिस्टिंग के बारे में पूछ सकते हैं।',
+            'mr': 'नमस्कार! मी किसान सारथी आहे. आपण मला बाजारभाव, कोल्ड स्टोरेज, शासकीय योजना किंवा शेतमाल विक्रीबद्दल विचारू शकता.',
+            'en': 'Hello! I am Kisan Saarthi, your AI agricultural voice copilot. Ask me anything about live mandi rates, cold storages, government schemes, or your farm inventory.'
+        }
         return jsonify({
             'success': True,
-            'response_text': 'Namaste! I am Kisan Saarthi, your AI agricultural voice copilot. Ask me anything about live mandi rates, cold storages, government schemes, or your active farm inventory and deals.',
+            'response_text': default_msgs.get(req_lang, default_msgs['en']),
             'action_url': '/farmer/mandi-rates',
-            'action_label': 'View Live Mandi Rates'
+            'action_label': 'मंडी भाव देखें' if req_lang == 'hi' else ('बाजारभाव पहा' if req_lang == 'mr' else 'View Mandi Rates')
         })
 
-    user_context = None
-    if g.user:
-        user_context = {
-            'id': g.user.id,
-            'name': g.user.name,
-            'role': g.user.role,
-            'preferred_language': g.user.preferred_language
-        }
+    user_context = {
+        'id': g.user.id if g.user else None,
+        'name': g.user.name if g.user else 'Kisan',
+        'role': g.user.role if g.user else 'farmer',
+        'preferred_language': req_lang
+    }
 
     result = AIVoiceService.process_query(query, user_context, history)
     return jsonify(result)

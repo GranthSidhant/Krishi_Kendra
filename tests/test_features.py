@@ -72,27 +72,38 @@ def test_admin_login_flow(client):
 
 
 def test_ai_voice_query_api(client):
-    # Test crop rate query
-    res = client.post('/api/voice-query', json={'query': 'What is the price of Wheat today?'})
+    # Test English crop rate query
+    res = client.post('/api/voice-query', json={'query': 'What is the price of Wheat today?', 'language': 'en'})
     assert res.status_code == 200
     data = res.get_json()
     assert data['success'] is True
-    assert "wheat" in data['response_text'].lower() or "गेहूं" in data['response_text'] or "mandi" in data['response_text'].lower() or "भाव" in data['response_text']
+    assert "wheat" in data['response_text'].lower()
+    assert "Today's Mandi rate" in data['response_text'] or "mandi" in data['response_text'].lower()
     assert "/farmer/mandi-rates" in data['action_url']
+    assert data.get('language') == 'en'
 
     # Test Hindi crop query
-    res_hi = client.post('/api/voice-query', json={'query': 'प्याज का भाव क्या है?'})
+    res_hi = client.post('/api/voice-query', json={'query': 'प्याज का भाव क्या है?', 'language': 'hi'})
     assert res_hi.status_code == 200
     data_hi = res_hi.get_json()
     assert data_hi['success'] is True
-    assert "onion" in data_hi['response_text'].lower() or "प्याज" in data_hi['response_text'] or "भाव" in data_hi['response_text']
+    assert "प्याज" in data_hi['response_text'] or "भाव" in data_hi['response_text']
+    assert data_hi.get('language') == 'hi'
 
-    # Test scheme query
-    res_scheme = client.post('/api/voice-query', json={'query': 'PM KISAN samman nidhi'})
+    # Test Marathi crop query
+    res_mr = client.post('/api/voice-query', json={'query': 'कांद्याचा बाजारभाव काय आहे?', 'language': 'mr'})
+    assert res_mr.status_code == 200
+    data_mr = res_mr.get_json()
+    assert data_mr['success'] is True
+    assert "कांदा" in data_mr['response_text'] or "बाजारभाव" in data_mr['response_text']
+    assert data_mr.get('language') == 'mr'
+
+    # Test scheme query in English
+    res_scheme = client.post('/api/voice-query', json={'query': 'PM KISAN scheme benefits', 'language': 'en'})
     assert res_scheme.status_code == 200
     data_scheme = res_scheme.get_json()
     assert data_scheme['success'] is True
-    assert "PM-KISAN" in data_scheme['response_text'] or "kisan" in data_scheme['response_text'].lower() or "किसान" in data_scheme['response_text'] or "योजना" in data_scheme['response_text'] or "पीएम" in data_scheme['response_text']
+    assert "PM-KISAN" in data_scheme['response_text'] or "kisan" in data_scheme['response_text'].lower()
 
 
 

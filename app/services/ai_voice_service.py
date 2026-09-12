@@ -1,17 +1,67 @@
 import os
+import re
 import json
 import logging
+import time
 from flask import g
 from app.models import MandiRate, ColdStorage, GovernmentScheme, Inventory, Offer, User
 from app.services.mandi_service import MandiService
-
-import time
 
 logger = logging.getLogger(__name__)
 
 # In-memory grounding context cache to eliminate multi-query DB latency
 _platform_grounding_cache = ""
 _platform_grounding_cache_time = 0
+
+def detect_query_language(query: str, preferred_lang: str = 'en') -> str:
+    """
+    Detects the language of the user query with script analysis and keyword heuristics.
+    Returns ISO language code: 'en', 'hi', 'mr', 'ta', 'te', etc.
+    """
+    if not query:
+        return preferred_lang or 'en'
+        
+    # Check for Devanagari script (Hindi / Marathi)
+    if re.search(r'[\u0900-\u097F]', query):
+        # Marathi specific marker words
+        marathi_markers = ['आहे', 'बघा', 'सांगा', 'शेतकरी', 'बाजारभाव', 'कांदा', 'कसा', 'काय', 'कुठे', 'पाहिजे', 'शेती']
+        if any(w in query for w in marathi_markers) or preferred_lang == 'mr':
+            return 'mr'
+        return 'hi'
+        
+    # Check for Tamil script
+    if re.search(r'[\u0B80-\u0BFF]', query):
+        return 'ta'
+        
+    # Check for Telugu script
+    if re.search(r'[\u0C00-\u0C7F]', query):
+        return 'te'
+        
+    # Check for Bengali script
+    if re.search(r'[\u0980-\u09FF]', query):
+        return 'bn'
+
+    # Check for Gujarati script
+    if re.search(r'[\u0A80-\u0AFF]', query):
+        return 'gu'
+
+    query_lower = query.lower()
+    
+    # Check for Hinglish / Romanized Hindi indicators
+    hinglish_markers = [
+        'kya', 'hai', 'kaise', 'bhav', 'bhaav', 'dam', 'daam', 'kitna', 'bataye', 'batao',
+        'kisan', 'fasal', 'bechna', 'kharidna', 'mandi', 'yojana', 'paisa', 'mujhe', 'chahiye'
+    ]
+    if any(re.search(r'\b' + re.escape(w) + r'\b', query_lower) for w in hinglish_markers):
+        return 'hi' if preferred_lang == 'hi' else 'en' # Respond in user preferred or clear English/Hinglish
+
+    # If pure English or ASCII
+    english_words = ['price', 'rate', 'cost', 'storage', 'crop', 'wheat', 'onion', 'tomato', 'potato', 'scheme', 'farmer', 'buy', 'sell', 'order', 'hello', 'what', 'how', 'where']
+    if any(re.search(r'\b' + re.escape(w) + r'\b', query_lower) for w in english_words):
+        return 'en'
+
+    return preferred_lang or 'en'
+
 
 class AIVoiceService:
     @staticmethod
@@ -88,57 +138,77 @@ class AIVoiceService:
     def process_query(query: str, user_context: dict = None, conversation_history: list = None) -> dict:
         """
         Processes voice/text queries using Google Gemini AI grounded on live database records.
-        Supports multi-turn conversation history.
+        Supports multi-turn conversation history and exact user-language alignment.
         """
-        api_key = os.environ.get('GEMINI_API_KEY')
-        if not api_key:
-            return AIVoiceService._fallback_rule_based(query)
-
         user_role = user_context.get('role', 'farmer') if user_context else 'farmer'
         user_name = user_context.get('name', 'Kisan') if user_context else 'Kisan'
+        preferred_lang = user_context.get('preferred_language', 'en') if user_context else 'en'
+        
+        detected_lang = detect_query_language(query, preferred_lang)
+        
+        lang_names = {
+            'en': 'English',
+            'hi': 'Hindi (Devanagari)',
+            'mr': 'Marathi (Devanagari)',
+            'ta': 'Tamil',
+            'te': 'Telugu',
+            'bn': 'Bengali',
+            'gu': 'Gujarati'
+        }
+        target_lang_name = lang_names.get(detected_lang, 'English')
+
+        api_key = os.environ.get('GEMINI_API_KEY')
+        if not api_key:
+            return AIVoiceService._fallback_rule_based(query, detected_lang)
+
         db_context = AIVoiceService.get_database_grounding_context(user_context)
 
         system_instruction = f"""
 You are 'Kisan Saarthi' (किसान सारथी), an intelligent, conversational agricultural AI advisor and voice navigator on the Krishi Kendra platform.
-You assist Indian farmers, buyers, and agricultural traders in their native regional languages (Hindi, Marathi, Tamil, Telugu, English, Hinglish).
 
-CURRENT USER:
+USER PROFILE:
 - Name: {user_name}
 - Role: {user_role}
+- User's Query Language: {target_lang_name} (Code: {detected_lang})
 
 REAL-TIME PLATFORM DATABASE RECORDS:
 {db_context}
 
-INSTRUCTIONS:
-1. Ground your answers directly on the platform database records provided above whenever answering about prices, cold storages, government schemes, or user inventory.
-2. Reply concisely (2 to 3 sentences max) in the EXACT same language and script that the user asked in (e.g. reply in Devanagari Hindi if user asks in Hindi).
-3. Be respectful, encouraging, and clear for voice readout.
-4. Maintain context across conversation turns if the user asks follow-up questions.
-5. Suggest the single most appropriate deep-link action URL:
-   - '/farmer/crop-doctor' -> If user asks about crop diseases, leaf spots, pests, spraying, plant health, or crop doctor
-   - '/farmer/inventory/add' -> If user wants to sell produce or add crop listing
-   - '/farmer/mandi-rates' -> If user wants to check mandi rates or price charts
-   - '/cold-storage/' -> If user asks about cold storage facilities or booking
-   - '/schemes/' -> If user asks about government schemes (PM-KISAN, PMFBY, KCC, AIF)
-   - '/marketplace/' -> If user wants to buy crops or browse listings
-   - '/farmer/orders' -> If user asks about their active orders or deals
-   - '/farmer/profit-calculator' -> If user asks about crop profit or cost calculator
-   - '/farmer/visiting-card' -> If user asks about digital visiting card or QR profile
-   - '/auth/profile' -> If user asks about account settings or verification
-   - '/farmer/dashboard' -> For general navigation or dashboard
+CRITICAL LANGUAGE & CONVERSATIONAL DIRECTIVES:
+1. MANDATORY LANGUAGE MATCHING:
+   - The user asked this question in {target_lang_name}.
+   - You MUST formulate your 'response_text' and 'action_label' in {target_lang_name}.
+   - If the user asks in English -> Reply STRICTLY in natural, professional English. Do NOT use Hindi!
+   - If the user asks in Hindi -> Reply in Hindi (Devanagari script).
+   - If the user asks in Marathi -> Reply in Marathi (Devanagari script).
+   - If the user asks in Tamil / Telugu / Bengali -> Reply in that respective language.
+2. Ground your answers directly on the platform database records provided above when asked about mandi rates, cold storages, government schemes, or inventory.
+3. Keep response concise (2 to 3 sentences max) so it sounds great during text-to-speech audio readout.
+4. Suggest the single most appropriate deep-link action URL:
+   - '/farmer/crop-doctor' -> Crop disease diagnosis, pest attack, leaf spots, spray recommendations
+   - '/farmer/inventory/add' -> Add crop listing, sell harvest produce
+   - '/farmer/mandi-rates' -> Live mandi rates, price trend charts
+   - '/cold-storage/' -> Cold storage booking, storage capacity, rental rates
+   - '/schemes/' -> PM-KISAN, PMFBY insurance, KCC loans, government subsidies
+   - '/marketplace/' -> Buy produce, browse open marketplace
+   - '/farmer/orders' -> Active orders, incoming buyer counter-offers
+   - '/impact' -> Market comparison, profit calculator, economic benefits
+   - '/farmer/visiting-card' -> Digital visiting card, QR profile
+   - '/auth/profile' -> Profile & account settings
+   - '/farmer/dashboard' -> General navigation
 
 Return STRICTLY a JSON object with this structure:
 {{
-  "response_text": "<concise spoken reply in user's language>",
+  "response_text": "<concise spoken reply strictly in {target_lang_name}>",
   "action_url": "<relevant url or null>",
-  "action_label": "<short button label in user's language, e.g. 'मंडी भाव देखें' or 'View Schemes'>"
+  "action_label": "<short button label strictly in {target_lang_name}>"
 }}
 """
 
         # Build prompt with history
         history_text = ""
         if conversation_history and isinstance(conversation_history, list):
-            for turn in conversation_history[-4:]: # Keep last 4 turns for context
+            for turn in conversation_history[-4:]:
                 role_label = "User" if turn.get('role') == 'user' else "Kisan Saarthi"
                 history_text += f"{role_label}: {turn.get('content', '')}\n"
 
@@ -171,7 +241,6 @@ Return STRICTLY a JSON object with this structure:
                 )
                 
                 text_out = response.text.strip()
-                # Clean any markdown block formatting if present
                 if text_out.startswith("```"):
                     text_out = text_out.strip("`").replace("json\n", "", 1).strip()
                 data = json.loads(text_out)
@@ -182,110 +251,199 @@ Return STRICTLY a JSON object with this structure:
                     'action_url': data.get('action_url'),
                     'action_label': data.get('action_label', 'Open Page'),
                     'is_ai': True,
+                    'language': detected_lang,
                     'model': model_candidate
                 }
             except Exception as e:
                 logger.warning(f"Model {model_candidate} attempt note: {e}")
                 continue
 
-        # Fallback to local rule-based if all API calls failed
-        return AIVoiceService._fallback_rule_based(query)
+        # Fallback to local multilingual rule-based if all API calls failed
+        return AIVoiceService._fallback_rule_based(query, detected_lang)
 
     @staticmethod
-    def _fallback_rule_based(query: str) -> dict:
-        """Local smart agricultural knowledge fallback when offline or no API key."""
+    def _fallback_rule_based(query: str, lang: str = 'en') -> dict:
+        """Local smart multilingual agricultural knowledge fallback when offline or no API key."""
         query_lower = query.lower()
 
         crops_map = {
-            'wheat': 'Wheat', 'गेहूं': 'Wheat', 'gehun': 'Wheat', 'gehu': 'Wheat', 'gahu': 'Wheat',
-            'onion': 'Onion', 'प्याज': 'Onion', 'pyaz': 'Onion', 'kanda': 'Onion',
-            'tomato': 'Tomato', 'टमाटर': 'Tomato', 'tamatar': 'Tomato',
-            'potato': 'Potato', 'आलू': 'Potato', 'aaloo': 'Potato', 'alu': 'Potato', 'batata': 'Potato',
-            'rice': 'Rice', 'चावल': 'Rice', 'dhan': 'Rice', 'धान': 'Rice', 'chawal': 'Rice', 'paddy': 'Rice',
-            'soybean': 'Soybean', 'सोयाबीन': 'Soybean', 'soya': 'Soybean',
-            'cotton': 'Cotton', 'कपास': 'Cotton', 'kapas': 'Cotton', 'rui': 'Cotton',
-            'garlic': 'Garlic', 'लहसुन': 'Garlic', 'lahsun': 'Garlic',
-            'mustard': 'Mustard', 'सरसों': 'Mustard', 'sarso': 'Mustard',
-            'maize': 'Maize', 'मक्का': 'Maize', 'makka': 'Maize', 'bhutta': 'Maize',
-            'gram': 'Gram', 'चना': 'Gram', 'chana': 'Gram',
-            'banana': 'Banana', 'केला': 'Banana', 'kela': 'Banana',
-            'apple': 'Apple', 'सेब': 'Apple', 'seb': 'Apple'
+            'wheat': {'en': 'Wheat', 'hi': 'गेहूं', 'mr': 'गहू'},
+            'gehun': {'en': 'Wheat', 'hi': 'गेहूं', 'mr': 'गहू'},
+            'gehu': {'en': 'Wheat', 'hi': 'गेहूं', 'mr': 'गहू'},
+            'gahu': {'en': 'Wheat', 'hi': 'गेहूं', 'mr': 'गहू'},
+            'गेहूं': {'en': 'Wheat', 'hi': 'गेहूं', 'mr': 'गहू'},
+            'गहू': {'en': 'Wheat', 'hi': 'गेहूं', 'mr': 'गहू'},
+
+            'onion': {'en': 'Onion', 'hi': 'प्याज', 'mr': 'कांदा'},
+            'pyaz': {'en': 'Onion', 'hi': 'प्याज', 'mr': 'कांदा'},
+            'kanda': {'en': 'Onion', 'hi': 'प्याज', 'mr': 'कांदा'},
+            'प्याज': {'en': 'Onion', 'hi': 'प्याज', 'mr': 'कांदा'},
+            'कांदा': {'en': 'Onion', 'hi': 'प्याज', 'mr': 'कांदा'},
+
+            'tomato': {'en': 'Tomato', 'hi': 'टमाटर', 'mr': 'टोमॅटो'},
+            'tamatar': {'en': 'Tomato', 'hi': 'टमाटर', 'mr': 'टोमॅटो'},
+            'टमाटर': {'en': 'Tomato', 'hi': 'टमाटर', 'mr': 'टोमॅटो'},
+            'टोमॅटो': {'en': 'Tomato', 'hi': 'टमाटर', 'mr': 'टोमॅटो'},
+
+            'potato': {'en': 'Potato', 'hi': 'आलू', 'mr': 'बटाटा'},
+            'aaloo': {'en': 'Potato', 'hi': 'आलू', 'mr': 'बटाटा'},
+            'alu': {'en': 'Potato', 'hi': 'आलू', 'mr': 'बटाटा'},
+            'batata': {'en': 'Potato', 'hi': 'आलू', 'mr': 'बटाटा'},
+            'आलू': {'en': 'Potato', 'hi': 'आलू', 'mr': 'बटाटा'},
+            'बटाटा': {'en': 'Potato', 'hi': 'आलू', 'mr': 'बटाटा'},
+
+            'rice': {'en': 'Rice', 'hi': 'चावल', 'mr': 'तांदूळ'},
+            'paddy': {'en': 'Rice', 'hi': 'धान', 'mr': 'भात'},
+            'chawal': {'en': 'Rice', 'hi': 'चावल', 'mr': 'तांदूळ'},
+            'dhan': {'en': 'Rice', 'hi': 'धान', 'mr': 'भात'},
+            'चावल': {'en': 'Rice', 'hi': 'चावल', 'mr': 'तांदूळ'},
+            'धान': {'en': 'Rice', 'hi': 'धान', 'mr': 'भात'},
+
+            'soybean': {'en': 'Soybean', 'hi': 'सोयाबीन', 'mr': 'सोयाबीन'},
+            'soya': {'en': 'Soybean', 'hi': 'सोयाबीन', 'mr': 'सोयाबीन'},
+            'सोयाबीन': {'en': 'Soybean', 'hi': 'सोयाबीन', 'mr': 'सोयाबीन'},
+
+            'cotton': {'en': 'Cotton', 'hi': 'कपास', 'mr': 'कापूस'},
+            'kapas': {'en': 'Cotton', 'hi': 'कपास', 'mr': 'कापूस'},
+            'कपास': {'en': 'Cotton', 'hi': 'कपास', 'mr': 'कापूस'},
+            'कापूस': {'en': 'Cotton', 'hi': 'कपास', 'mr': 'कापूस'},
+
+            'mustard': {'en': 'Mustard', 'hi': 'सरसों', 'mr': 'मोहरी'},
+            'sarso': {'en': 'Mustard', 'hi': 'सरसों', 'mr': 'मोहरी'},
+            'सरसों': {'en': 'Mustard', 'hi': 'सरसों', 'mr': 'मोहरी'}
         }
 
-        matched_crop = None
-        for keyword, crop_name in crops_map.items():
+        matched_crop_dict = None
+        for keyword, names in crops_map.items():
             if keyword in query_lower:
-                matched_crop = crop_name
+                matched_crop_dict = names
                 break
 
-        if matched_crop:
-            rate_info = MandiService.get_rate_for_commodity(matched_crop)
+        if matched_crop_dict:
+            crop_en = matched_crop_dict['en']
+            crop_local = matched_crop_dict.get(lang, crop_en)
+            rate_info = MandiService.get_rate_for_commodity(crop_en)
             rate_kg = rate_info.get('rate_per_kg', 25.0)
             modal_price = rate_info.get('raw_modal_price', rate_kg * 100)
-            market = rate_info.get('market_name', 'APMC Mandi')
+            market = rate_info.get('market_name', 'District APMC Mandi')
             trend = rate_info.get('trend', 'stable')
-            trend_msg = "Rates are showing an upward trend." if trend == 'up' else ("Rates are slightly lower today." if trend == 'down' else "Rates remain stable today.")
-            
-            response_text = f"Today's Mandi rate for {matched_crop} is ₹{rate_kg}/kg (₹{modal_price:.0f}/Quintal) at {market}. {trend_msg}"
-            action_url = f"/farmer/mandi-rates?commodity={matched_crop}"
-            action_label = f"View {matched_crop} Mandi Analytics"
+
+            if lang == 'hi':
+                trend_msg = "भाव में आज तेजी देखी जा रही है।" if trend == 'up' else ("भाव में आज हल्की नरमी है।" if trend == 'down' else "भाव आज स्थिर हैं।")
+                response_text = f"आज {market} में {crop_local} का मंडी भाव ₹{rate_kg}/किलो (₹{modal_price:.0f}/क्विंटल) है। {trend_msg}"
+                action_label = f"{crop_local} मंडी भाव देखें"
+            elif lang == 'mr':
+                trend_msg = "बाजारात आज तेजी दिसत आहे." if trend == 'up' else ("बाजारात आज थोडी मंदी आहे." if trend == 'down' else "बाजारभाव आज स्थिर आहेत.")
+                response_text = f"आज {market} मध्ये {crop_local} चा बाजारभाव ₹{rate_kg}/किलो (₹{modal_price:.0f}/क्विंटल) आहे. {trend_msg}"
+                action_label = f"{crop_local} बाजारभाव पहा"
+            else:
+                trend_msg = "Rates are showing an upward trend." if trend == 'up' else ("Rates are slightly lower today." if trend == 'down' else "Rates remain stable today.")
+                response_text = f"Today's Mandi rate for {crop_en} is ₹{rate_kg}/kg (₹{modal_price:.0f}/Quintal) at {market}. {trend_msg}"
+                action_label = f"View {crop_en} Mandi Rates"
+
+            action_url = f"/farmer/mandi-rates?commodity={crop_en}"
 
         elif any(k in query_lower for k in ['pm kisan', 'pm-kisan', 'kisan samman', 'सम्मान निधि', 'योजना', 'scheme', 'subsidy', 'pmfby', 'fasal bima', 'insurance', 'aif', 'kcc', 'credit card']):
-            if 'pm kisan' in query_lower or 'सम्मान निधि' in query_lower:
-                response_text = "PM-KISAN Samman Nidhi provides ₹6,000/year in 3 installments of ₹2,000 directly to farmers' bank accounts. View details on our Schemes page."
-            elif 'bima' in query_lower or 'insurance' in query_lower or 'pmfby' in query_lower:
-                response_text = "PM Fasal Bima Yojana (PMFBY) covers crop loss from natural risks with up to 90% premium subsidies."
-            elif 'kcc' in query_lower or 'credit card' in query_lower:
-                response_text = "Kisan Credit Card (KCC) provides short-term crop loans at 4% effective interest rate."
+            if lang == 'hi':
+                response_text = "पीएम-किसान योजना के तहत किसानों को हर साल ₹6,000 की वित्तीय सहायता 3 किस्तों में दी जाती है। आप हमारी योजना बोर्ड पर सभी विवरण देख सकते हैं।"
+                action_label = "सरकारी योजनाएं देखें"
+            elif lang == 'mr':
+                response_text = "पीएम-किसान योजनेअंतर्गत शेतकऱ्यांना दरवर्षी ₹6,000 ची मदत 3 हप्त्यांमध्ये दिली जाते. सविस्तर माहिती योजना पृष्ठावर उपलब्ध आहे."
+                action_label = "शासकीय योजना पहा"
             else:
-                response_text = "Krishi Kendra tracks active agricultural schemes including PM-KISAN, PMFBY, and Agri Infrastructure Fund (AIF)."
+                response_text = "PM-KISAN Samman Nidhi provides ₹6,000/year in 3 installments directly to farmers' bank accounts. Explore active schemes on our dashboard."
+                action_label = "Open Schemes Board"
             action_url = "/schemes/"
-            action_label = "Open Schemes Board"
 
         elif any(k in query_lower for k in ['cold storage', 'storage', 'कोल्ड स्टोरेज', 'warehouse', 'गोदाम', 'store']):
-            response_text = "Krishi Kendra provides accredited cold storage facilities with real-time temperature, capacity tracking, and per-day rental rates."
+            if lang == 'hi':
+                response_text = "कृषि केंद्र पर तापमान, लाइव खाली क्षमता और दैनिक किराए के साथ सत्यापित कोल्ड स्टोरेज उपलब्ध हैं।"
+                action_label = "कोल्ड स्टोरेज खोजें"
+            elif lang == 'mr':
+                response_text = "कृषी केंद्रावर तापमान, उपलब्ध क्षमता आणि दैनिक दरांसह प्रमाणित कोल्ड स्टोरेज उपलब्ध आहेत."
+                action_label = "कोल्ड स्टोरेज शोधा"
+            else:
+                response_text = "Krishi Kendra provides accredited cold storage facilities with real-time temperature, capacity tracking, and daily rental rates."
+                action_label = "Explore Cold Storages"
             action_url = "/cold-storage/"
-            action_label = "Explore Cold Storages"
 
         elif any(k in query_lower for k in ['add crop', 'add produce', 'list crop', 'inventory', 'फसल जोड़ें', 'बेचना', 'sell', 'new harvest', 'list produce']):
-            response_text = "Opening the Add Produce wizard where you can list crops, set prices, and compare with live Mandi rates."
+            if lang == 'hi':
+                response_text = "फसल बिक्री विजार्ड खुल रहा है जहाँ आप मात्रा, भाव और फोटो जोड़कर सीधे खरीदारों से जुड़ सकते हैं।"
+                action_label = "फसल बिक्री के लिए जोड़ें"
+            elif lang == 'mr':
+                response_text = "नवीन शेतमाल विक्री पेज उघडत आहे जेथे आपण पिकाची माहिती आणि अपेक्षित दर नोंदवू शकता."
+                action_label = "शेतमाल विक्री नोंदणी"
+            else:
+                response_text = "Opening the Add Produce wizard where you can list crops, set your price, and compare with live Mandi rates."
+                action_label = "Add Produce to Inventory"
             action_url = "/farmer/inventory/add"
-            action_label = "Add Produce to Inventory"
 
         elif any(k in query_lower for k in ['order', 'ऑर्डर', 'requests', 'offers', 'negotiation', 'counter offer', 'सौदे']):
-            response_text = "Opening your active orders and buyer counter-offer requests for direct review and confirmation."
+            if lang == 'hi':
+                response_text = "आपके सक्रिय ऑर्डर्स और खरीदारों के सौदों की सूची खोली जा रही है।"
+                action_label = "ऑर्डर्स और सौदे देखें"
+            elif lang == 'mr':
+                response_text = "आपल्या सक्रिय ऑर्डर्स आणि खरेदीदारांच्या मागण्यांची यादी उघडत आहे."
+                action_label = "ऑर्डर्स पहा"
+            else:
+                response_text = "Opening your active orders and buyer counter-offer requests for direct review and confirmation."
+                action_label = "View Orders & Deals"
             action_url = "/farmer/orders"
-            action_label = "View Orders & Deals"
-
-        elif any(k in query_lower for k in ['marketplace', 'buy crop', 'खरीदें', 'बाजार', 'browse', 'shop', 'produce list']):
-            response_text = "Opening Krishi Kendra Marketplace with verified direct farm produce listings."
-            action_url = "/marketplace/"
-            action_label = "Browse Open Marketplace"
 
         elif any(k in query_lower for k in ['card', 'visiting card', 'विजिटिंग कार्ड', 'qr', 'contact card']):
-            response_text = "Opening your digital Krishi Kendra Visiting Card with QR code verification."
+            if lang == 'hi':
+                response_text = "आपका डिजिटल विजिटिंग कार्ड और क्यूआर कोड खोला जा रहा है।"
+                action_label = "विजिटिंग कार्ड देखें"
+            elif lang == 'mr':
+                response_text = "आपले डिजिटल व्हिजिटिंग कार्ड आणि क्यूआर प्रोफाइल उघडत आहे."
+                action_label = "व्हिजिटिंग कार्ड पहा"
+            else:
+                response_text = "Opening your digital Krishi Kendra Visiting Card with QR code verification."
+                action_label = "Open My Visiting Card"
             action_url = "/farmer/visiting-card"
-            action_label = "Open My Visiting Card"
 
-        elif any(k in query_lower for k in ['profile', 'setting', 'privacy', 'photo', 'avatar', 'खाता']):
-            response_text = "Taking you to Profile Settings to update personal details, profile picture, and phone privacy preferences."
-            action_url = "/auth/profile"
-            action_label = "Edit Profile & Settings"
+        elif any(k in query_lower for k in ['doctor', 'disease', 'pest', 'leaf', 'spray', 'कीट', 'रोग', 'दवा', 'डॉक्टर', 'पाने']):
+            if lang == 'hi':
+                response_text = "एआई क्रॉप डॉक्टर खुल रहा है। पौधे या पत्ती की फोटो अपलोड करके तुरंत रोग पहचान और जैविक उपचार प्राप्त करें।"
+                action_label = "एआई क्रॉप डॉक्टर खोलें"
+            elif lang == 'mr':
+                response_text = "एआय पीक डॉक्टर उघडत आहे. पिकाचा किंवा पानाचा फोटो अपलोड करून रोगाचे त्वरित निदान मिळवा."
+                action_label = "एआय पीक डॉक्टर उघडा"
+            else:
+                response_text = "Opening AI Crop Doctor. Upload a photo of damaged leaves or crops for instant disease diagnosis and treatment steps."
+                action_label = "Open AI Crop Doctor"
+            action_url = "/farmer/crop-doctor"
 
-        elif any(k in query_lower for k in ['weather', 'मौसम', 'rain', 'barish', 'forecast']):
-            response_text = "Agricultural Weather Advisory: Moderate temperatures expected. Ensure adequate field drainage and monitor pest alerts."
-            action_url = "/farmer/dashboard"
-            action_label = "Return to Dashboard"
+        elif any(k in query_lower for k in ['impact', 'profit', 'calculator', 'comparison', 'फायदा', 'कैलकुलेटर', 'मुनाफा']):
+            if lang == 'hi':
+                response_text = "मार्केट तुलना और मुनाफा कैलकुलेटर खोला जा रहा है जहाँ आप बिचौलियों के बिना अपनी अतिरिक्त कमाई देख सकते हैं।"
+                action_label = "मार्केट तुलना और मुनाफा देखें"
+            elif lang == 'mr':
+                response_text = "बाजार तुलना आणि नफा कॅल्क्युलेटर उघडत आहे जेथे आपण थेट विक्रीचा फायदा तपासू शकता."
+                action_label = "नफा कॅल्क्युलेटर पहा"
+            else:
+                response_text = "Opening Market Comparison & Profit Simulator to view net extra earnings compared to traditional mandis."
+                action_label = "View Profit Comparison"
+            action_url = "/impact"
 
         else:
-            response_text = f"I understood: '{query}'. You can ask for crop rates like 'Onion price today', 'Cold storage near me', 'PM-KISAN scheme', or 'List new crop'."
+            if lang == 'hi':
+                response_text = f"मैंने समझा: '{query}'। आप मुझसे 'आज प्याज का भाव', 'कोल्ड स्टोरेज', 'फसल रोग जांच' या 'फसल जोड़ें' के बारे में पूछ सकते हैं।"
+                action_label = "मंडी भाव देखें"
+            elif lang == 'mr':
+                response_text = f"मी समजलो: '{query}'। आपण मला 'कांद्याचा भाव', 'कोल्ड स्टोरेज', 'पीक रोग तपासणी' किंवा 'शेतमाल विक्री' विचारू शकता."
+                action_label = "बाजारभाव पहा"
+            else:
+                response_text = f"I understood: '{query}'. You can ask for crop rates like 'Wheat price today', 'Cold storage near me', 'PM-KISAN scheme', or 'Check crop disease'."
+                action_label = "View Live Mandi Rates"
             action_url = "/farmer/mandi-rates"
-            action_label = "View Live Mandi Rates"
 
         return {
             'success': True,
             'response_text': response_text,
             'action_url': action_url,
             'action_label': action_label,
-            'is_ai': False
+            'is_ai': False,
+            'language': lang
         }
