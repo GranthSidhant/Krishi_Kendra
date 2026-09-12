@@ -144,8 +144,17 @@ Return STRICTLY a JSON object with this structure:
 
         full_prompt = f"{system_instruction}\n\nCONVERSATION HISTORY:\n{history_text}\nUser Voice Query: {query}"
 
-        # Call Gemini using google-genai SDK (optimized for fast voice responses)
-        for model_candidate in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest']:
+        model_candidates = [
+            'gemini-3.1-flash-lite',
+            'gemini-3.5-flash-lite',
+            'gemini-flash-lite-latest',
+            'gemini-3.1-flash-lite-preview',
+            'gemini-flash-latest',
+            'gemini-3.5-flash',
+            'gemini-3.6-flash',
+            'gemini-2.5-flash-lite'
+        ]
+        for model_candidate in model_candidates:
             try:
                 from google import genai
                 from google.genai import types
