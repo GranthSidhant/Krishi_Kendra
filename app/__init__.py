@@ -77,11 +77,32 @@ def create_app(config_class=Config):
             db.create_all()
             try:
                 with db.engine.connect() as conn:
+                    # PostgreSQL column type migrations
                     if db.engine.name == 'postgresql':
-                        conn.execute(db.text("ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;"))
-                        conn.execute(db.text("ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;"))
-                        conn.execute(db.text("ALTER TABLE messages ALTER COLUMN metadata_json TYPE TEXT;"))
-                        conn.commit()
+                        try:
+                            conn.execute(db.text("ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;"))
+                            conn.execute(db.text("ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;"))
+                            conn.execute(db.text("ALTER TABLE messages ALTER COLUMN metadata_json TYPE TEXT;"))
+                            conn.commit()
+                        except Exception:
+                            pass
+
+                    # General column migrations for requirements, transport_bookings, etc.
+                    migration_sqls = [
+                        "ALTER TABLE requirements ADD COLUMN is_pre_order BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE requirements ADD COLUMN target_harvest_timeline VARCHAR(100);",
+                        "ALTER TABLE requirements ADD COLUMN advance_payment_terms VARCHAR(255);",
+                        "ALTER TABLE transport_bookings ADD COLUMN is_shared_pooling BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE transport_bookings ADD COLUMN pool_code VARCHAR(50);",
+                        "ALTER TABLE transport_bookings ADD COLUMN pickup_latitude FLOAT;",
+                        "ALTER TABLE transport_bookings ADD COLUMN pickup_longitude FLOAT;",
+                    ]
+                    for stmt in migration_sqls:
+                        try:
+                            conn.execute(db.text(stmt))
+                            conn.commit()
+                        except Exception:
+                            pass
             except Exception as e_mig:
                 flask_app.logger.warning(f"Schema migration note: {e_mig}")
         except Exception as e:

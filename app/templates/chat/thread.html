@@ -34,12 +34,15 @@
 
       <!-- Action Buttons -->
       <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-success fw-bold d-flex align-items-center gap-1.5 rounded-pill px-2.5 shadow-xs" data-bs-toggle="modal" data-bs-target="#voiceAssistantModal" title="Ask Kisan Saarthi AI Copilot for bargaining advice or crop rates">
+          <i class="fas fa-robot text-success"></i> <span class="d-none d-sm-inline">Kisan Saarthi AI</span>
+        </button>
         <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#inChatOfferModal">
           <i class="fas fa-handshake me-1 text-warning"></i> Send Offer / Counter
         </button>
         <form method="POST" action="{{ url_for('chat.share_phone', thread_id=thread.id) }}" class="d-inline" onsubmit="return confirm('Share your verified contact number in this chat?');">
-          <button type="submit" class="btn btn-sm btn-outline-success fw-semibold">
-            <i class="fas fa-phone-alt me-1"></i> Share Phone
+          <button type="submit" class="btn btn-sm btn-outline-secondary fw-semibold">
+            <i class="fas fa-phone-alt me-1 text-success"></i> <span class="d-none d-sm-inline">Share Phone</span>
           </button>
         </form>
       </div>

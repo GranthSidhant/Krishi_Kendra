@@ -320,6 +320,29 @@ main {
   100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
 
+/* Responsive Weather Dropdown for Smartphones */
+@media (max-width: 768px) {
+  #weatherWidgetDropdown .dropdown-menu {
+    position: fixed !important;
+    top: 66px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    min-width: unset !important;
+    max-width: calc(100vw - 24px) !important;
+    transform: none !important;
+    z-index: 1080 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25) !important;
+  }
+  .voice-assistant-fab {
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 52px;
+    height: 52px;
+  }
+}
+
 /* Kisan Saarthi Conversational UI */
 .kisan-saarthi-modal .modal-header {
   border-bottom: none;
