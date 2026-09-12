@@ -347,3 +347,13 @@ def browse_requirements():
         pre_order_count=pre_order_count
     )
 
+
+# ----------------------------------------------------
+# AI Crop Health Doctor & Disease Diagnostic Scanner
+# ----------------------------------------------------
+@farmer_bp.route('/crop-doctor')
+def crop_doctor():
+    user = g.user
+    return render_template('farmer/crop_doctor.html', user=user)
+
+

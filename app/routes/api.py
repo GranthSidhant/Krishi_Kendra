@@ -169,3 +169,60 @@ def submit_report():
         'report_code': report.report_code,
         'message': 'Report received and submitted to Krishi Kendra Admin Moderation.'
     })
+
+
+# ----------------------------------------------------
+# AI Crop Health Doctor & Disease Diagnostic Scanner
+# ----------------------------------------------------
+import base64
+from app.services.crop_doctor_service import CropDoctorService
+
+@api_bp.route('/crop-doctor/scan', methods=['POST'])
+def crop_doctor_scan():
+    crop_hint = request.form.get('crop_hint') or ''
+    user_lang = request.form.get('lang') or (g.user.preferred_language if g.user else 'en')
+
+    image_bytes = None
+    mime_type = "image/jpeg"
+
+    # Check multipart file upload
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename:
+            image_bytes = file.read()
+            mime_type = file.content_type or "image/jpeg"
+    
+    # Or check base64 JSON payload
+    if not image_bytes:
+        data = request.get_json(silent=True) or {}
+        image_data = data.get('image_base64', '')
+        crop_hint = data.get('crop_hint') or crop_hint
+        user_lang = data.get('lang') or user_lang
+        if image_data:
+            if ',' in image_data:
+                header, encoded = image_data.split(',', 1)
+                if 'png' in header:
+                    mime_type = 'image/png'
+                elif 'webp' in header:
+                    mime_type = 'image/webp'
+                image_bytes = base64.b64decode(encoded)
+            else:
+                image_bytes = base64.b64decode(image_data)
+
+    if not image_bytes:
+        return jsonify({'success': False, 'error': 'No image provided for crop scan.'}), 400
+
+    report = CropDoctorService.analyze_crop_image(
+        image_bytes=image_bytes,
+        mime_type=mime_type,
+        user_lang=user_lang,
+        crop_hint=crop_hint
+    )
+    return jsonify(report)
+
+
+@api_bp.route('/crop-doctor/sample/<sample_key>')
+def crop_doctor_sample(sample_key):
+    report = CropDoctorService.get_sample_diagnosis(sample_key)
+    return jsonify(report)
+

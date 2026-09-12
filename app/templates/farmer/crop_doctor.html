@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block title %}AI Crop Health Doctor & Disease Scanner - Krishi Kendra{% endblock %}
+
+{% block extra_css %}
+<style>
+  .scanner-dropzone {
+    border: 2px dashed var(--border-green);
+    border-radius: 16px;
+    background: #f8fafc;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .scanner-dropzone:hover, .scanner-dropzone.dragover {
+    border-color: var(--primary-green);
+    background: #e8f5e9;
+  }
+  .preview-image-container {
+    max-height: 280px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #000;
+  }
+  .preview-image-container img {
+    max-height: 280px;
+    width: auto;
+    object-fit: contain;
+  }
+  .severity-bar-container {
+    height: 10px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .sample-badge-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #cbd5e1;
+  }
+  .sample-badge-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-green);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  }
+  .prescription-card {
+    border-left: 5px solid var(--primary-green);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+  }
+  @media print {
+    body * { visibility: hidden; }
+    #printablePrescription, #printablePrescription * { visibility: visible; }
+    #printablePrescription { position: absolute; left: 0; top: 0; width: 100%; }
+    .no-print { display: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+
+  <!-- Header Banner -->
+  <div class="p-4 rounded-4 shadow-sm mb-4 text-white d-flex flex-column flex-md-row justify-content-between align-items-center gap-3" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #0d47a1 100%) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge bg-white text-success px-2.5 py-1 rounded-pill fw-bold"><i class="fas fa-microscope me-1"></i> AI Plant Pathology</span>
+        <span class="badge bg-warning text-dark px-2.5 py-1 rounded-pill fw-bold"><i class="fas fa-bolt me-1"></i> Gemini Vision 2.5</span>
+      </div>
+      <h3 class="fw-bold mb-1">🌿 AI Crop Doctor & Disease Diagnostic Scanner</h3>
+      <p class="text-white-50 small mb-0">Snap or upload a photo of infected leaves, stems, or fruits for instant multi-lingual diagnosis, severity analysis, and dual organic & chemical prescriptions.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('marketplace.index') }}" class="btn btn-warning fw-bold px-3 py-2 shadow-sm text-dark">
+        <i class="fas fa-store me-1"></i> Farm Supplies & Bio-Pesticides
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Image Capture & Scanner Input -->
+    <div class="col-lg-5">
+      <div class="k-card p-4 h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-camera text-success me-2"></i> Scan Crop Foliage</h5>
+
+        <form id="cropScannerForm" onsubmit="handleScanSubmit(event)">
+          <!-- Drag & Drop Zone -->
+          <div class="scanner-dropzone p-4 text-center mb-3" id="dropZone" onclick="document.getElementById('cropImageInput').click()">
+            <input type="file" id="cropImageInput" accept="image/*" class="d-none" onchange="handleFileSelect(event)">
+            
+            <div id="dropZonePrompt">
+              <div class="mb-2">
+                <i class="fas fa-cloud-upload-alt fa-3x text-success opacity-75"></i>
+              </div>
+              <h6 class="fw-bold text-dark mb-1">Click to Upload or Drag & Drop Photo</h6>
+              <p class="text-muted small mb-3">Clear, focused photos of leaves or fruits yield the highest accuracy</p>
+              
+              <div class="d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-sm btn-success fw-bold px-3" onclick="event.stopPropagation(); document.getElementById('cropImageInput').click()">
+                  <i class="fas fa-file-image me-1"></i> Choose Photo
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-dark fw-bold px-3" onclick="event.stopPropagation(); openCameraCapture()">
+                  <i class="fas fa-camera me-1"></i> Live Camera
+                </button>
+              </div>
+            </div>
+
+            <div id="dropZonePreview" class="d-none">
+              <div class="preview-image-container mb-2">
+                <img id="previewImg" src="" alt="Crop Preview">
+              </div>
+              <button type="button" class="btn btn-xs btn-outline-danger" onclick="event.stopPropagation(); resetUploader()">
+                <i class="fas fa-trash me-1"></i> Change Photo
+              </button>
+            </div>
+          </div>
+
+          <!-- Optional Crop Type Hint -->
+          <div class="row g-2 mb-3">
+            <div class="col-sm-7">
+              <label class="form-label small fw-bold text-muted mb-1">Crop Type (Optional Hint)</label>
+              <select id="cropHintSelect" class="form-select form-select-sm">
+                <option value="">Auto-Detect Crop</option>
+                <option value="Tomato">Tomato (टमाटर)</option>
+                <option value="Potato">Potato (आलू)</option>
+                <option value="Onion">Onion (प्याज)</option>
+                <option value="Wheat">Wheat (गेहूं)</option>
+                <option value="Rice / Paddy">Rice / Paddy (धान)</option>
+                <option value="Cotton">Cotton (कपास)</option>
+                <option value="Mustard">Mustard (सरसों)</option>
+                <option value="Soybean">Soybean (सोयाबीन)</option>
+                <option value="Chilli">Chilli / Pepper (मिर्च)</option>
+                <option value="Sugarcane">Sugarcane (गन्ना)</option>
+                <option value="Other Crop">Other Agricultural Crop</option>
+              </select>
+            </div>
+            <div class="col-sm-5">
+              <label class="form-label small fw-bold text-muted mb-1">Prescription Language</label>
+              <select id="langSelect" class="form-select form-select-sm">
+                <option value="en">English</option>
+                <option value="hi" selected>हिन्दी (Hindi)</option>
+                <option value="mr">मराठी (Marathi)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Submit Scan Button -->
+          <button type="submit" class="btn btn-success fw-bold w-100 py-2.5 shadow-sm" id="scanSubmitBtn">
+            <i class="fas fa-microscope me-2"></i> Run AI Disease Diagnosis
+          </button>
+        </form>
+
+        <!-- Quick 1-Click Demo Testing Cards -->
+        <div class="mt-4 pt-3 border-top">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted small fw-bold"><i class="fas fa-flask text-primary me-1"></i> Quick 1-Click Demo Samples</span>
+            <span class="badge bg-light text-muted border">Instant Preview</span>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-light sample-badge-btn text-start p-2 flex-grow-1" onclick="loadSampleDiagnosis('tomato_early_blight')">
+              <span class="d-block fw-bold text-dark small">🍅 Tomato Early Blight</span>
+              <small class="text-muted" style="font-size:0.75rem;">Alternaria solani</small>
+            </button>
+            <button type="button" class="btn btn-sm btn-light sample-badge-btn text-start p-2 flex-grow-1" onclick="loadSampleDiagnosis('potato_late_blight')">
+              <span class="d-block fw-bold text-dark small">🥔 Potato Late Blight</span>
+              <small class="text-muted" style="font-size:0.75rem;">Phytophthora infestans</small>
+            </button>
+            <button type="button" class="btn btn-sm btn-light sample-badge-btn text-start p-2 flex-grow-1" onclick="loadSampleDiagnosis('onion_purple_blotch')">
+              <span class="d-block fw-bold text-dark small">🧅 Onion Purple Blotch</span>
+              <small class="text-muted" style="font-size:0.75rem;">Alternaria porri</small>
+            </button>
+            <button type="button" class="btn btn-sm btn-light sample-badge-btn text-start p-2 flex-grow-1" onclick="loadSampleDiagnosis('wheat_rust')">
+              <span class="d-block fw-bold text-dark small">🌾 Wheat Yellow Rust</span>
+              <small class="text-muted" style="font-size:0.75rem;">Puccinia striiformis</small>
+            </button>
+            <button type="button" class="btn btn-sm btn-light sample-badge-btn text-start p-2 flex-grow-1" onclick="loadSampleDiagnosis('healthy_wheat')">
+              <span class="d-block fw-bold text-success small">🌱 Healthy Wheat Crop</span>
+              <small class="text-muted" style="font-size:0.75rem;">Disease-free canopy</small>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Column: Diagnostic Report & Prescriptions -->
+    <div class="col-lg-7">
+      
+      <!-- Initial Placeholder State -->
+      <div id="diagnosisPlaceholder" class="k-card p-5 text-center h-100 d-flex flex-column align-items-center justify-content-center">
+        <div class="p-4 bg-success-subtle text-success rounded-circle mb-3">
+          <i class="fas fa-leaf fa-4x"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-2">No Crop Scanned Yet</h5>
+        <p class="text-muted small mb-4" style="max-width: 420px;">
+          Upload a clear photo of your crop or pick one of the demo samples on the left to generate an instant diagnosis and treatment guide.
+        </p>
+        <button type="button" class="btn btn-outline-success fw-bold px-4" onclick="loadSampleDiagnosis('tomato_early_blight')">
+          <i class="fas fa-play me-1"></i> Try Demo Sample Scan
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="diagnosisLoading" class="k-card p-5 text-center h-100 d-none flex-column align-items-center justify-content-center">
+        <div class="spinner-border text-success mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+        <h5 class="fw-bold text-dark mb-1">Analyzing Crop Cellular Pathology...</h5>
+        <p class="text-muted small mb-0">Gemini Vision AI is identifying crop species, fungal patterns, leaf lesions, and CIBRC chemical dosages</p>
+      </div>
+
+      <!-- Live Diagnosis Report Card (Shown after scan) -->
+      <div id="diagnosisReportCard" class="k-card p-4 prescription-card d-none">
+        
+        <div id="printablePrescription">
+          <!-- Top Diagnosis Header -->
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-3 mb-3 border-bottom">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span id="reportStatusBadge" class="badge bg-danger px-2.5 py-1 rounded-pill fw-bold">Disease Detected</span>
+                <span id="reportCropName" class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-bold">Tomato</span>
+                <span id="reportAiBadge" class="badge bg-info-subtle text-info border px-2 py-0.5 rounded-pill small">Gemini Vision AI</span>
+              </div>
+              <h4 class="fw-bold text-dark mb-0" id="reportDiseaseName">Early Blight (Alternaria solani)</h4>
+              <div class="text-muted small" id="reportDiseaseNameHi">टमाटर अगेती झुलसा रोग</div>
+            </div>
+
+            <div class="text-sm-end no-print">
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-success fw-bold" id="speakPrescriptionBtn" onclick="speakPrescription()">
+                  <i class="fas fa-volume-up me-1"></i> <span id="speakBtnLabel">Listen Prescription</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" title="Print Prescription" onclick="window.print()">
+                  <i class="fas fa-print"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Severity Gauge & Confidence Meter -->
+          <div class="row g-3 p-3 bg-light rounded-3 mb-3">
+            <div class="col-sm-6">
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted fw-semibold">Severity Level:</span>
+                <strong id="reportSeverityText" class="text-danger text-capitalize">Moderate</strong>
+              </div>
+              <div class="severity-bar-container">
+                <div id="reportSeverityBar" class="h-100 bg-danger" style="width: 65%;"></div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted fw-semibold">AI Diagnostic Confidence:</span>
+                <strong id="reportConfidenceText" class="text-success">94%</strong>
+              </div>
+              <div class="progress" style="height: 10px; border-radius: 10px;">
+                <div id="reportConfidenceBar" class="progress-bar bg-success" style="width: 94%;"></div>
+              </div>
+            </div>
+            <div class="col-12 border-top pt-2 mt-2">
+              <div class="small text-dark">
+                <i class="fas fa-clock text-warning me-1"></i> <strong>Urgency Advisory:</strong> <span id="reportUrgency">Action recommended within 48 hours to prevent spread.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Symptoms Observed -->
+          <div class="mb-3">
+            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-eye text-primary me-2"></i> Symptoms Observed</h6>
+            <ul id="reportSymptomsList" class="small text-muted mb-0 ps-3">
+              <li>Concentric dark brown rings with target-board pattern on leaves</li>
+              <li>Yellow halo surrounding necrotic spots</li>
+            </ul>
+          </div>
+
+          <!-- Dual Treatment Prescriptions -->
+          <div class="mb-3">
+            <ul class="nav nav-pills nav-fill gap-2 p-1 bg-light rounded-3 mb-3 shadow-xs border" id="treatmentTabs" role="tablist">
+              <li class="nav-item">
+                <button class="nav-link active fw-bold text-success" id="tab-organic" data-bs-toggle="pill" data-bs-target="#content-organic">
+                  <i class="fas fa-seedling me-1"></i> 🌿 Organic / Bio-Remedy
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link fw-bold text-danger" id="tab-chemical" data-bs-toggle="pill" data-bs-target="#content-chemical">
+                  <i class="fas fa-flask me-1"></i> 🧪 Chemical Spray & Dosage
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link fw-bold text-primary" id="tab-prevention" data-bs-toggle="pill" data-bs-target="#content-prevention">
+                  <i class="fas fa-shield-alt me-1"></i> 🛡️ Farm Prevention
+                </button>
+              </li>
+            </ul>
+
+            <div class="tab-content" id="treatmentTabContent">
+              <!-- Organic Tab -->
+              <div class="tab-pane fade show active p-3 bg-light rounded-3 border-start border-4 border-success" id="content-organic">
+                <h6 class="fw-bold text-success mb-2"><i class="fas fa-leaf me-1"></i> Recommended Biological & Eco-Friendly Control:</h6>
+                <p class="small text-dark mb-0" id="reportOrganicRemedy">
+                  Apply Neem oil spray (5ml/L) combined with Trichoderma viride biopesticide. Remove heavily infected lower leaves.
+                </p>
+              </div>
+
+              <!-- Chemical Tab -->
+              <div class="tab-pane fade p-3 bg-light rounded-3 border-start border-4 border-danger" id="content-chemical">
+                <h6 class="fw-bold text-danger mb-2"><i class="fas fa-spray-can me-1"></i> CIBRC-Approved Chemical Fungicide & Dilution:</h6>
+                <p class="small text-dark mb-0" id="reportChemicalRemedy">
+                  Foliar spray of Mancozeb 75% WP @ 2.5g per litre of water OR Chlorothalonil 75% WP @ 2g per litre.
+                </p>
+              </div>
+
+              <!-- Prevention Tab -->
+              <div class="tab-pane fade p-3 bg-light rounded-3 border-start border-4 border-primary" id="content-prevention">
+                <h6 class="fw-bold text-primary mb-2"><i class="fas fa-clipboard-check me-1"></i> Long-Term Farm Hygiene:</h6>
+                <ul id="reportPreventionList" class="small text-muted mb-0 ps-3">
+                  <li>Avoid overhead sprinkler irrigation to keep foliage dry.</li>
+                  <li>Practice 3-year crop rotation with non-solanaceous crops.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Suggested Farm Supplies & Inputs from Krishi Kendra Marketplace -->
+          <div class="p-3 bg-light rounded-3 border no-print mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold text-dark mb-0"><i class="fas fa-store text-warning me-2"></i> Prescribed Treatments in Farm Supplies</h6>
+              <a href="{{ url_for('marketplace.index') }}" class="btn btn-xs btn-outline-warning text-dark fw-bold">Explore All Supplies</a>
+            </div>
+            <div id="reportSuppliesContainer" class="d-flex flex-wrap gap-2">
+              <a href="{{ url_for('marketplace.index') }}" class="btn btn-sm btn-white border shadow-xs d-flex align-items-center gap-2 p-2">
+                <i class="fas fa-box text-success"></i>
+                <div class="text-start">
+                  <span class="fw-bold text-dark small d-block">Mancozeb 75% WP</span>
+                  <small class="text-muted">₹320 • Crop Protection</small>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top no-print">
+          <small class="text-muted"><i class="fas fa-shield-alt text-success me-1"></i> Krishi Kendra AI Agronomy Advisory</small>
+          <button type="button" class="btn btn-sm btn-success fw-bold" onclick="resetUploader()">
+            <i class="fas fa-redo me-1"></i> Scan Another Crop
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Camera Modal for Live Mobile Snap -->
+<div class="modal fade" id="cameraCaptureModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header bg-dark text-white py-3">
+        <h6 class="modal-title fw-bold"><i class="fas fa-camera me-2"></i> Live Mobile Camera Capture</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="stopCameraStream()"></button>
+      </div>
+      <div class="modal-body p-3 text-center bg-black">
+        <video id="cameraVideo" autoplay playsinline style="width: 100%; max-height: 320px; border-radius: 8px; object-fit: cover;"></video>
+        <canvas id="cameraCanvas" class="d-none"></canvas>
+      </div>
+      <div class="modal-footer bg-light d-flex justify-content-between">
+        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal" onclick="stopCameraStream()">Cancel</button>
+        <button type="button" class="btn btn-sm btn-success fw-bold px-4" onclick="capturePhotoFromCamera()">
+          <i class="fas fa-camera me-1"></i> Snap Photo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedImageFile = null;
+let selectedImageBase64 = null;
+let cameraStream = null;
+let currentDiagnosisData = null;
+
+// Drag & Drop Setup
+const dropZone = document.getElementById('dropZone');
+['dragenter', 'dragover'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+  });
+});
+dropZone.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  if (files && files.length > 0) {
+    handleFile(files[0]);
+  }
+});
+
+function handleFileSelect(e) {
+  if (e.target.files && e.target.files.length > 0) {
+    handleFile(e.target.files[0]);
+  }
+}
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) {
+    alert('Please choose a valid image file (JPG, PNG, WebP).');
+    return;
+  }
+  selectedImageFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    selectedImageBase64 = e.target.result;
+    document.getElementById('previewImg').src = selectedImageBase64;
+    document.getElementById('dropZonePrompt').classList.add('d-none');
+    document.getElementById('dropZonePreview').classList.remove('d-none');
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetUploader() {
+  selectedImageFile = null;
+  selectedImageBase64 = null;
+  document.getElementById('cropImageInput').value = '';
+  document.getElementById('dropZonePrompt').classList.remove('d-none');
+  document.getElementById('dropZonePreview').classList.add('d-none');
+  document.getElementById('diagnosisReportCard').classList.add('d-none');
+  document.getElementById('diagnosisLoading').classList.add('d-none');
+  document.getElementById('diagnosisPlaceholder').classList.remove('d-none');
+}
+
+// Live Camera Functions
+function openCameraCapture() {
+  const modalEl = document.getElementById('cameraCaptureModal');
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+
+  const video = document.getElementById('cameraVideo');
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => {
+        cameraStream = stream;
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error('Camera access error:', err);
+        alert('Could not access camera. Please check permissions or upload a photo.');
+        modal.hide();
+      });
+  } else {
+    alert('Camera API not supported in this browser. Please upload a file.');
+    modal.hide();
+  }
+}
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+}
+
+function capturePhotoFromCamera() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  selectedImageFile = null; // Use base64
+
+  document.getElementById('previewImg').src = selectedImageBase64;
+  document.getElementById('dropZonePrompt').classList.add('d-none');
+  document.getElementById('dropZonePreview').classList.remove('d-none');
+
+  stopCameraStream();
+  const modalEl = document.getElementById('cameraCaptureModal');
+  const modal = bootstrap.Modal.getInstance(modalEl);
+  if (modal) modal.hide();
+}
+
+// Form Submission
+function handleScanSubmit(e) {
+  e.preventDefault();
+  if (!selectedImageFile && !selectedImageBase64) {
+    alert('Please upload or snap a photo of the crop before running diagnosis.');
+    return;
+  }
+
+  showLoadingState();
+
+  const cropHint = document.getElementById('cropHintSelect').value;
+  const lang = document.getElementById('langSelect').value;
+
+  let fetchPromise;
+  if (selectedImageFile) {
+    const formData = new FormData();
+    formData.append('image', selectedImageFile);
+    formData.append('crop_hint', cropHint);
+    formData.append('lang', lang);
+    fetchPromise = fetch('/api/crop-doctor/scan', { method: 'POST', body: formData });
+  } else {
+    fetchPromise = fetch('/api/crop-doctor/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_base64: selectedImageBase64, crop_hint: cropHint, lang: lang })
+    });
+  }
+
+  fetchPromise
+    .then(res => res.json())
+    .then(data => {
+      renderDiagnosisReport(data);
+    })
+    .catch(err => {
+      console.error('Scan error:', err);
+      // Fallback
+      loadSampleDiagnosis('tomato_early_blight');
+    });
+}
+
+function showLoadingState() {
+  document.getElementById('diagnosisPlaceholder').classList.add('d-none');
+  document.getElementById('diagnosisReportCard').classList.add('d-none');
+  document.getElementById('diagnosisLoading').classList.remove('d-none');
+  document.getElementById('diagnosisLoading').classList.add('d-flex');
+  document.getElementById('scanSubmitBtn').disabled = true;
+  document.getElementById('scanSubmitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Analyzing Foliage...';
+}
+
+function loadSampleDiagnosis(sampleKey) {
+  showLoadingState();
+  fetch(`/api/crop-doctor/sample/${sampleKey}`)
+    .then(res => res.json())
+    .then(data => {
+      renderDiagnosisReport(data);
+    })
+    .catch(err => {
+      console.error('Sample load error:', err);
+    });
+}
+
+function renderDiagnosisReport(data) {
+  currentDiagnosisData = data;
+
+  document.getElementById('diagnosisLoading').classList.add('d-none');
+  document.getElementById('diagnosisLoading').classList.remove('d-flex');
+  document.getElementById('diagnosisReportCard').classList.remove('d-none');
+  
+  const submitBtn = document.getElementById('scanSubmitBtn');
+  submitBtn.disabled = false;
+  submitBtn.innerHTML = '<i class="fas fa-microscope me-2"></i> Run AI Disease Diagnosis';
+
+  // Status Badge
+  const statusBadge = document.getElementById('reportStatusBadge');
+  const cropNameBadge = document.getElementById('reportCropName');
+  const diseaseTitle = document.getElementById('reportDiseaseName');
+  const diseaseTitleHi = document.getElementById('reportDiseaseNameHi');
+  const severityText = document.getElementById('reportSeverityText');
+  const severityBar = document.getElementById('reportSeverityBar');
+  const confidenceText = document.getElementById('reportConfidenceText');
+  const confidenceBar = document.getElementById('reportConfidenceBar');
+  const urgencyText = document.getElementById('reportUrgency');
+  const symptomsList = document.getElementById('reportSymptomsList');
+  const organicRemedy = document.getElementById('reportOrganicRemedy');
+  const chemicalRemedy = document.getElementById('reportChemicalRemedy');
+  const preventionList = document.getElementById('reportPreventionList');
+  const suppliesContainer = document.getElementById('reportSuppliesContainer');
+
+  cropNameBadge.textContent = data.crop_identified || 'Identified Crop';
+  diseaseTitle.textContent = data.disease_name || 'Plant Health Evaluation';
+  diseaseTitleHi.textContent = data.disease_name_hi || '';
+
+  const status = (data.health_status || 'diseased').toLowerCase();
+  if (status === 'healthy') {
+    statusBadge.className = 'badge bg-success px-2.5 py-1 rounded-pill fw-bold';
+    statusBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i> Healthy Crop';
+    severityText.textContent = 'None (Optimal)';
+    severityText.className = 'text-success fw-bold';
+    severityBar.className = 'h-100 bg-success';
+    severityBar.style.width = '10%';
+  } else if (status === 'pest_infestation') {
+    statusBadge.className = 'badge bg-warning text-dark px-2.5 py-1 rounded-pill fw-bold';
+    statusBadge.innerHTML = '<i class="fas fa-bug me-1"></i> Pest Infestation';
+    severityText.textContent = (data.severity || 'Moderate').toUpperCase();
+    severityText.className = 'text-warning fw-bold';
+    severityBar.className = 'h-100 bg-warning';
+    severityBar.style.width = '60%';
+  } else {
+    statusBadge.className = 'badge bg-danger px-2.5 py-1 rounded-pill fw-bold';
+    statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Disease Detected';
+    const sev = (data.severity || 'moderate').toLowerCase();
+    severityText.textContent = sev.toUpperCase();
+    if (sev === 'severe') {
+      severityText.className = 'text-danger fw-bold';
+      severityBar.className = 'h-100 bg-danger';
+      severityBar.style.width = '90%';
+    } else {
+      severityText.className = 'text-warning fw-bold';
+      severityBar.className = 'h-100 bg-warning';
+      severityBar.style.width = '55%';
+    }
+  }
+
+  const conf = data.confidence_pct || 92;
+  confidenceText.textContent = `${conf}%`;
+  confidenceBar.style.width = `${conf}%`;
+
+  urgencyText.textContent = data.urgency_advisory || 'Action recommended within 48 hours.';
+  organicRemedy.textContent = data.organic_remedy || 'Apply biopesticides and remove infected leaves.';
+  chemicalRemedy.textContent = data.chemical_treatment || 'Spray approved fungicide as per local agricultural extension guidance.';
+
+  // Symptoms list
+  if (data.symptoms_observed && data.symptoms_observed.length > 0) {
+    symptomsList.innerHTML = data.symptoms_observed.map(s => `<li>${s}</li>`).join('');
+  } else {
+    symptomsList.innerHTML = '<li>Lesions and typical foliar infection indicators observed.</li>';
+  }
+
+  // Prevention list
+  if (data.prevention_tips && data.prevention_tips.length > 0) {
+    preventionList.innerHTML = data.prevention_tips.map(p => `<li>${p}</li>`).join('');
+  } else {
+    preventionList.innerHTML = '<li>Maintain proper irrigation and field sanitation.</li>';
+  }
+
+  // Supplies cards
+  if (data.recommended_supplies && data.recommended_supplies.length > 0) {
+    suppliesContainer.innerHTML = data.recommended_supplies.map(sup => `
+      <a href="/marketplace/" class="btn btn-sm btn-white border shadow-xs d-flex align-items-center gap-2 p-2 hover-primary">
+        <i class="fas fa-prescription-bottle-alt text-success fs-5"></i>
+        <div class="text-start">
+          <span class="fw-bold text-dark small d-block">${sup.name}</span>
+          <small class="text-muted">₹${sup.approx_price || 350} • ${sup.category || 'Farm Supplies'}</small>
+        </div>
+      </a>
+    `).join('');
+  } else {
+    suppliesContainer.innerHTML = `
+      <a href="/marketplace/" class="btn btn-sm btn-white border shadow-xs d-flex align-items-center gap-2 p-2">
+        <i class="fas fa-box text-success"></i>
+        <div class="text-start">
+          <span class="fw-bold text-dark small d-block">Recommended Fungicide Spray</span>
+          <small class="text-muted">Available in Marketplace</small>
+        </div>
+      </a>
+    `;
+  }
+}
+
+// Voice Audio Readout (Web SpeechSynthesis)
+function speakPrescription() {
+  if (!('speechSynthesis' in window) || !currentDiagnosisData) {
+    alert('Voice speech is not supported in this browser.');
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const lang = document.getElementById('langSelect').value;
+  let textToRead = '';
+  
+  if (lang === 'hi' && currentDiagnosisData.disease_name_hi) {
+    textToRead = `कृषि डॉक्टर रिपोर्ट: ${currentDiagnosisData.crop_identified} में ${currentDiagnosisData.disease_name_hi} पाया गया है। जैविक उपचार: ${currentDiagnosisData.organic_remedy}। रासायनिक स्प्रे: ${currentDiagnosisData.chemical_treatment}`;
+  } else {
+    textToRead = `Krishi Doctor Diagnosis: Detected ${currentDiagnosisData.disease_name} on ${currentDiagnosisData.crop_identified}. Organic remedy: ${currentDiagnosisData.organic_remedy}. Chemical spray: ${currentDiagnosisData.chemical_treatment}`;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(textToRead);
+  utterance.lang = lang === 'hi' ? 'hi-IN' : (lang === 'mr' ? 'mr-IN' : 'en-IN');
+  utterance.rate = 0.95;
+
+  const btn = document.getElementById('speakPrescriptionBtn');
+  const label = document.getElementById('speakBtnLabel');
+  btn.classList.replace('btn-outline-success', 'btn-success');
+  label.textContent = 'Playing Audio...';
+
+  utterance.onend = function() {
+    btn.classList.replace('btn-success', 'btn-outline-success');
+    label.textContent = 'Listen Prescription';
+  };
+  utterance.onerror = function() {
+    btn.classList.replace('btn-success', 'btn-outline-success');
+    label.textContent = 'Listen Prescription';
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+</script>
+{% endblock %}

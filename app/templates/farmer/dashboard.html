@@ -149,12 +149,34 @@
         </a>
       </div>
       <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.visiting_card') }}" class="btn btn-light border btn-farmer-action text-success w-100 shadow-sm">
+        <a href="{{ url_for('farmer.crop_doctor') }}" class="btn btn-light border btn-farmer-action text-success w-100 shadow-sm" style="border-color: #a5d6a7 !important; background: #e8f5e9 !important;">
+          <i class="fas fa-microscope text-success"></i>
+          <span class="fw-bold">AI Crop Doctor</span>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-4 col-6">
+        <a href="{{ url_for('farmer.visiting_card') }}" class="btn btn-light border btn-farmer-action text-dark w-100 shadow-sm">
           <i class="fas fa-id-badge"></i>
           <span>Visiting Card</span>
         </a>
       </div>
     </div>
+  </div>
+
+  <!-- AI Crop Health Banner -->
+  <div class="p-3 bg-white rounded-4 shadow-sm border border-success border-2 mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="p-3 bg-success text-white rounded-circle">
+        <i class="fas fa-leaf fa-2x"></i>
+      </div>
+      <div>
+        <h6 class="fw-bold text-dark mb-0">Protect Your Yield with AI Crop Doctor</h6>
+        <small class="text-muted">Snap a photo of any leaf spots, discoloration or pest damage to get instant biological & chemical prescriptions.</small>
+      </div>
+    </div>
+    <a href="{{ url_for('farmer.crop_doctor') }}" class="btn btn-sm btn-success fw-bold px-3 py-2 shadow-xs text-nowrap">
+      <i class="fas fa-camera me-1"></i> Scan Crop Foliage Now
+    </a>
   </div>
 
   <!-- Recent Buyer Requests & Inventory Overview -->

@@ -130,6 +130,9 @@
           </li>
           {% if current_user and current_user.role == 'farmer' %}
             <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'farmer.crop_doctor' %}active fw-bold text-success{% endif %}" href="{{ url_for('farmer.crop_doctor') }}"><i class="fas fa-microscope me-1 text-success"></i> <span>Crop Doctor</span></a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link {% if request.endpoint == 'farmer.browse_requirements' %}active fw-bold text-warning{% endif %}" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-1 text-warning"></i> <span>Buyer Demands</span></a>
             </li>
             <li class="nav-item">
@@ -209,6 +212,7 @@
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-2 text-primary"></i> <span data-i18n="nav_requests">My Service Requests</span></a></li>
                 {% if current_user.role == 'farmer' %}
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.crop_doctor') }}"><i class="fas fa-microscope me-2 text-success"></i> <span>AI Crop Health Doctor</span></a></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-2 text-warning"></i> Buyer Demands & Pre-Orders</a></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.profit_calculator') }}"><i class="fas fa-calculator me-2 text-success"></i> Crop Profit Calculator</a></li>
                   <li><a class="dropdown-item" href="{{ url_for('farmer.visiting_card') }}"><i class="fas fa-id-card me-2 text-success"></i> My Visiting Card</a></li>
