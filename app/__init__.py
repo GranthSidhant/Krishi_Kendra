@@ -15,10 +15,32 @@ def create_app(config_class=Config):
     except Exception as e:
         flask_app.logger.warning(f"Directory creation note: {e}")
 
+    # Configure connection pooling for PostgreSQL (prevents serverless cold start socket hangs)
+    db_uri = str(flask_app.config.get('SQLALCHEMY_DATABASE_URI', ''))
+    if 'postgresql' in db_uri:
+        flask_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 120,
+            'pool_size': 10,
+            'max_overflow': 15,
+            'pool_timeout': 15,
+            'connect_args': {
+                'connect_timeout': 10,
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5
+            }
+        }
+
     # Initialize extensions
     db.init_app(flask_app)
     jwt.init_app(flask_app)
     cors.init_app(flask_app)
+
+    @flask_app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
 
     # User loader & context processor
     from app.models import User, Notification

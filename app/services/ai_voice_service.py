@@ -5,45 +5,61 @@ from flask import g
 from app.models import MandiRate, ColdStorage, GovernmentScheme, Inventory, Offer, User
 from app.services.mandi_service import MandiService
 
+import time
+
 logger = logging.getLogger(__name__)
+
+# In-memory grounding context cache to eliminate multi-query DB latency
+_platform_grounding_cache = ""
+_platform_grounding_cache_time = 0
 
 class AIVoiceService:
     @staticmethod
     def get_database_grounding_context(user_context: dict = None) -> str:
         """
-        Dynamically extracts current database records so Gemini AI answers with 100% accuracy based on actual platform data.
+        Dynamically extracts current database records with in-memory caching to eliminate DB latency.
         """
-        context_parts = []
+        global _platform_grounding_cache, _platform_grounding_cache_time
+        now = time.time()
         
-        # 1. Mandi Rates summary from Database
-        try:
-            rates = MandiRate.query.order_by(MandiRate.last_updated.desc()).limit(12).all()
-            if rates:
-                rate_strs = [f"{r.commodity} in {r.market_name} ({r.district}): ₹{r.modal_price_per_kg}/kg (₹{r.modal_price_per_kg*100:.0f}/Q)" for r in rates]
-                context_parts.append("LIVE MANDI RATES IN DATABASE:\n" + "\n".join(rate_strs[:8]))
-        except Exception as e:
-            logger.debug(f"DB Mandi context note: {e}")
+        # Reuse cached platform records if younger than 180 seconds
+        if not _platform_grounding_cache or (now - _platform_grounding_cache_time > 180):
+            context_parts = []
+            
+            # 1. Mandi Rates summary from Database
+            try:
+                rates = MandiRate.query.order_by(MandiRate.last_updated.desc()).limit(12).all()
+                if rates:
+                    rate_strs = [f"{r.commodity} in {r.market_name} ({r.district}): ₹{r.modal_price_per_kg}/kg (₹{r.modal_price_per_kg*100:.0f}/Q)" for r in rates]
+                    context_parts.append("LIVE MANDI RATES IN DATABASE:\n" + "\n".join(rate_strs[:8]))
+            except Exception as e:
+                logger.debug(f"DB Mandi context note: {e}")
 
-        # 2. Cold Storages from Database
-        try:
-            storages = ColdStorage.query.filter_by(is_active=True).limit(6).all()
-            if storages:
-                storage_strs = [
-                    f"{cs.name} ({cs.district}, {cs.state}): {cs.available_capacity_mt} MT available out of {cs.total_capacity_mt} MT, Temp: {cs.temperature_celsius}°C, Rate: ₹{cs.price_per_day_quintal}/day/Q"
-                    for cs in storages
-                ]
-                context_parts.append("ACTIVE COLD STORAGES IN DATABASE:\n" + "\n".join(storage_strs))
-        except Exception as e:
-            logger.debug(f"DB Cold storage context note: {e}")
+            # 2. Cold Storages from Database
+            try:
+                storages = ColdStorage.query.filter_by(is_active=True).limit(6).all()
+                if storages:
+                    storage_strs = [
+                        f"{cs.name} ({cs.district}, {cs.state}): {cs.available_capacity_mt} MT available out of {cs.total_capacity_mt} MT, Temp: {cs.temperature_celsius}°C, Rate: ₹{cs.price_per_day_quintal}/day/Q"
+                        for cs in storages
+                    ]
+                    context_parts.append("ACTIVE COLD STORAGES IN DATABASE:\n" + "\n".join(storage_strs))
+            except Exception as e:
+                logger.debug(f"DB Cold storage context note: {e}")
 
-        # 3. Government Schemes from Database
-        try:
-            schemes = GovernmentScheme.query.filter_by(is_active=True).limit(6).all()
-            if schemes:
-                scheme_strs = [f"{s.title} ({s.code}): {s.benefit_summary}" for s in schemes]
-                context_parts.append("GOVERNMENT SCHEMES IN DATABASE:\n" + "\n".join(scheme_strs))
-        except Exception as e:
-            logger.debug(f"DB Schemes context note: {e}")
+            # 3. Government Schemes from Database
+            try:
+                schemes = GovernmentScheme.query.filter_by(is_active=True).limit(6).all()
+                if schemes:
+                    scheme_strs = [f"{s.title} ({s.code}): {s.benefit_summary}" for s in schemes]
+                    context_parts.append("GOVERNMENT SCHEMES IN DATABASE:\n" + "\n".join(scheme_strs))
+            except Exception as e:
+                logger.debug(f"DB Schemes context note: {e}")
+
+            _platform_grounding_cache = "\n\n".join(context_parts)
+            _platform_grounding_cache_time = now
+
+        context_parts = [_platform_grounding_cache] if _platform_grounding_cache else []
 
         # 4. User-Specific Live Data (if logged in)
         if user_context and user_context.get('id'):
@@ -126,8 +142,8 @@ Return STRICTLY a JSON object with this structure:
 
         full_prompt = f"{system_instruction}\n\nCONVERSATION HISTORY:\n{history_text}\nUser Voice Query: {query}"
 
-        # Call Gemini using google-genai SDK
-        for model_candidate in ['gemini-3.6-flash', 'gemini-flash-latest']:
+        # Call Gemini using google-genai SDK (optimized for fast voice responses)
+        for model_candidate in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest']:
             try:
                 from google import genai
                 from google.genai import types
@@ -138,7 +154,8 @@ Return STRICTLY a JSON object with this structure:
                     contents=full_prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
-                        temperature=0.3
+                        temperature=0.2,
+                        max_output_tokens=350
                     )
                 )
                 

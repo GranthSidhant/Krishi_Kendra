@@ -58,6 +58,10 @@ WMO_CODES = {
 }
 
 
+import time
+
+_weather_cache = {}
+
 class WeatherService:
     @staticmethod
     def get_coordinates(district_name):
@@ -79,10 +83,17 @@ class WeatherService:
 
     @staticmethod
     def fetch_live_weather(lat=None, lon=None, district=None):
-        """Fetch current weather and 5-day forecast from Open-Meteo free API."""
+        """Fetch current weather and 5-day forecast with in-memory 15-minute caching."""
         resolved_name = district or "Nashik"
         if lat is None or lon is None:
             lat, lon, resolved_name = WeatherService.get_coordinates(district)
+
+        cache_key = f"{round(lat, 2)}_{round(lon, 2)}"
+        now = time.time()
+        if cache_key in _weather_cache:
+            cached_entry, cached_at = _weather_cache[cache_key]
+            if now - cached_at < 900: # 15 minutes TTL
+                return cached_entry
 
         try:
             url = (
@@ -94,7 +105,7 @@ class WeatherService:
             )
             
             req = urllib.request.Request(url, headers={'User-Agent': 'KrishiKendra/1.0'})
-            with urllib.request.urlopen(req, timeout=4) as response:
+            with urllib.request.urlopen(req, timeout=3) as response:
                 if response.status == 200:
                     data = json.loads(response.read().decode())
                     current = data.get('current', {})
@@ -121,7 +132,7 @@ class WeatherService:
                             'icon': d_info['icon']
                         })
 
-                    return {
+                    res_payload = {
                         'success': True,
                         'location': resolved_name,
                         'latitude': lat,
@@ -136,11 +147,13 @@ class WeatherService:
                         'agri_advisory': wmo_info['alert'],
                         'forecast': forecast
                     }
+                    _weather_cache[cache_key] = (res_payload, now)
+                    return res_payload
         except Exception as e:
             logger.warning(f"Live weather fetch error: {e}")
 
         # Fallback offline simulation data
-        return {
+        sim_payload = {
             'success': True,
             'location': resolved_name,
             'latitude': lat or 19.9975,
@@ -161,3 +174,5 @@ class WeatherService:
                 {'date': 'Day 5', 'max_temp': 33, 'min_temp': 23, 'rain_prob': 5, 'desc': 'Sunny', 'icon': '☀️'}
             ]
         }
+        _weather_cache[cache_key] = (sim_payload, now)
+        return sim_payload
