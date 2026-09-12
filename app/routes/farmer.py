@@ -1,4 +1,6 @@
 import os
+import json
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, current_app, jsonify
 from werkzeug.utils import secure_filename
 from app.routes.auth import farmer_required
@@ -186,57 +188,79 @@ def respond_offer(offer_id):
     offer = Offer.query.filter_by(id=offer_id, farmer_id=user.id).first_or_404()
     action = request.form.get('action') # 'accept', 'reject', 'counter'
 
+    effective_price = offer.counter_price_per_unit if (offer.status == 'countered' and offer.counter_price_per_unit) else offer.offered_price_per_unit
+    effective_qty = offer.counter_quantity if (offer.status == 'countered' and offer.counter_quantity) else offer.quantity
+    effective_total = round(effective_price * effective_qty, 2)
+
     if action == 'accept':
         offer.status = 'accepted'
         offer.last_action_by = 'farmer'
         
-        # Create confirmed Order
-        order_code = f"ORD-2026-{offer.id + 8000}"
-        buyer_profile = offer.buyer.buyer_profile
-        delivery_addr = buyer_profile.address if (buyer_profile and buyer_profile.address) else "Buyer Warehouse, APMC Yard"
-        
-        order = Order(
-            order_code=order_code,
-            offer_id=offer.id,
-            buyer_id=offer.buyer_id,
-            farmer_id=user.id,
-            product_name=offer.product_name,
-            quantity=offer.quantity,
-            unit=offer.unit,
-            agreed_price_per_unit=offer.offered_price_per_unit,
-            total_amount=offer.total_amount,
-            delivery_address=delivery_addr,
-            status='confirmed',
-            payment_status='in_escrow'
-        )
-        db.session.add(order)
-        db.session.flush()
+        # Check if confirmed Order already exists
+        order = Order.query.filter_by(offer_id=offer.id).first()
+        if not order:
+            from app.services.escrow_service import EscrowService
+            order_code = EscrowService.generate_unique_order_code()
+            buyer_profile = offer.buyer.buyer_profile
+            delivery_addr = buyer_profile.address if (buyer_profile and buyer_profile.address) else "Buyer Warehouse, APMC Yard"
+            
+            order = Order(
+                order_code=order_code,
+                offer_id=offer.id,
+                inventory_id=offer.inventory_id,
+                buyer_id=offer.buyer_id,
+                farmer_id=user.id,
+                product_name=offer.product_name,
+                quantity=effective_qty,
+                unit=offer.unit,
+                agreed_price_per_unit=effective_price,
+                total_amount=effective_total,
+                delivery_address=delivery_addr,
+                status='confirmed',
+                payment_status='in_escrow'
+            )
+            db.session.add(order)
+            db.session.flush()
 
-        from app.services.logistics_service import LogisticsService
-        pickup_otp, delivery_otp = LogisticsService.generate_handover_otps()
+            from app.services.logistics_service import LogisticsService
+            pickup_otp, delivery_otp = LogisticsService.generate_handover_otps()
 
-        # Create Delivery record with Two-Step OTP
-        delivery = Delivery(
-            order_id=order.id,
-            pickup_address=f"{user.farmer_profile.farm_location_name if user.farmer_profile else 'Farmer Farm'}, {user.farmer_profile.district if user.farmer_profile else ''}",
-            drop_address=delivery_addr,
-            vehicle_type='Mini Truck (Tata Ace)',
-            vehicle_category='mini_truck',
-            pickup_otp=pickup_otp,
-            delivery_otp=delivery_otp,
-            current_status='assigned'
-        )
-        db.session.add(delivery)
-        
-        # Notify buyer
-        NotificationService.send(
-            user_id=offer.buyer_id,
-            title='Order Accepted by Farmer!',
-            message=f"Farmer {user.name} accepted your offer for {offer.quantity} {offer.unit} of {offer.product_name}. Order #{order.order_code} is confirmed.",
-            link_url=url_for('orders.view_order', order_id=order.id)
-        )
-        db.session.commit()
-        flash(f'Offer accepted! Order #{order.order_code} is now confirmed.', 'success')
+            # Create Delivery record with Two-Step OTP
+            delivery = Delivery(
+                order_id=order.id,
+                pickup_address=f"{user.farmer_profile.farm_location_name if user.farmer_profile else 'Farmer Farm'}, {user.farmer_profile.district if user.farmer_profile else ''}",
+                drop_address=delivery_addr,
+                vehicle_type='Mini Truck (Tata Ace)',
+                vehicle_category='mini_truck',
+                pickup_otp=pickup_otp,
+                delivery_otp=delivery_otp,
+                current_status='assigned'
+            )
+            db.session.add(delivery)
+            
+            # Link order to chat thread if active
+            chat_thread = ChatThread.query.filter_by(farmer_id=user.id, buyer_id=offer.buyer_id).first()
+            if chat_thread:
+                chat_thread.order_id = order.id
+                status_msg = Message(
+                    thread_id=chat_thread.id,
+                    sender_id=user.id,
+                    message_text=f"✅ Offer Accepted by Farmer! Confirmed Order #{order.order_code} generated for ₹{order.total_amount:,.2f}.",
+                    message_type='text'
+                )
+                db.session.add(status_msg)
+
+            # Notify buyer
+            NotificationService.send(
+                user_id=offer.buyer_id,
+                title='Order Accepted by Farmer!',
+                message=f"Farmer {user.name} accepted your offer for {effective_qty} {offer.unit} of {offer.product_name}. Order #{order.order_code} is confirmed.",
+                link_url=url_for('orders.view_order', order_id=order.id)
+            )
+            db.session.commit()
+            flash(f'Offer accepted! Order #{order.order_code} is now confirmed.', 'success')
+
+        return redirect(url_for('orders.view_order', order_id=order.id))
 
     elif action == 'reject':
         offer.status = 'rejected'
@@ -251,8 +275,8 @@ def respond_offer(offer_id):
         flash('Offer rejected.', 'info')
 
     elif action == 'counter':
-        counter_price = float(request.form.get('counter_price_per_unit', offer.offered_price_per_unit))
-        counter_qty = float(request.form.get('counter_quantity', offer.quantity))
+        counter_price = float(request.form.get('counter_price_per_unit', effective_price))
+        counter_qty = float(request.form.get('counter_quantity', effective_qty))
         counter_notes = request.form.get('counter_notes', '')
 
         offer.status = 'countered'
@@ -273,6 +297,98 @@ def respond_offer(offer_id):
         flash('Counter-offer sent to buyer successfully!', 'success')
 
     return redirect(url_for('farmer.orders'))
+
+
+@farmer_bp.route('/requirements/<int:req_id>/quote', methods=['POST'])
+@farmer_required
+def submit_requirement_quote(req_id):
+    import json
+    user = g.user
+    req = Requirement.query.get_or_404(req_id)
+
+    price = float(request.form.get('offered_price', req.target_price_per_unit or 0))
+    qty = float(request.form.get('quantity', req.required_quantity))
+    unit = req.unit
+    inventory_id = request.form.get('inventory_id', type=int)
+    notes = request.form.get('notes', '').strip()
+
+    if price <= 0 or qty <= 0:
+        flash('Please enter a valid quotation price and quantity.', 'danger')
+        return redirect(url_for('farmer.browse_requirements'))
+
+    total_amount = round(price * qty, 2)
+
+    # 1. Create Formal Offer
+    offer = Offer(
+        requirement_id=req.id,
+        inventory_id=inventory_id if inventory_id else None,
+        buyer_id=req.buyer_id,
+        farmer_id=user.id,
+        product_name=req.product_name,
+        quantity=qty,
+        unit=unit,
+        offered_price_per_unit=price,
+        total_amount=total_amount,
+        offered_by_role='farmer',
+        status='pending',
+        last_action_by='farmer',
+        notes=notes
+    )
+    db.session.add(offer)
+    db.session.flush()
+
+    # 2. Find or Create ChatThread
+    thread = ChatThread.query.filter_by(farmer_id=user.id, buyer_id=req.buyer_id).first()
+    if not thread:
+        thread = ChatThread(
+            farmer_id=user.id,
+            buyer_id=req.buyer_id,
+            offer_id=offer.id,
+            requirement_id=req.id,
+            subject_product=f"{req.product_name} Procurement"
+        )
+        db.session.add(thread)
+        db.session.flush()
+    else:
+        thread.offer_id = offer.id
+        thread.requirement_id = req.id
+
+    # 3. Post structured offer card message in chat
+    metadata = {
+        'offer_id': offer.id,
+        'requirement_id': req.id,
+        'product_name': req.product_name,
+        'price': price,
+        'quantity': qty,
+        'unit': unit,
+        'total_amount': total_amount,
+        'notes': notes,
+        'offered_by': user.name,
+        'role': 'farmer',
+        'status': 'pending'
+    }
+
+    msg = Message(
+        thread_id=thread.id,
+        sender_id=user.id,
+        message_text=f"Formal Quotation for Requirement: ₹{price}/{unit} for {qty} {unit} of {req.product_name} (Total ₹{total_amount:,.2f})",
+        message_type='counter_card',
+        metadata_json=json.dumps(metadata)
+    )
+    thread.last_message_at = datetime.utcnow()
+    db.session.add(msg)
+
+    # 4. Notify Buyer
+    NotificationService.send(
+        user_id=req.buyer_id,
+        title=f"New Quotation from Farmer {user.name}!",
+        message=f"Farmer {user.name} offered ₹{price}/{unit} for your {req.product_name} demand. View & accept deal in chat.",
+        link_url=url_for('chat.view_thread', thread_id=thread.id)
+    )
+    db.session.commit()
+
+    flash(f"Quotation of ₹{price}/{unit} submitted to {req.buyer.name}! You can now negotiate or finalize terms in chat.", "success")
+    return redirect(url_for('chat.view_thread', thread_id=thread.id))
 
 
 @farmer_bp.route('/mandi-rates')
@@ -343,6 +459,7 @@ def browse_requirements():
         
     requirements = query.order_by(Requirement.created_at.desc()).all()
     pre_order_count = Requirement.query.filter_by(status='open', is_pre_order=True).count()
+    inventories = Inventory.query.filter_by(farmer_id=user.id, status='available').all()
 
     return render_template(
         'farmer/browse_requirements.html',
@@ -350,7 +467,8 @@ def browse_requirements():
         requirements=requirements,
         filter_type=filter_type,
         commodity=commodity,
-        pre_order_count=pre_order_count
+        pre_order_count=pre_order_count,
+        inventories=inventories
     )
 
 

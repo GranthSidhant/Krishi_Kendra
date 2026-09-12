@@ -25,6 +25,7 @@ def chat_list():
 @chat_bp.route('/start/<int:target_user_id>')
 @login_required
 def start_chat(target_user_id):
+    from app.models import Requirement
     user = g.user
     target = User.query.get_or_404(target_user_id)
     
@@ -33,6 +34,7 @@ def start_chat(target_user_id):
 
     order_id = request.args.get('order_id', type=int)
     offer_id = request.args.get('offer_id', type=int)
+    requirement_id = request.args.get('requirement_id', type=int)
 
     thread = ChatThread.query.filter_by(farmer_id=farmer_id, buyer_id=buyer_id).first()
     if not thread:
@@ -41,30 +43,44 @@ def start_chat(target_user_id):
             buyer_id=buyer_id,
             order_id=order_id,
             offer_id=offer_id,
+            requirement_id=requirement_id,
             subject_product="Agricultural Produce Trading"
         )
         db.session.add(thread)
         db.session.flush()
         
         # Initial greeting message
+        greeting_text = f"Hello {target.name}, I am reaching out regarding agricultural trade on Krishi Kendra."
+        if requirement_id:
+            req = Requirement.query.get(requirement_id)
+            if req:
+                greeting_text = f"Hello {target.name}, I am reaching out regarding your procurement demand for {req.product_name} ({req.required_quantity} {req.unit} for {req.delivery_district})."
+                thread.subject_product = f"{req.product_name} Demand"
+
         msg = Message(
             thread_id=thread.id,
             sender_id=user.id,
-            message_text=f"Hello {target.name}, I am reaching out regarding agricultural trade on Krishi Kendra.",
+            message_text=greeting_text,
             message_type='text'
         )
         db.session.add(msg)
         db.session.commit()
-    elif order_id:
-        thread.order_id = order_id
+    else:
+        if order_id:
+            thread.order_id = order_id
+        if requirement_id:
+            thread.requirement_id = requirement_id
+        if offer_id:
+            thread.offer_id = offer_id
         db.session.commit()
 
-    return redirect(url_for('chat.view_thread', thread_id=thread.id))
+    return redirect(url_for('chat.view_thread', thread_id=thread.id, open_offer=1 if request.args.get('open_offer') else None))
 
 
 @chat_bp.route('/thread/<int:thread_id>')
 @login_required
 def view_thread(thread_id):
+    from app.models import Requirement
     user = g.user
     thread = ChatThread.query.get_or_404(thread_id)
 
@@ -82,9 +98,10 @@ def view_thread(thread_id):
 
     messages = Message.query.filter_by(thread_id=thread.id).order_by(Message.created_at.asc()).all()
     
-    # Active order / offer context if linked
+    # Active order / offer / requirement context if linked
     linked_order = db.session.get(Order, thread.order_id) if thread.order_id else None
     linked_offer = db.session.get(Offer, thread.offer_id) if thread.offer_id else None
+    linked_requirement = db.session.get(Requirement, thread.requirement_id) if thread.requirement_id else None
 
     return render_template(
         'chat/thread.html',
@@ -95,6 +112,7 @@ def view_thread(thread_id):
         my_profile=my_profile,
         linked_order=linked_order,
         linked_offer=linked_offer,
+        linked_requirement=linked_requirement,
         user=user
     )
 

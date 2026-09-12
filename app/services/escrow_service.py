@@ -108,3 +108,15 @@ class EscrowService:
             'amount_released': order.total_amount,
             'released_at': now.strftime('%d %b %Y, %I:%M %p')
         }
+
+    @staticmethod
+    def generate_unique_order_code() -> str:
+        """
+        Generates a collision-free order tracking code, e.g. ORD-2026-9812.
+        """
+        import time
+        for _ in range(200):
+            code = f"ORD-2026-{random.randint(1000, 9999)}"
+            if not Order.query.filter_by(order_code=code).first():
+                return code
+        return f"ORD-2026-{int(time.time()) % 100000}"

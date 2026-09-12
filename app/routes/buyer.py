@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, jsonify
 from app.routes.auth import buyer_required
-from app.models import Inventory, Requirement, Offer, Order, Delivery, MandiRate, Product, User, Notification
+from app.models import Inventory, Requirement, Offer, Order, Delivery, MandiRate, Product, User, Notification, ChatThread, Message
 from app.extensions import db
 from app.services.matching_service import MatchingService
 from app.services.mandi_service import MandiService
@@ -238,53 +238,71 @@ def respond_offer(offer_id):
         offer.status = 'accepted'
         offer.last_action_by = 'buyer'
 
-        # Create confirmed Order
-        order_code = f"ORD-2026-{offer.id + 8000}"
-        buyer_profile = user.buyer_profile
-        delivery_addr = buyer_profile.address if (buyer_profile and buyer_profile.address) else "Buyer Warehouse, APMC Yard"
+        # Check if an Order already exists for this offer
+        order = Order.query.filter_by(offer_id=offer.id).first()
+        if not order:
+            from app.services.escrow_service import EscrowService
+            order_code = EscrowService.generate_unique_order_code()
+            buyer_profile = user.buyer_profile
+            delivery_addr = buyer_profile.address if (buyer_profile and buyer_profile.address) else "Buyer Warehouse, APMC Yard"
 
-        order = Order(
-            order_code=order_code,
-            offer_id=offer.id,
-            buyer_id=user.id,
-            farmer_id=offer.farmer_id,
-            product_name=offer.product_name,
-            quantity=effective_qty,
-            unit=offer.unit,
-            agreed_price_per_unit=effective_price,
-            total_amount=effective_total,
-            delivery_address=delivery_addr,
-            status='confirmed',
-            payment_status='in_escrow'
-        )
-        db.session.add(order)
-        db.session.flush()
+            order = Order(
+                order_code=order_code,
+                offer_id=offer.id,
+                inventory_id=offer.inventory_id,
+                buyer_id=user.id,
+                farmer_id=offer.farmer_id,
+                product_name=offer.product_name,
+                quantity=effective_qty,
+                unit=offer.unit,
+                agreed_price_per_unit=effective_price,
+                total_amount=effective_total,
+                delivery_address=delivery_addr,
+                status='confirmed',
+                payment_status='in_escrow'
+            )
+            db.session.add(order)
+            db.session.flush()
 
-        from app.services.logistics_service import LogisticsService
-        pickup_otp, delivery_otp = LogisticsService.generate_handover_otps()
+            from app.services.logistics_service import LogisticsService
+            pickup_otp, delivery_otp = LogisticsService.generate_handover_otps()
 
-        # Create Delivery record with Two-Step OTP
-        delivery = Delivery(
-            order_id=order.id,
-            pickup_address=f"{offer.farmer.farmer_profile.farm_location_name if offer.farmer.farmer_profile else 'Farmer Farm'}, {offer.farmer.farmer_profile.district if offer.farmer.farmer_profile else ''}",
-            drop_address=delivery_addr,
-            vehicle_type='Mini Truck (Tata Ace)',
-            vehicle_category='mini_truck',
-            pickup_otp=pickup_otp,
-            delivery_otp=delivery_otp,
-            current_status='assigned'
-        )
-        db.session.add(delivery)
+            # Create Delivery record with Two-Step OTP
+            delivery = Delivery(
+                order_id=order.id,
+                pickup_address=f"{offer.farmer.farmer_profile.farm_location_name if offer.farmer.farmer_profile else 'Farmer Farm'}, {offer.farmer.farmer_profile.district if offer.farmer.farmer_profile else ''}",
+                drop_address=delivery_addr,
+                vehicle_type='Mini Truck (Tata Ace)',
+                vehicle_category='mini_truck',
+                pickup_otp=pickup_otp,
+                delivery_otp=delivery_otp,
+                current_status='assigned'
+            )
+            db.session.add(delivery)
 
-        # Notify farmer
-        NotificationService.send(
-            user_id=offer.farmer_id,
-            title='Counter-Offer Accepted by Buyer!',
-            message=f"Buyer {user.name} accepted your price for {effective_qty} {offer.unit} of {offer.product_name}. Order #{order.order_code} is confirmed.",
-            link_url=url_for('orders.view_order', order_id=order.id)
-        )
-        db.session.commit()
-        flash(f'Offer accepted! Order #{order.order_code} has been created with guaranteed escrow.', 'success')
+            # Link order to chat thread if active
+            chat_thread = ChatThread.query.filter_by(farmer_id=offer.farmer_id, buyer_id=user.id).first()
+            if chat_thread:
+                chat_thread.order_id = order.id
+                status_msg = Message(
+                    thread_id=chat_thread.id,
+                    sender_id=user.id,
+                    message_text=f"✅ Deal Accepted by Buyer! Confirmed Order #{order.order_code} generated for ₹{order.total_amount:,.2f}.",
+                    message_type='text'
+                )
+                db.session.add(status_msg)
+
+            # Notify farmer
+            NotificationService.send(
+                user_id=offer.farmer_id,
+                title='Counter-Offer Accepted by Buyer!',
+                message=f"Buyer {user.name} accepted your price for {effective_qty} {offer.unit} of {offer.product_name}. Order #{order.order_code} is confirmed.",
+                link_url=url_for('orders.view_order', order_id=order.id)
+            )
+            db.session.commit()
+            flash(f'Offer accepted! Order #{order.order_code} has been created with guaranteed escrow.', 'success')
+
+        return redirect(url_for('orders.view_order', order_id=order.id))
 
     elif action == 'reject':
         offer.status = 'rejected'

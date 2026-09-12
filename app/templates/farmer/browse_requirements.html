@@ -128,7 +128,7 @@
             </div>
 
             <!-- Footer Action -->
-            <div class="pt-2 border-top d-flex align-items-center justify-content-between">
+            <div class="pt-2 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
               <div class="d-flex align-items-center gap-2">
                 <span style="font-size: 1.2rem;">{{ req.buyer.avatar_emoji or '👨‍💼' }}</span>
                 <div style="line-height: 1.2;">
@@ -136,11 +136,91 @@
                   <small class="text-muted" style="font-size: 0.72rem;">{{ req.buyer.custom_id }}</small>
                 </div>
               </div>
-              <a href="{{ url_for('chat.start_chat', target_user_id=req.buyer_id) }}" class="btn btn-sm btn-success fw-bold px-3">
-                <i class="fas fa-comment-dots me-1"></i> Respond / Deal
-              </a>
+              <div class="d-flex gap-1.5">
+                <a href="{{ url_for('chat.start_chat', target_user_id=req.buyer_id, requirement_id=req.id) }}" class="btn btn-sm btn-outline-secondary" title="Chat with Buyer">
+                  <i class="fas fa-comments"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-success fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#quoteModal_{{ req.id }}">
+                  <i class="fas fa-handshake me-1"></i> Quote / Deal
+                </button>
+              </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Quotation & Deal Negotiation Modal for Requirement {{ req.id }} -->
+        <div class="modal fade" id="quoteModal_{{ req.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold mb-0">
+                  <i class="fas fa-handshake me-2"></i> Submit Quotation to {{ req.buyer.name }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" action="{{ url_for('farmer.submit_requirement_quote', req_id=req.id) }}">
+                <div class="modal-body p-4">
+                  <!-- Demand Summary Card -->
+                  <div class="p-3 bg-light rounded-3 mb-3 border">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                      <strong class="text-dark">{{ req.product_name }}</strong>
+                      <span class="badge bg-primary">{{ req.required_quantity }} {{ req.unit }}</span>
+                    </div>
+                    <div class="small text-muted mb-1">
+                      Buyer Target Price: <strong>₹{{ req.target_price_per_unit or 'Open Negotiable' }}{% if req.target_price_per_unit %}/{{ req.unit }}{% endif %}</strong>
+                    </div>
+                    <div class="small text-muted">
+                      Delivery Destination: <strong>{{ req.delivery_district }}, {{ req.delivery_state }}</strong>
+                    </div>
+                  </div>
+
+                  <!-- Offer Price & Quantity -->
+                  <div class="row g-3 mb-3">
+                    <div class="col-6">
+                      <label class="form-label fw-bold small text-dark">Your Offer Price (₹/{{ req.unit }}) <span class="text-danger">*</span></label>
+                      <input type="number" step="0.5" min="1" name="offered_price" class="form-control fw-bold text-success" value="{{ req.target_price_per_unit or 25 }}" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label fw-bold small text-dark">Supply Quantity ({{ req.unit }}) <span class="text-danger">*</span></label>
+                      <input type="number" step="0.5" min="1" name="quantity" class="form-control fw-bold" value="{{ req.required_quantity }}" required>
+                    </div>
+                  </div>
+
+                  <!-- Link to Existing Inventory (Optional) -->
+                  {% if inventories %}
+                    <div class="mb-3">
+                      <label class="form-label fw-bold small text-dark">Link to Listed Inventory (Optional)</label>
+                      <select name="inventory_id" class="form-select form-select-sm">
+                        <option value="">-- Select from your Produce Inventory --</option>
+                        {% for inv in inventories %}
+                          <option value="{{ inv.id }}">
+                            {{ inv.product_name }} ({{ inv.available_quantity }} {{ inv.unit }} available at ₹{{ inv.price_per_unit }}/{{ inv.unit }})
+                          </option>
+                        {% endfor %}
+                      </select>
+                      <small class="text-muted" style="font-size: 0.72rem;">Linking inventory auto-deducts stock once the buyer accepts and funds escrow.</small>
+                    </div>
+                  {% endif %}
+
+                  <!-- Notes / Advance Terms -->
+                  <div class="mb-3">
+                    <label class="form-label fw-bold small text-dark">Proposal Details / Delivery Schedule</label>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Fresh farm-gate harvest ready for dispatch. Weighed on electronic APMC scale."></textarea>
+                  </div>
+
+                  <div class="alert alert-success-subtle text-success p-2 mb-0 small rounded-3 border border-success-subtle">
+                    <i class="fas fa-shield-alt me-1"></i> Your quotation will be sent directly as a negotiable deal card in the chat with {{ req.buyer.name }}.
+                  </div>
+                </div>
+                <div class="modal-footer bg-light border-top">
+                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-success fw-bold px-4">
+                    <i class="fas fa-paper-plane me-1"></i> Send Formal Quote
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       {% endfor %}

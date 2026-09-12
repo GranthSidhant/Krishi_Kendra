@@ -74,19 +74,34 @@
 
     <!-- Active Linked Transaction Context Banner (if any) -->
     {% if linked_order %}
-      <div class="p-2 px-3 bg-success-subtle text-dark border-bottom small d-flex justify-content-between align-items-center">
+      <div class="p-2 px-3 bg-success-subtle text-dark border-bottom small d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <i class="fas fa-box text-success me-1"></i>
-          <strong>Linked Order #{{ linked_order.order_code }}:</strong> {{ linked_order.quantity }} {{ linked_order.unit }} of {{ linked_order.product_name }} (₹{{ linked_order.total_amount }})
+          <strong>Linked Order #{{ linked_order.order_code }}:</strong> {{ linked_order.quantity }} {{ linked_order.unit }} of {{ linked_order.product_name }} (₹{{ "{:,.2f}".format(linked_order.total_amount) }})
+          <span class="badge bg-success ms-1">{{ linked_order.status|replace('_', ' ')|title }}</span>
         </div>
-        <a href="{{ url_for('orders.view_order', order_id=linked_order.id) }}" class="btn btn-sm btn-success py-0 px-2">Order Details</a>
+        <a href="{{ url_for('orders.view_order', order_id=linked_order.id) }}" class="btn btn-sm btn-success py-0 px-2 fw-bold">View Order Details</a>
       </div>
     {% elif linked_offer %}
-      <div class="p-2 px-3 bg-warning-subtle text-dark border-bottom small d-flex justify-content-between align-items-center">
+      <div class="p-2 px-3 bg-warning-subtle text-dark border-bottom small d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <i class="fas fa-handshake text-warning me-1"></i>
-          <strong>Negotiating Offer:</strong> {{ linked_offer.quantity }} {{ linked_offer.unit }} of {{ linked_offer.product_name }} at ₹{{ linked_offer.offered_price_per_unit }}/{{ linked_offer.unit }} (Status: <span class="badge bg-warning text-dark">{{ linked_offer.status.capitalize() }}</span>)
+          <strong>Active Negotiating Offer:</strong> {{ linked_offer.quantity }} {{ linked_offer.unit }} of {{ linked_offer.product_name }} at ₹{{ linked_offer.offered_price_per_unit }}/{{ linked_offer.unit }} (Status: <span class="badge bg-warning text-dark">{{ linked_offer.status.capitalize() }}</span>)
         </div>
+        <button type="button" class="btn btn-sm btn-warning py-0 px-2 fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#inChatOfferModal">
+          <i class="fas fa-edit me-1"></i> Counter Offer
+        </button>
+      </div>
+    {% elif linked_requirement %}
+      <div class="p-2 px-3 bg-primary-subtle text-dark border-bottom small d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <i class="fas fa-bullhorn text-primary me-1"></i>
+          <strong>Buyer Demand:</strong> {{ linked_requirement.required_quantity }} {{ linked_requirement.unit }} of {{ linked_requirement.product_name }} for {{ linked_requirement.delivery_district }}
+          {% if linked_requirement.target_price_per_unit %} • Target: <strong>₹{{ linked_requirement.target_price_per_unit }}/{{ linked_requirement.unit }}</strong>{% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-primary py-0 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#inChatOfferModal">
+          <i class="fas fa-handshake me-1"></i> Send Formal Quote
+        </button>
       </div>
     {% endif %}
 
@@ -139,7 +154,7 @@
                 </div>
                 <div class="col-12">
                   <span class="text-muted">Total Settlement:</span>
-                  <strong class="text-dark">₹{{ meta.total_amount }}</strong>
+                  <strong class="text-dark">₹{{ "{:,.2f}".format(meta.total_amount) if meta.total_amount else '0.00' }}</strong>
                 </div>
                 {% if meta.notes %}
                   <div class="col-12 text-muted fst-italic msg-text-content" id="msgText_{{ msg.id }}">"{{ meta.notes }}"</div>
@@ -151,7 +166,7 @@
                   {% if user.role == 'farmer' %}
                     <form method="POST" action="{{ url_for('farmer.respond_offer', offer_id=meta.offer_id) }}" class="d-inline flex-grow-1">
                       <input type="hidden" name="action" value="accept">
-                      <button type="submit" class="btn btn-sm btn-success w-100 fw-bold"><i class="fas fa-check me-1"></i> Accept</button>
+                      <button type="submit" class="btn btn-sm btn-success w-100 fw-bold"><i class="fas fa-check me-1"></i> Accept Offer</button>
                     </form>
                     <form method="POST" action="{{ url_for('farmer.respond_offer', offer_id=meta.offer_id) }}" class="d-inline">
                       <input type="hidden" name="action" value="reject">
@@ -160,7 +175,7 @@
                   {% elif user.role == 'buyer' %}
                     <form method="POST" action="{{ url_for('buyer.respond_offer', offer_id=meta.offer_id) }}" class="d-inline flex-grow-1">
                       <input type="hidden" name="action" value="accept">
-                      <button type="submit" class="btn btn-sm btn-success w-100 fw-bold"><i class="fas fa-check me-1"></i> Accept & Order</button>
+                      <button type="submit" class="btn btn-sm btn-success w-100 fw-bold"><i class="fas fa-check me-1"></i> Accept Deal & Create Order</button>
                     </form>
                     <form method="POST" action="{{ url_for('buyer.respond_offer', offer_id=meta.offer_id) }}" class="d-inline">
                       <input type="hidden" name="action" value="reject">
@@ -264,43 +279,46 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
       <div class="modal-header bg-warning bg-opacity-25">
-        <h5 class="modal-title fw-bold text-dark"><i class="fas fa-handshake text-warning me-2"></i> Submit Offer / Counter-Offer</h5>
+        <h5 class="modal-title fw-bold text-dark"><i class="fas fa-handshake text-warning me-2"></i> Submit Formal Quotation / Counter-Offer</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form id="inChatOfferForm">
         <div class="modal-body p-4">
           <div class="mb-3">
-            <label class="form-label fw-bold small">Crop / Product Name</label>
-            <input type="text" name="product_name" id="offerCropName" class="form-control" value="{{ linked_offer.product_name if linked_offer else 'Wheat' }}" required>
+            <label class="form-label fw-bold small">Crop / Produce Name</label>
+            <input type="text" name="product_name" id="offerCropName" class="form-control" value="{{ linked_offer.product_name if linked_offer else (linked_requirement.product_name if linked_requirement else 'Wheat') }}" required>
           </div>
           <div class="row g-2 mb-3">
             <div class="col-6">
               <label class="form-label fw-bold small">Offered Price (₹/unit)</label>
-              <input type="number" step="0.5" name="price" id="offerPrice" class="form-control" value="{{ linked_offer.offered_price_per_unit if linked_offer else 28 }}" required>
+              <input type="number" step="0.5" min="1" name="price" id="offerPrice" class="form-control" value="{{ linked_offer.offered_price_per_unit if linked_offer else (linked_requirement.target_price_per_unit if (linked_requirement and linked_requirement.target_price_per_unit) else 28) }}" required>
             </div>
             <div class="col-6">
               <label class="form-label fw-bold small">Quantity</label>
               <div class="input-group">
-                <input type="number" step="1" name="quantity" id="offerQty" class="form-control" value="{{ linked_offer.quantity if linked_offer else 100 }}" required>
-                <select name="unit" class="form-select" style="max-width: 80px;">
-                  <option value="kg" {% if linked_offer and linked_offer.unit == 'kg' %}selected{% endif %}>kg</option>
-                  <option value="Quintal" {% if linked_offer and linked_offer.unit == 'Quintal' %}selected{% endif %}>Qtl</option>
-                  <option value="Ton" {% if linked_offer and linked_offer.unit == 'Ton' %}selected{% endif %}>Ton</option>
+                <input type="number" step="0.5" min="1" name="quantity" id="offerQty" class="form-control" value="{{ linked_offer.quantity if linked_offer else (linked_requirement.required_quantity if linked_requirement else 100) }}" required>
+                <select name="unit" class="form-select" style="max-width: 85px;">
+                  {% set current_unit = linked_offer.unit if linked_offer else (linked_requirement.unit if linked_requirement else 'kg') %}
+                  <option value="kg" {% if current_unit == 'kg' %}selected{% endif %}>kg</option>
+                  <option value="Quintal" {% if current_unit == 'Quintal' %}selected{% endif %}>Qtl</option>
+                  <option value="Ton" {% if current_unit == 'Ton' %}selected{% endif %}>Ton</option>
                 </select>
               </div>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-bold small">Proposal Notes (Optional)</label>
-            <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Best price for organic Grade A harvest. Direct delivery included."></textarea>
+            <label class="form-label fw-bold small">Proposal Notes / Delivery Terms (Optional)</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Best price for organic Grade A harvest. Direct farm-gate pickup or warehouse delivery."></textarea>
           </div>
           <div class="alert alert-light border p-2 mb-0 small">
-            <i class="fas fa-info-circle text-primary me-1"></i> This proposal will be posted directly as an interactive deal card in this chat.
+            <i class="fas fa-info-circle text-primary me-1"></i> This offer card will be posted directly into this chat and can be accepted by {{ other_user.name }} to generate a confirmed escrow order.
           </div>
         </div>
         <div class="modal-footer bg-light">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning fw-bold px-4">Send Offer Card</button>
+          <button type="submit" class="btn btn-warning fw-bold px-4">
+            <i class="fas fa-paper-plane me-1"></i> Send Offer Card
+          </button>
         </div>
       </form>
     </div>
@@ -311,4 +329,15 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% if request.args.get('open_offer') %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var offerModalEl = document.getElementById('inChatOfferModal');
+    if (offerModalEl) {
+      var offerModal = new bootstrap.Modal(offerModalEl);
+      offerModal.show();
+    }
+  });
+</script>
+{% endif %}
 {% endblock %}

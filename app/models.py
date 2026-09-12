@@ -345,6 +345,7 @@ class ChatThread(db.Model):
     buyer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id', ondelete='SET NULL'), nullable=True)
     offer_id = db.Column(db.Integer, db.ForeignKey('offers.id', ondelete='SET NULL'), nullable=True)
+    requirement_id = db.Column(db.Integer, db.ForeignKey('requirements.id', ondelete='SET NULL'), nullable=True)
     
     subject_product = db.Column(db.String(100), default='Produce Negotiation')
     last_message_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -352,6 +353,7 @@ class ChatThread(db.Model):
     # Relationships
     farmer = db.relationship('User', foreign_keys=[farmer_id])
     buyer = db.relationship('User', foreign_keys=[buyer_id])
+    requirement = db.relationship('Requirement', foreign_keys=[requirement_id])
     messages = db.relationship('Message', backref='thread', lazy='dynamic', cascade='all, delete-orphan')
 
 

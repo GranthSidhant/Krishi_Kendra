@@ -97,52 +97,57 @@ def create_app(config_class=Config):
     with flask_app.app_context():
         try:
             db.create_all()
-            try:
-                with db.engine.connect() as conn:
-                    # PostgreSQL column type migrations
-                    if db.engine.name == 'postgresql':
-                        try:
-                            conn.execute(db.text("ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;"))
-                            conn.execute(db.text("ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;"))
-                            conn.execute(db.text("ALTER TABLE messages ALTER COLUMN metadata_json TYPE TEXT;"))
-                            conn.commit()
-                        except Exception:
-                            pass
-
-                    # General column migrations for requirements, transport_bookings, orders, deliveries, etc.
-                    migration_sqls = [
-                        "ALTER TABLE requirements ADD COLUMN is_pre_order BOOLEAN DEFAULT 0;",
-                        "ALTER TABLE requirements ADD COLUMN target_harvest_timeline VARCHAR(100);",
-                        "ALTER TABLE requirements ADD COLUMN advance_payment_terms VARCHAR(255);",
-                        "ALTER TABLE transport_bookings ADD COLUMN is_shared_pooling BOOLEAN DEFAULT 0;",
-                        "ALTER TABLE transport_bookings ADD COLUMN pool_code VARCHAR(50);",
-                        "ALTER TABLE transport_bookings ADD COLUMN pickup_latitude FLOAT;",
-                        "ALTER TABLE transport_bookings ADD COLUMN pickup_longitude FLOAT;",
-                        "ALTER TABLE orders ADD COLUMN escrow_txn_id VARCHAR(50);",
-                        "ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50) DEFAULT 'UPI_ESCROW';",
-                        "ALTER TABLE orders ADD COLUMN paid_at TIMESTAMP;",
-                        "ALTER TABLE orders ADD COLUMN payout_txn_id VARCHAR(50);",
-                        "ALTER TABLE orders ADD COLUMN payout_released_at TIMESTAMP;",
-                        "ALTER TABLE orders ADD COLUMN inventory_id INTEGER;",
-                        "ALTER TABLE orders ADD COLUMN buyer_rating INTEGER;",
-                        "ALTER TABLE orders ADD COLUMN buyer_review TEXT;",
-                        "ALTER TABLE orders ADD COLUMN farmer_rating INTEGER;",
-                        "ALTER TABLE orders ADD COLUMN farmer_review TEXT;",
-                        "ALTER TABLE deliveries ADD COLUMN pickup_otp VARCHAR(10);",
-                        "ALTER TABLE deliveries ADD COLUMN delivery_otp VARCHAR(10);",
-                        "ALTER TABLE deliveries ADD COLUMN pickup_verified_at TIMESTAMP;",
-                        "ALTER TABLE deliveries ADD COLUMN delivery_verified_at TIMESTAMP;",
-                        "ALTER TABLE deliveries ADD COLUMN vehicle_category VARCHAR(30) DEFAULT 'mini_truck';",
-                        "ALTER TABLE deliveries ADD COLUMN distance_km FLOAT DEFAULT 0.0;",
-                    ]
-                    for stmt in migration_sqls:
-                        try:
-                            conn.execute(db.text(stmt))
-                            conn.commit()
-                        except Exception:
-                            pass
-            except Exception as e_mig:
-                flask_app.logger.warning(f"Schema migration note: {e_mig}")
+            
+            if db.engine.name == 'postgresql':
+                try:
+                    with db.engine.begin() as conn:
+                        conn.execute(db.text("""
+                            ALTER TABLE users ALTER COLUMN profile_image TYPE TEXT;
+                            ALTER TABLE users ALTER COLUMN verification_doc TYPE TEXT;
+                            ALTER TABLE messages ALTER COLUMN metadata_json TYPE TEXT;
+                            
+                            ALTER TABLE requirements 
+                                ADD COLUMN IF NOT EXISTS is_pre_order BOOLEAN DEFAULT FALSE,
+                                ADD COLUMN IF NOT EXISTS target_harvest_timeline VARCHAR(100),
+                                ADD COLUMN IF NOT EXISTS advance_payment_terms VARCHAR(255);
+                                
+                            ALTER TABLE transport_bookings 
+                                ADD COLUMN IF NOT EXISTS is_shared_pooling BOOLEAN DEFAULT FALSE,
+                                ADD COLUMN IF NOT EXISTS pool_code VARCHAR(50),
+                                ADD COLUMN IF NOT EXISTS pickup_latitude FLOAT,
+                                ADD COLUMN IF NOT EXISTS pickup_longitude FLOAT;
+                                
+                            ALTER TABLE orders 
+                                ADD COLUMN IF NOT EXISTS escrow_txn_id VARCHAR(50),
+                                ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'UPI_ESCROW',
+                                ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP,
+                                ADD COLUMN IF NOT EXISTS payout_txn_id VARCHAR(50),
+                                ADD COLUMN IF NOT EXISTS payout_released_at TIMESTAMP,
+                                ADD COLUMN IF NOT EXISTS inventory_id INTEGER,
+                                ADD COLUMN IF NOT EXISTS buyer_rating INTEGER,
+                                ADD COLUMN IF NOT EXISTS buyer_review TEXT,
+                                ADD COLUMN IF NOT EXISTS farmer_rating INTEGER,
+                                ADD COLUMN IF NOT EXISTS farmer_review TEXT;
+                                
+                            ALTER TABLE deliveries 
+                                ADD COLUMN IF NOT EXISTS pickup_otp VARCHAR(10),
+                                ADD COLUMN IF NOT EXISTS delivery_otp VARCHAR(10),
+                                ADD COLUMN IF NOT EXISTS pickup_verified_at TIMESTAMP,
+                                ADD COLUMN IF NOT EXISTS delivery_verified_at TIMESTAMP,
+                                ADD COLUMN IF NOT EXISTS vehicle_category VARCHAR(30) DEFAULT 'mini_truck',
+                                ADD COLUMN IF NOT EXISTS distance_km FLOAT DEFAULT 0.0;
+                                
+                            ALTER TABLE chat_threads 
+                                ADD COLUMN IF NOT EXISTS requirement_id INTEGER;
+                                
+                            ALTER TABLE offers 
+                                ADD COLUMN IF NOT EXISTS counter_price_per_unit FLOAT,
+                                ADD COLUMN IF NOT EXISTS counter_quantity FLOAT,
+                                ADD COLUMN IF NOT EXISTS counter_notes TEXT,
+                                ADD COLUMN IF NOT EXISTS last_action_by VARCHAR(20) DEFAULT 'buyer';
+                        """))
+                except Exception as e_mig:
+                    flask_app.logger.warning(f"Schema migration note: {e_mig}")
         except Exception as e:
             flask_app.logger.error(f"Error initializing database tables: {e}")
 

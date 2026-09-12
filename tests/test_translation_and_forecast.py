@@ -1,16 +1,24 @@
 import pytest
 from app import create_app
+from config import Config
+from app.extensions import db
 from app.services.translation_service import TranslationService
 from app.services.price_forecast_service import PriceForecastService
 
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
+    SERVER_NAME = 'localhost.localdomain'
+
 @pytest.fixture
 def app():
-    app = create_app()
-    app.config.update({
-        "TESTING": True,
-        "WTF_CSRF_ENABLED": False,
-    })
-    return app
+    app = create_app(TestConfig)
+    with app.app_context():
+        db.create_all()
+        yield app
+        db.session.remove()
+        db.drop_all()
 
 @pytest.fixture
 def client(app):
