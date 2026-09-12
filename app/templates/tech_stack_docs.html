@@ -312,35 +312,68 @@
       <span class="tech-badge bg-danger text-white">Multimodal Intelligence</span>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 mb-4">
       <div class="col-lg-6">
-        <h6 class="fw-bold text-dark"><i class="fas fa-microscope text-success me-1"></i> Multimodal AI Crop Doctor (Plant Pathology)</h6>
+        <h6 class="fw-bold text-dark"><i class="fas fa-chart-line text-primary me-1"></i> A. Mandi Price & Cold Storage ROI Prediction Engine</h6>
         <p class="small text-muted mb-2">
-          Uses Google Gemini's multimodal vision capabilities to analyze plant photos uploaded by farmers:
+          Engineered in <span class="code-pill">app/services/price_forecast_service.py</span> to prevent distress selling:
         </p>
         <div class="p-3 bg-light rounded-3 border small text-muted mb-3">
-          <ol class="mb-0 ps-3">
-            <li class="mb-1">Farmer uploads an image of a diseased crop or leaf.</li>
-            <li class="mb-1">Image bytes are encoded to Base64 and sent to <span class="code-pill">gemini-2.5-flash</span> with a structured diagnostic prompt.</li>
-            <li class="mb-1">Gemini outputs structured JSON containing: <strong>Disease Name, Pathogen Type, Confidence Score (%), Organic Remedy, Chemical Treatment, and Urgency Advisory</strong>.</li>
-            <li>Results are translated and presented with matching agricultural supply links.</li>
-          </ol>
+          <ul class="mb-0 ps-3">
+            <li class="mb-1"><strong>7-Day Time-Series Trajectory:</strong> Ingests live APMC modal prices and directional trends (<span class="code-pill">up</span>, <span class="code-pill">down</span>, <span class="code-pill">stable</span>) to project 7-day price curves with minimum, modal, and maximum confidence intervals.</li>
+            <li class="mb-1"><strong>Commodity Volatility Matrix:</strong> Calibrates price elasticity based on crop perishability (e.g., Tomato: 5.5% high volatility, Onion: 3.5%, Wheat: 1.2% low volatility).</li>
+            <li class="mb-1"><strong>Net Storage Optimization Algorithm:</strong> Computes cumulative cold storage rental costs (₹0.45 - ₹1.20/day/Qtl) against projected 10-day price appreciation.</li>
+            <li><strong>Actionable Advisory Output:</strong> If projected gain exceeds storage costs by &ge; 5%, triggers 🟢 <em>"HOLD & STORE"</em> with net extra profit calculation; otherwise advises 🟠 <em>"SELL NOW"</em>.</li>
+          </ul>
         </div>
       </div>
 
       <div class="col-lg-6">
-        <h6 class="fw-bold text-dark"><i class="fas fa-microphone-alt text-primary me-1"></i> Kisan Saarthi Conversational Voice Agent</h6>
+        <h6 class="fw-bold text-dark"><i class="fas fa-microscope text-success me-1"></i> B. Multimodal AI Crop Pathology & Disease Prediction</h6>
         <p class="small text-muted mb-2">
-          Multi-turn conversational agent grounded directly on real-time database records:
+          Powered by Google Gemini 2.5 Flash multimodal vision in <span class="code-pill">app/services/crop_doctor_service.py</span>:
         </p>
         <div class="p-3 bg-light rounded-3 border small text-muted mb-3">
           <ul class="mb-0 ps-3">
-            <li class="mb-1"><strong>Dynamic Grounding:</strong> Ingests live mandi rates, active cold storage capacity, and user inventory into the LLM context.</li>
-            <li class="mb-1"><strong>Language-Aware Output:</strong> Strictly formulates responses in the user's spoken language (English, Hindi, Marathi, Telugu, Tamil).</li>
-            <li><strong>Action Deep-Linking:</strong> Returns direct navigation URLs (e.g. <span class="code-pill">/farmer/crop-doctor</span> or <span class="code-pill">/impact</span>) alongside spoken text.</li>
+            <li class="mb-1"><strong>Visual Symptom Recognition:</strong> Identifies necrotic spots, target-board lesions, fungal mycelium, and pest damage from raw leaf photos.</li>
+            <li class="mb-1"><strong>Pathology Classification & Confidence:</strong> Predicts exact pathogen name (e.g. <em>Alternaria solani</em>, <em>Phytophthora infestans</em>) with confidence percentage (e.g. 94%).</li>
+            <li class="mb-1"><strong>Severity & Urgency Scoring:</strong> Classifies damage into Mild, Moderate, or Severe with action window countdown (e.g., <em>"Act within 48 hours"</em>).</li>
+            <li><strong>Prescriptive Remedy:</strong> Generates dual treatments: organic bio-controls (Neem oil, Trichoderma) and chemical sprays with exact dilution ratios (g/L).</li>
           </ul>
         </div>
-        <a href="https://ai.google.dev/docs" target="_blank" class="doc-link">Google Gemini GenAI SDK Docs <i class="fas fa-external-link-alt"></i></a>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <h6 class="fw-bold text-dark"><i class="fas fa-handshake text-warning me-1"></i> C. Deal Fairness & Price Valuation Prediction</h6>
+        <p class="small text-muted mb-2">
+          Engineered in <span class="code-pill">app/services/deal_analysis_service.py</span> to protect farmers during negotiations:
+        </p>
+        <div class="p-3 bg-light rounded-3 border small text-muted">
+          <ul class="mb-0 ps-3">
+            <li class="mb-1">Compares incoming buyer counter-offers against the active district APMC benchmark.</li>
+            <li class="mb-1">Calculates valuation delta percentage and flags lowball offers with high-visibility warning badges.</li>
+            <li>Predicts the optimal counter-offer price to maximize closing speed while guaranteeing fair profit margin.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <h6 class="fw-bold text-dark"><i class="fas fa-microphone-alt text-primary me-1"></i> D. Kisan Saarthi Conversational Voice Agent</h6>
+        <p class="small text-muted mb-2">
+          Multi-turn conversational assistant grounded on real-time database records in <span class="code-pill">app/services/ai_voice_service.py</span>:
+        </p>
+        <div class="p-3 bg-light rounded-3 border small text-muted">
+          <ul class="mb-0 ps-3">
+            <li class="mb-1"><strong>Real-Time DB Grounding:</strong> Ingests live mandi rates, active cold storage capacity, and user inventory into LLM context.</li>
+            <li class="mb-1"><strong>Strict Language Matching:</strong> Automatically detects user language and responds in matching English, Hindi, or Marathi.</li>
+            <li><strong>Action Deep-Linking:</strong> Returns executable routing buttons (<span class="code-pill">/impact</span>, <span class="code-pill">/farmer/crop-doctor</span>) alongside speech.</li>
+          </ul>
+        </div>
+        <div class="mt-2">
+          <a href="https://ai.google.dev/docs" target="_blank" class="doc-link">Google Gemini GenAI SDK Documentation <i class="fas fa-external-link-alt"></i></a>
+        </div>
       </div>
     </div>
   </div>
@@ -480,6 +513,26 @@
         </div>
         <p class="small text-muted mb-0">
           <strong>Answer:</strong> <em>"We enforce a 4-state Escrow machine: (1) <strong>Funded</strong>: Buyer deposits funds before truck dispatch; (2) <strong>In Transit</strong>: Driver enters Pickup OTP at farm gate; (3) <strong>Delivered</strong>: Buyer enters Delivery OTP upon arrival; (4) <strong>Released</strong>: Funds instantly disburse to the farmer's bank account. This eliminates default risk for farmers and non-delivery risk for buyers."</em>
+        </p>
+      </div>
+
+      <!-- QA 6 -->
+      <div class="p-3.5 qa-card">
+        <div class="fw-bold text-dark mb-1">
+          <span class="badge bg-primary me-2">Q6</span> "How does your Mandi Price Prediction and Forecasting Model work?"
+        </div>
+        <p class="small text-muted mb-0">
+          <strong>Answer:</strong> <em>"Our Price Forecasting Service (<span class="code-pill">price_forecast_service.py</span>) implements a <strong>time-series momentum and volatility-weighted trajectory algorithm</strong>. It ingests live daily APMC modal rates, calculates directional momentum vectors, and applies commodity-specific volatility indexes (e.g. 5.5% for perishable Tomatoes vs 1.2% for dry Wheat). It outputs a 7-day projected price band with min, modal, and max confidence intervals to help farmers time their harvest sales for peak profit."</em>
+        </p>
+      </div>
+
+      <!-- QA 7 -->
+      <div class="p-3.5 qa-card">
+        <div class="fw-bold text-dark mb-1">
+          <span class="badge bg-success me-2">Q7</span> "How does the platform predict whether a farmer should hold produce in Cold Storage?"
+        </div>
+        <p class="small text-muted mb-0">
+          <strong>Answer:</strong> <em>"The engine calculates a <strong>Net Storage Financial ROI</strong>: it projects 10-day price appreciation and subtracts cumulative cold storage rental fees (₹0.45 to ₹1.20/day/Qtl). If the projected net gain exceeds cumulative storage fees by &ge; 5%, the system advises <strong>'HOLD & STORE'</strong> showing the exact extra rupees per quintal. If market trends are downward or stagnant, it recommends immediate sale to prevent spoilage and storage cost drag."</em>
         </p>
       </div>
 
