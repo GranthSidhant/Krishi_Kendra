@@ -36,6 +36,18 @@ def dashboard():
     
     # Recent incoming buyer offers / requests
     recent_offers = Offer.query.filter_by(farmer_id=user.id).order_by(Offer.created_at.desc()).limit(5).all()
+    featured_offer = Offer.query.filter_by(farmer_id=user.id, status='pending').order_by(Offer.created_at.desc()).first()
+    if not featured_offer and recent_offers:
+        featured_offer = recent_offers[0]
+
+    deal_analysis = None
+    if featured_offer:
+        deal_analysis = DealAnalysisService.analyze_offer(
+            commodity_name=featured_offer.product_name,
+            offered_price_per_unit=featured_offer.offered_price_per_unit,
+            unit=featured_offer.unit,
+            district=user.farmer_profile.district if user.farmer_profile else 'Nashik'
+        )
     
     # Recent Mandi rates for farmer's crops
     mandi_rates = MandiRate.query.filter_by(district=user.farmer_profile.district if user.farmer_profile else 'Nashik').limit(6).all()
@@ -52,6 +64,8 @@ def dashboard():
         total_sales_amount=round(total_sales_amount, 2),
         pending_payments_amount=round(pending_payments_amount, 2),
         recent_offers=recent_offers,
+        featured_offer=featured_offer,
+        deal_analysis=deal_analysis,
         mandi_rates=mandi_rates
     )
 

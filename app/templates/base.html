@@ -257,10 +257,56 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Floating Voice Assistant FAB (Hidden on active chat thread to avoid overlaying message inputs) -->
+  <!-- Fixed Mobile Bottom Navigation Bar (Screens < 992px) -->
+  {% if current_user %}
+  <nav class="mobile-bottom-nav">
+    <a href="{{ url_for('main.index') }}" class="mobile-nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    {% if current_user.role == 'farmer' %}
+      <a href="{{ url_for('farmer.dashboard') }}" class="mobile-nav-item {% if request.endpoint == 'farmer.dashboard' %}active{% endif %}">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('farmer.inventory') }}" class="mobile-nav-item {% if request.endpoint == 'farmer.inventory' %}active{% endif %}">
+        <i class="fas fa-boxes"></i>
+        <span>Inventory</span>
+      </a>
+      <a href="{{ url_for('farmer.orders') }}" class="mobile-nav-item {% if request.endpoint == 'farmer.orders' %}active{% endif %}">
+        <i class="fas fa-handshake"></i>
+        <span>Orders</span>
+      </a>
+      <a href="{{ url_for('farmer.browse_requirements') }}" class="mobile-nav-item {% if request.endpoint == 'farmer.browse_requirements' %}active{% endif %}">
+        <i class="fas fa-bullhorn"></i>
+        <span>Demands</span>
+      </a>
+    {% elif current_user.role == 'buyer' %}
+      <a href="{{ url_for('buyer.dashboard') }}" class="mobile-nav-item {% if request.endpoint == 'buyer.dashboard' %}active{% endif %}">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('buyer.browse') }}" class="mobile-nav-item {% if request.endpoint == 'buyer.browse' %}active{% endif %}">
+        <i class="fas fa-search"></i>
+        <span>Produce</span>
+      </a>
+      <a href="{{ url_for('buyer.orders') }}" class="mobile-nav-item {% if request.endpoint == 'buyer.orders' %}active{% endif %}">
+        <i class="fas fa-shopping-cart"></i>
+        <span>Orders</span>
+      </a>
+      <a href="{{ url_for('buyer.post_requirement') }}" class="mobile-nav-item {% if request.endpoint == 'buyer.post_requirement' %}active{% endif %}">
+        <i class="fas fa-plus-circle"></i>
+        <span>Post Need</span>
+      </a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  <!-- Floating Voice Assistant FAB -->
   {% if request.endpoint != 'chat.thread' %}
-  <div class="voice-assistant-fab" id="voiceAssistantFab" title="Click to speak with Kisan Saarthi AI Copilot">
-    <i class="fas fa-microphone fs-4"></i>
+  <div class="voice-assistant-fab" id="voiceAssistantFab" title="Click to speak with Krishi Mitra AI Copilot">
+    <i class="fas fa-microphone"></i>
+    <span class="d-none d-sm-inline">Ask Krishi Mitra</span>
   </div>
   {% endif %}
 

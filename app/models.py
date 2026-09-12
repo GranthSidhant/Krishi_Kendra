@@ -159,6 +159,44 @@ class Category(db.Model):
     products = db.relationship('Product', backref='category', lazy='dynamic', cascade='all, delete-orphan')
 
 
+CROP_IMAGE_MAP = {
+    'wheat': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80',
+    'onion': 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=600&q=80',
+    'tomato': 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80',
+    'potato': 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=600&q=80',
+    'cotton': 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&w=600&q=80',
+    'rice': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80',
+    'basmati': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80',
+    'soybean': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=600&q=80',
+    'garlic': 'https://images.unsplash.com/photo-1615477032219-b12da2ac9042?auto=format&fit=crop&w=600&q=80',
+    'mustard': 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=600&q=80',
+    'corn': 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=600&q=80',
+    'maize': 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=600&q=80',
+    'chili': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
+    'chilli': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
+    'ginger': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=600&q=80',
+    'turmeric': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=600&q=80',
+    'mango': 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=600&q=80',
+    'apple': 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80',
+    'banana': 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=600&q=80',
+    'cardamom': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=600&q=80',
+    'default': 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=600&q=80'
+}
+
+def get_crop_image(name_or_url: str) -> str:
+    if not name_or_url:
+        return CROP_IMAGE_MAP['default']
+    if name_or_url.startswith(('http://', 'https://', 'data:', '/')):
+        return name_or_url
+    if name_or_url.startswith('crop_') and not name_or_url.endswith('.jpg'):
+        return f"/static/uploads/{name_or_url}"
+    name_clean = name_or_url.lower().strip()
+    for key, url in CROP_IMAGE_MAP.items():
+        if key in name_clean:
+            return url
+    return CROP_IMAGE_MAP['default']
+
+
 class Product(db.Model):
     __tablename__ = 'products'
     
@@ -170,6 +208,12 @@ class Product(db.Model):
     estimated_mandi_rate = db.Column(db.Float, default=25.0) # benchmark ₹/kg
     image_url = db.Column(db.String(255), default='default_crop.jpg')
     is_active = db.Column(db.Boolean, default=True)
+
+    @property
+    def display_image(self):
+        if self.image_url and self.image_url not in ['default_crop.jpg', 'crop_default.jpg', '']:
+            return get_crop_image(self.image_url)
+        return get_crop_image(self.name)
 
 
 class Inventory(db.Model):
@@ -194,6 +238,12 @@ class Inventory(db.Model):
     description = db.Column(db.Text, default='Freshly harvested high quality farm produce.')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @property
+    def display_image(self):
+        if self.image_url and self.image_url not in ['default_crop.jpg', 'crop_default.jpg', '']:
+            return get_crop_image(self.image_url)
+        return get_crop_image(self.product_name)
 
 
 class Requirement(db.Model):
@@ -224,6 +274,10 @@ class Requirement(db.Model):
     status = db.Column(db.String(30), default='open') # open, responded, matched, completed, closed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     offers = db.relationship('Offer', backref='requirement', lazy='dynamic', cascade='all, delete-orphan')
+
+    @property
+    def display_image(self):
+        return get_crop_image(self.product_name)
 
 
 class Offer(db.Model):

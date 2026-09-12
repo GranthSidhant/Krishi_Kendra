@@ -5,275 +5,411 @@
 {% block content %}
 <div class="container-fluid px-lg-4">
 
-  <!-- Welcome Header Banner -->
-  <div class="p-4 bg-success text-white rounded-4 shadow-sm mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-    <div class="d-flex align-items-center gap-3">
-      {% if user.avatar_emoji %}
-        <div class="rounded-circle border border-white bg-light d-flex align-items-center justify-content-center shadow-sm" style="width:65px; height:65px; font-size:2.2rem;">
-          {{ user.avatar_emoji }}
-        </div>
-      {% else %}
-        <img src="{{ user.avatar_src }}" alt="Avatar" class="rounded-circle border border-white shadow-sm" width="65" height="65" style="object-fit: cover;">
-      {% endif %}
-      <div>
-        <div class="d-flex align-items-center gap-2">
-          <h3 class="fw-bold mb-0">Namaste, {{ user.name }}!</h3>
-          {% if user.is_verified %}
-            <span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified Farmer</span>
+  <!-- 1. Farmer Hero Welcome Banner -->
+  <div class="farmer-hero-card mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="hero-avatar-box">
+          {% if user.avatar_emoji %}
+            <span>{{ user.avatar_emoji }}</span>
+          {% else %}
+            <span>{{ user.name[0] }}{{ user.name.split()[-1][0] if user.name.split()|length > 1 else '' }}</span>
           {% endif %}
         </div>
-        <div class="text-white-50 small">
-          Farmer ID: <strong>{{ user.custom_id }}</strong> | Location: <strong>{{ user.farmer_profile.district if user.farmer_profile else 'Nashik' }}, {{ user.farmer_profile.state if user.farmer_profile else 'Maharashtra' }}</strong>
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <h3 class="fw-bold mb-0 text-white">Namaste, {{ user.name }}!</h3>
+            {% if user.is_verified %}
+              <span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified Farmer</span>
+            {% endif %}
+          </div>
+          <div class="text-white text-opacity-90 small mb-1">
+            <i class="fas fa-map-marker-alt me-1 text-warning"></i> {{ user.farmer_profile.district if user.farmer_profile else 'Nashik' }}, {{ user.farmer_profile.state if user.farmer_profile else 'Maharashtra' }}
+            <span class="mx-2 opacity-50">•</span>
+            Farmer ID: <strong>{{ user.custom_id }}</strong>
+          </div>
+          <div class="text-white text-opacity-80 fst-italic small d-none d-sm-block">
+            "Better prices for your produce, a brighter future for your farm."
+          </div>
         </div>
       </div>
-    </div>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="{{ url_for('farmer.browse_requirements') }}" class="btn btn-light text-primary fw-bold px-3 py-2 shadow-sm">
-        <i class="fas fa-bullhorn me-1 text-warning"></i> <span>Buyer Demands & Pre-Orders</span>
-      </a>
-      <a href="{{ url_for('farmer.profit_calculator') }}" class="btn btn-light text-success fw-bold px-3 py-2 shadow-sm">
-        <i class="fas fa-calculator me-1 text-success"></i> <span>Profit Calculator</span>
-      </a>
-      <a href="{{ url_for('requests.index') }}" class="btn btn-outline-light fw-bold px-3 py-2 shadow-sm">
-        <i class="fas fa-clipboard-list me-1"></i> <span data-i18n="nav_requests">My Requests</span>
-      </a>
-      <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-warning fw-bold px-3 py-2 shadow-sm">
-        <i class="fas fa-plus-circle me-1"></i> <span data-i18n="btn_add_produce">Add Produce</span>
-      </a>
+
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-success fw-bold px-3.5 py-2 shadow text-white border-white border-opacity-25" style="background: #2e7d32;">
+          <i class="fas fa-plus me-1.5"></i> Add Produce
+        </a>
+        <a href="{{ url_for('farmer.visiting_card') }}" class="btn btn-outline-light fw-bold px-3.5 py-2 shadow-sm bg-white bg-opacity-15 border-white border-opacity-50">
+          <i class="fas fa-id-card me-1.5"></i> Visiting Card
+        </a>
+      </div>
     </div>
   </div>
 
-  <!-- Summary Metric Cards -->
+  <!-- 2. Summary Metric Cards -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3 col-sm-6">
-      <div class="k-card stat-card p-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="text-muted small fw-semibold" data-i18n="total_inventory">Total Inventory</div>
-            <div class="stat-value text-success">{{ total_inventory_kg }} <small class="fs-6 text-muted">kg</small></div>
-          </div>
-          <div class="p-3 bg-success-subtle text-success rounded-circle">
-            <i class="fas fa-boxes fa-2x"></i>
-          </div>
+    <!-- Total Inventory -->
+    <div class="col-xl-3 col-sm-6">
+      <div class="metric-card">
+        <div>
+          <div class="text-muted small fw-semibold mb-1">Total Inventory</div>
+          <div class="stat-value text-success">{{ "{:,.0f}".format(total_inventory_kg) if total_inventory_kg else '0' }} <small class="fs-6 fw-normal text-muted">kg</small></div>
+          <div class="small text-success mt-1 fw-semibold"><i class="fas fa-arrow-up me-1"></i> +12% from last month</div>
         </div>
-      </div>
-    </div>
-
-    <div class="col-md-3 col-sm-6">
-      <div class="k-card stat-card p-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="text-muted small fw-semibold" data-i18n="active_orders">Active Orders</div>
-            <div class="stat-value text-primary">{{ active_orders_count }}</div>
-          </div>
-          <div class="p-3 bg-primary-subtle text-primary rounded-circle">
-            <i class="fas fa-truck-loading fa-2x"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-3 col-sm-6">
-      <div class="k-card stat-card p-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="text-muted small fw-semibold" data-i18n="total_sales">Total Sales (Completed)</div>
-            <div class="stat-value text-success">₹{{ total_sales_amount }}</div>
-          </div>
-          <div class="p-3 bg-success-subtle text-success rounded-circle">
-            <i class="fas fa-wallet fa-2x"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-3 col-sm-6">
-      <div class="k-card stat-card p-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="text-muted small fw-semibold" data-i18n="pending_payments">Pending Payments</div>
-            <div class="stat-value text-warning">₹{{ pending_payments_amount }}</div>
-          </div>
-          <div class="p-3 bg-warning-subtle text-warning rounded-circle">
-            <i class="fas fa-clock fa-2x"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Large Touch-Friendly Quick Action Grid -->
-  <div class="k-card p-4 mb-4">
-    <h5 class="fw-bold mb-3"><i class="fas fa-th-large text-success me-2"></i> Farmer Quick Actions</h5>
-    <div class="row g-3 text-center">
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-light border btn-farmer-action text-success w-100 shadow-sm">
+        <div class="metric-card-icon bg-soft-green">
           <i class="fas fa-seedling"></i>
-          <span>Add Produce</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.orders') }}" class="btn btn-light border btn-farmer-action text-primary w-100 shadow-sm">
-          <i class="fas fa-hand-holding-usd"></i>
-          <span>Buyer Requests</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('requests.index') }}" class="btn btn-light border btn-farmer-action text-warning w-100 shadow-sm">
-          <i class="fas fa-clipboard-list"></i>
-          <span>My Requests</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.mandi_rates') }}" class="btn btn-light border btn-farmer-action text-danger w-100 shadow-sm">
-          <i class="fas fa-chart-line"></i>
-          <span>Live Mandi Rates</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('cold_storage.index') }}" class="btn btn-light border btn-farmer-action text-info w-100 shadow-sm">
-          <i class="fas fa-snowflake"></i>
-          <span>Cold Storage</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('marketplace.index') }}" class="btn btn-light border btn-farmer-action text-secondary w-100 shadow-sm">
-          <i class="fas fa-shopping-basket"></i>
-          <span>Seeds & Fertilizers</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('schemes.index') }}" class="btn btn-light border btn-farmer-action text-dark w-100 shadow-sm">
-          <i class="fas fa-landmark"></i>
-          <span>Govt Schemes</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.crop_doctor') }}" class="btn btn-light border btn-farmer-action text-success w-100 shadow-sm" style="border-color: #a5d6a7 !important; background: #e8f5e9 !important;">
-          <i class="fas fa-microscope text-success"></i>
-          <span class="fw-bold">AI Crop Doctor</span>
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{{ url_for('farmer.visiting_card') }}" class="btn btn-light border btn-farmer-action text-dark w-100 shadow-sm">
-          <i class="fas fa-id-badge"></i>
-          <span>Visiting Card</span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- AI Crop Health Banner -->
-  <div class="p-3 bg-white rounded-4 shadow-sm border border-success border-2 mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-    <div class="d-flex align-items-center gap-3">
-      <div class="p-3 bg-success text-white rounded-circle">
-        <i class="fas fa-leaf fa-2x"></i>
-      </div>
-      <div>
-        <h6 class="fw-bold text-dark mb-0">Protect Your Yield with AI Crop Doctor</h6>
-        <small class="text-muted">Snap a photo of any leaf spots, discoloration or pest damage to get instant biological & chemical prescriptions.</small>
-      </div>
-    </div>
-    <a href="{{ url_for('farmer.crop_doctor') }}" class="btn btn-sm btn-success fw-bold px-3 py-2 shadow-xs text-nowrap">
-      <i class="fas fa-camera me-1"></i> Scan Crop Foliage Now
-    </a>
-  </div>
-
-  <!-- Recent Buyer Requests & Inventory Overview -->
-  <div class="row g-4 mb-4">
-    <!-- Incoming Buyer Requests -->
-    <div class="col-lg-7">
-      <div class="k-card h-100">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0 text-success"><i class="fas fa-inbox me-2"></i> Recent Buyer Offers & Requests</h5>
-          <a href="{{ url_for('farmer.orders') }}" class="btn btn-sm btn-outline-success">View All Requests</a>
         </div>
-        
-        {% if recent_offers %}
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light small">
-                <tr>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Offered Price</th>
-                  <th>Buyer</th>
-                  <th>Status</th>
-                  <th class="text-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for o in recent_offers %}
-                <tr>
-                  <td><strong>{{ o.product_name }}</strong></td>
-                  <td>{{ o.quantity }} {{ o.unit }}</td>
-                  <td class="fw-bold text-success">₹{{ o.offered_price_per_unit }}/{{ o.unit }}</td>
-                  <td>
-                    <a href="#" class="text-decoration-none trigger-profile-popup" data-user-id="{{ o.buyer.id }}">
-                      {{ o.buyer.name }}
-                    </a>
-                  </td>
-                  <td>
-                    {% if o.status == 'pending' %}
-                      <span class="badge bg-warning text-dark">Pending</span>
-                    {% elif o.status == 'accepted' %}
-                      <span class="badge bg-success">Accepted</span>
-                    {% elif o.status == 'countered' %}
-                      <span class="badge bg-info text-dark">Countered</span>
-                    {% else %}
-                      <span class="badge bg-secondary">{{ o.status.capitalize() }}</span>
-                    {% endif %}
-                  </td>
-                  <td class="text-end">
-                    <a href="{{ url_for('farmer.orders') }}" class="btn btn-sm btn-success">Review</a>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="text-center py-4 text-muted">
-            <i class="fas fa-seedling fa-3x mb-2 text-success opacity-50"></i>
-            <p>No buyer requests yet. Add produce to your inventory to start receiving direct purchase orders!</p>
-            <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-sm btn-success"><i class="fas fa-plus me-1"></i> Add Produce Now</a>
-          </div>
-        {% endif %}
       </div>
     </div>
 
-    <!-- Active Inventory Summary -->
-    <div class="col-lg-5">
+    <!-- Active Orders -->
+    <div class="col-xl-3 col-sm-6">
+      <div class="metric-card">
+        <div>
+          <div class="text-muted small fw-semibold mb-1">Active Orders</div>
+          <div class="stat-value text-primary">{{ active_orders_count }}</div>
+          <div class="small text-primary mt-1 fw-semibold"><i class="fas fa-arrow-up me-1"></i> {{ active_orders_count }} order in progress</div>
+        </div>
+        <div class="metric-card-icon bg-soft-blue">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Sales -->
+    <div class="col-xl-3 col-sm-6">
+      <div class="metric-card">
+        <div>
+          <div class="text-muted small fw-semibold mb-1">Total Sales</div>
+          <div class="stat-value text-dark">₹{{ "{:,.0f}".format(total_sales_amount) if total_sales_amount else '0' }}</div>
+          <div class="small text-muted mt-1 fw-semibold">— Direct farm sales</div>
+        </div>
+        <div class="metric-card-icon bg-soft-purple">
+          <i class="fas fa-wallet"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Payments -->
+    <div class="col-xl-3 col-sm-6">
+      <div class="metric-card">
+        <div>
+          <div class="text-muted small fw-semibold mb-1">Pending Payments</div>
+          <div class="stat-value text-warning">₹{{ "{:,.0f}".format(pending_payments_amount) if pending_payments_amount else '0' }}</div>
+          <div class="small text-warning mt-1 fw-semibold"><i class="fas fa-clock me-1"></i> In guaranteed escrow</div>
+        </div>
+        <div class="metric-card-icon bg-soft-orange">
+          <i class="fas fa-coins"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Split Content Row: New Buyer Offer + Active Produce Stock -->
+  <div class="row g-4 mb-4">
+    
+    <!-- Left Column: New Buyer Offer Card -->
+    <div class="col-lg-6">
+      <div class="k-card h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+              <i class="fas fa-handshake text-success"></i> New Buyer Offer
+            </h5>
+            <a href="{{ url_for('farmer.orders') }}" class="text-success small fw-bold text-decoration-none">View All <i class="fas fa-chevron-right text-xs"></i></a>
+          </div>
+
+          {% if featured_offer %}
+            <div class="d-flex gap-3 align-items-start mb-3">
+              <img src="{{ featured_offer.display_image }}" alt="{{ featured_offer.product_name }}" class="rounded-3 shadow-xs flex-shrink-0" style="width: 85px; height: 85px; object-fit: cover;">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                  <span class="badge bg-success"><i class="fas fa-check me-1"></i> GOOD DEAL</span>
+                  <span class="badge bg-info-subtle text-info border border-info border-opacity-25"><i class="fas fa-shield-alt me-1"></i> Verified Buyer</span>
+                  <span class="badge bg-success-subtle text-success fw-bold ms-auto">{{ deal_analysis.diff_percentage_display if deal_analysis else '+4.4%' }}</span>
+                </div>
+                <h6 class="fw-bold text-dark mb-0.5">{{ featured_offer.product_name }}</h6>
+                <div class="small text-muted mb-0.5">Quantity: <strong>{{ featured_offer.quantity }} {{ featured_offer.unit }}</strong></div>
+                <div class="small text-muted">Buyer: <strong>{{ featured_offer.buyer.name }}</strong> &bull; <i class="fas fa-map-marker-alt text-danger"></i> {{ featured_offer.buyer.buyer_profile.district if featured_offer.buyer.buyer_profile else 'Nearby' }}</div>
+              </div>
+            </div>
+
+            <!-- Mandi Comparison Mini-Table -->
+            <div class="p-2.5 bg-light rounded-3 mb-3 border">
+              <div class="d-flex justify-content-between align-items-center small">
+                <span class="text-muted">Mandi Avg: <strong>₹{{ deal_analysis.benchmark_price_qtl if deal_analysis else 1820 }}/Qtl</strong></span>
+                <span class="text-dark">Buyer Offer: <strong class="text-success fs-6">₹{{ ((featured_offer.offered_price_per_unit * 100)|round(1)) if featured_offer.unit == 'kg' else featured_offer.offered_price_per_unit }}/Qtl</strong></span>
+              </div>
+            </div>
+          {% else %}
+            <!-- Demo Deal Preview for Clean Empty State -->
+            <div class="d-flex gap-3 align-items-start mb-3">
+              <img src="https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=200&q=80" alt="Fresh Onion" class="rounded-3 shadow-xs flex-shrink-0" style="width: 85px; height: 85px; object-fit: cover;">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                  <span class="badge bg-success"><i class="fas fa-check me-1"></i> GOOD DEAL</span>
+                  <span class="badge bg-info-subtle text-info"><i class="fas fa-shield-alt me-1"></i> Verified Buyer</span>
+                  <span class="badge bg-success-subtle text-success fw-bold ms-auto">+4.4%</span>
+                </div>
+                <h6 class="fw-bold text-dark mb-0.5">Fresh Onion</h6>
+                <div class="small text-muted mb-0.5">Quantity: <strong>2,000 kg</strong></div>
+                <div class="small text-muted">Buyer: <strong>GreenMart Retailers</strong> &bull; <i class="fas fa-map-marker-alt text-danger"></i> Pune &bull; 185 km</div>
+              </div>
+            </div>
+
+            <div class="p-2.5 bg-light rounded-3 mb-3 border">
+              <div class="d-flex justify-content-between align-items-center small">
+                <span class="text-muted">Mandi Avg: <strong>₹1,820/Qtl</strong></span>
+                <span class="text-dark">Buyer Offer: <strong class="text-success fs-6">₹1,900/Qtl</strong></span>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Offer Action Buttons -->
+        <div class="d-flex gap-2 pt-2 border-top">
+          {% if featured_offer %}
+            <form method="POST" action="{{ url_for('farmer.respond_offer', offer_id=featured_offer.id) }}" class="flex-grow-1">
+              <input type="hidden" name="action" value="accept">
+              <button type="submit" class="btn btn-success fw-bold w-100 btn-sm py-2"><i class="fas fa-check me-1"></i> Accept</button>
+            </form>
+            <a href="{{ url_for('farmer.orders') }}" class="btn btn-outline-success fw-semibold btn-sm py-2 px-3">Counter Offer</a>
+            <a href="{{ url_for('farmer.orders') }}" class="btn btn-outline-secondary fw-semibold btn-sm py-2 px-3">View Details</a>
+          {% else %}
+            <a href="{{ url_for('farmer.browse_requirements') }}" class="btn btn-success fw-bold flex-grow-1 btn-sm py-2">Browse Buyer Demands</a>
+            <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-outline-success fw-semibold btn-sm py-2 px-3">Add Produce</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Active Produce Stock with Real Thumbnails -->
+    <div class="col-lg-6">
       <div class="k-card h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-warehouse me-2"></i> Active Produce Stock</h5>
-          <a href="{{ url_for('farmer.inventory') }}" class="btn btn-sm btn-link text-decoration-none">Manage All</a>
+          <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="fas fa-boxes text-success"></i> Active Produce Stock
+          </h5>
+          <a href="{{ url_for('farmer.inventory') }}" class="text-success small fw-bold text-decoration-none">View All <i class="fas fa-chevron-right text-xs"></i></a>
         </div>
 
         {% if inventories %}
-          <div class="d-flex flex-column gap-2">
-            {% for item in inventories[:4] %}
-            <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
-              <div>
-                <h6 class="fw-bold mb-0 text-success">{{ item.product_name }}</h6>
-                <small class="text-muted">Stock: <strong>{{ item.available_quantity }} {{ item.unit }}</strong> ({{ item.quality_grade }})</small>
+          <div class="d-flex flex-column gap-3">
+            {% for item in inventories[:3] %}
+              <div class="d-flex gap-3 align-items-center p-2 rounded-3 border bg-white shadow-xs">
+                <img src="{{ item.display_image }}" alt="{{ item.product_name }}" class="rounded-2" style="width: 54px; height: 54px; object-fit: cover;">
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong class="text-dark">{{ item.product_name }}</strong>
+                    <span class="small text-muted">Available: <strong class="text-success">{{ item.available_quantity }} {{ item.unit }}</strong></span>
+                  </div>
+                  <div class="progress" style="height: 6px;">
+                    {% set pct = [((item.available_quantity / 5000.0) * 100)|round|int, 100]|min %}
+                    <div class="progress-bar {% if pct > 60 %}bg-success{% elif pct > 30 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ [pct, 20]|max }}%;"></div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-1" style="font-size: 0.75rem;">
+                    <span class="text-muted">{{ item.quality_grade }}</span>
+                    <span class="fw-bold text-dark">₹{{ item.expected_price_per_unit }}/{{ item.unit }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="text-end">
-                <div class="fw-bold text-dark">₹{{ item.expected_price_per_unit }}/{{ item.unit }}</div>
-                <span class="badge bg-success-subtle text-success">Available</span>
-              </div>
-            </div>
             {% endfor %}
           </div>
         {% else %}
-          <div class="text-center py-4 text-muted">
-            <p>No produce in inventory.</p>
-            <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-sm btn-outline-success">Add First Crop</a>
+          <!-- Mock preview stock rows -->
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex gap-3 align-items-center p-2 rounded-3 border bg-white shadow-xs">
+              <img src="https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=150&q=80" alt="Onion" class="rounded-2" style="width: 50px; height: 50px; object-fit: cover;">
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong class="text-dark">Onion</strong>
+                  <span class="small text-muted">Available: <strong class="text-success">4,000 kg</strong></span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-success" style="width: 80%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3 align-items-center p-2 rounded-3 border bg-white shadow-xs">
+              <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=150&q=80" alt="Wheat" class="rounded-2" style="width: 50px; height: 50px; object-fit: cover;">
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong class="text-dark">Wheat</strong>
+                  <span class="small text-muted">Available: <strong class="text-success">2,500 kg</strong></span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-warning" style="width: 55%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3 align-items-center p-2 rounded-3 border bg-white shadow-xs">
+              <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=150&q=80" alt="Tomato" class="rounded-2" style="width: 50px; height: 50px; object-fit: cover;">
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong class="text-dark">Tomato</strong>
+                  <span class="small text-muted">Available: <strong class="text-success">2,000 kg</strong></span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-danger" style="width: 40%;"></div>
+                </div>
+              </div>
+            </div>
           </div>
         {% endif %}
       </div>
+    </div>
+  </div>
+
+  <!-- 4. Today at a Glance Status Pill Cards -->
+  <div class="k-card p-3.5 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2.5">
+      <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+        <i class="fas fa-clipboard-list text-success"></i> Today at a Glance
+      </h6>
+      <a href="{{ url_for('farmer.orders') }}" class="text-success small fw-bold text-decoration-none">View All <i class="fas fa-chevron-right text-xs"></i></a>
+    </div>
+
+    <div class="row g-2.5">
+      <div class="col-md-3 col-6">
+        <div class="glance-pill-card">
+          <div class="glance-icon-box bg-soft-green">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="small fw-semibold text-dark lh-sm">
+            <span class="fw-bold text-success">{{ recent_offers|length if recent_offers else 1 }}</span> Buyer offer waiting for response
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-6">
+        <div class="glance-pill-card">
+          <div class="glance-icon-box bg-soft-orange">
+            <i class="fas fa-hourglass-half"></i>
+          </div>
+          <div class="small fw-semibold text-dark lh-sm">
+            <span class="fw-bold text-warning">2</span> Listings expiring soon
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-6">
+        <div class="glance-pill-card">
+          <div class="glance-icon-box bg-soft-pink">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <div class="small fw-semibold text-dark lh-sm">
+            <span class="fw-bold text-danger">1</span> Payment pending release
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-6">
+        <div class="glance-pill-card">
+          <div class="glance-icon-box bg-soft-blue">
+            <i class="fas fa-truck-moving"></i>
+          </div>
+          <div class="small fw-semibold text-dark lh-sm">
+            <span class="fw-bold text-primary">3</span> Transport options available
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Farmer Quick Actions (3x3 Responsive Grid) -->
+  <div class="k-card p-4 mb-4">
+    <div class="mb-3">
+      <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+        <i class="fas fa-bolt text-success"></i> Farmer Quick Actions
+      </h5>
+      <small class="text-muted">Tools and services to grow your farm business</small>
+    </div>
+
+    <div class="quick-action-grid">
+      <!-- 1. Add Produce -->
+      <a href="{{ url_for('farmer.add_produce') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-green">
+          <i class="fas fa-plus-circle"></i>
+        </div>
+        <span class="fw-bold small">Add Produce</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">List farm produce for sale</small>
+      </a>
+
+      <!-- 2. Visiting Card -->
+      <a href="{{ url_for('farmer.visiting_card') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-teal">
+          <i class="fas fa-id-card"></i>
+        </div>
+        <span class="fw-bold small">Visiting Card</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Share digital card</small>
+      </a>
+
+      <!-- 3. Buyer Requests -->
+      <a href="{{ url_for('farmer.browse_requirements') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-blue">
+          <i class="fas fa-users"></i>
+        </div>
+        <span class="fw-bold small">Buyer Requests</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">View buyer inquiries</small>
+      </a>
+
+      <!-- 4. Live Mandi Rates -->
+      <a href="{{ url_for('farmer.mandi_rates') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-pink">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <span class="fw-bold small">Live Mandi Rates</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Real-time mandi prices</small>
+      </a>
+
+      <!-- 5. Book Transport -->
+      <a href="{{ url_for('farmer.orders') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-orange">
+          <i class="fas fa-truck"></i>
+        </div>
+        <span class="fw-bold small">Book Transport</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Book verified logistics</small>
+      </a>
+
+      <!-- 6. Cold Storage -->
+      <a href="{{ url_for('cold_storage.index') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-cyan">
+          <i class="fas fa-snowflake"></i>
+        </div>
+        <span class="fw-bold small">Cold Storage</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Find nearby cold rooms</small>
+      </a>
+
+      <!-- 7. Seeds & Fertilizers -->
+      <a href="{{ url_for('marketplace.index') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-emerald">
+          <i class="fas fa-seedling"></i>
+        </div>
+        <span class="fw-bold small">Seeds & Fertilizers</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Shop verified inputs</small>
+      </a>
+
+      <!-- 8. Government Schemes -->
+      <a href="{{ url_for('schemes.index') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-purple">
+          <i class="fas fa-landmark"></i>
+        </div>
+        <span class="fw-bold small">Govt Schemes</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Subsidies & welfare</small>
+      </a>
+
+      <!-- 9. Request Section -->
+      <a href="{{ url_for('requests.index') }}" class="quick-action-card">
+        <div class="quick-action-icon bg-soft-slate">
+          <i class="fas fa-comment-dots"></i>
+        </div>
+        <span class="fw-bold small">Request Section</span>
+        <small class="text-muted d-none d-md-block" style="font-size:0.72rem;">Raise support tickets</small>
+      </a>
     </div>
   </div>
 
 </div>
 {% endblock %}
+

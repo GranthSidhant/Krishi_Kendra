@@ -54,34 +54,37 @@
     <div class="row g-4">
       {% for item in produce_items %}
       <div class="col-lg-4 col-md-6">
-        <div class="k-card h-100 p-4 d-flex flex-column justify-content-between border-2">
-          <div>
+        <div class="produce-card h-100 border-2">
+          <div class="position-relative">
+            <img src="{{ item.display_image }}" class="produce-card-thumb" style="height: 175px;" alt="{{ item.product_name }}" loading="lazy">
+            <span class="badge bg-dark bg-opacity-75 text-white position-absolute top-0 end-0 m-2">{{ item.quality_grade }}</span>
+            <span class="badge bg-success position-absolute bottom-0 start-0 m-2"><i class="fas fa-check-circle me-1"></i> Available</span>
+          </div>
+
+          <div class="produce-card-body p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <div>
-                <h5 class="fw-bold text-success mb-0">{{ item.product_name }}</h5>
-                <span class="badge bg-light text-muted border mt-1">{{ item.quality_grade }}</span>
+                <h5 class="fw-bold text-dark mb-0">{{ item.product_name }}</h5>
+                <small class="text-muted">{{ item.category_name or 'Fresh Produce' }}</small>
               </div>
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-success-subtle text-success">Available</span>
-                <div class="dropdown">
-                  <button class="btn btn-sm btn-light p-1 text-muted" type="button" data-bs-toggle="dropdown" title="Options">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
-                    <li>
-                      <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="openReportModal('inventory', {{ item.id }}, '{{ item.product_name }} ({{ item.available_quantity }} {{ item.unit }} by {{ item.farmer.name }})')">
-                        <i class="fas fa-flag me-2"></i> Report Listing
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-light p-1 text-muted rounded-circle" type="button" data-bs-toggle="dropdown" title="Options" style="width: 28px; height: 28px;">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                  <li>
+                    <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="openReportModal('inventory', {{ item.id }}, '{{ item.product_name }} ({{ item.available_quantity }} {{ item.unit }} by {{ item.farmer.name }})')">
+                      <i class="fas fa-flag me-2"></i> Report Listing
+                    </a>
+                  </li>
+                </ul>
               </div>
             </div>
 
             <!-- Farmer Details (Privacy compliant) -->
             <div class="d-flex align-items-center gap-2 my-2 py-2 border-top border-bottom">
               <img src="https://ui-avatars.com/api/?name={{ item.farmer.name }}&background=2e7d32&color=fff" alt="Avatar" class="rounded-circle" width="32" height="32">
-              <div>
+              <div class="flex-grow-1 text-truncate">
                 <a href="#" class="text-decoration-none trigger-profile-popup fw-bold text-dark" data-user-id="{{ item.farmer.id }}">
                   {{ item.farmer.name }}
                 </a>
@@ -108,22 +111,22 @@
               </div>
               <div class="d-flex justify-content-between">
                 <span class="text-muted small">Harvest Date:</span>
-                <span class="small fw-semibold">{{ item.harvest_date or 'Recent' }}</span>
+                <span class="small fw-semibold text-dark">{{ item.harvest_date or 'Recent' }}</span>
               </div>
             </div>
 
             {% if item.description %}
               <p class="small text-muted mb-3">{{ item.description }}</p>
             {% endif %}
-          </div>
 
-          <div class="d-flex gap-2 pt-2 border-top">
-            <button type="button" class="btn btn-warning text-dark fw-bold flex-grow-1" data-bs-toggle="modal" data-bs-target="#directOrderModal{{ item.id }}">
-              <i class="fas fa-paper-plane me-1"></i> Send Buy Request
-            </button>
-            <a href="{{ url_for('chat.start_chat', target_user_id=item.farmer.id) }}" class="btn btn-outline-primary" title="Chat with Farmer">
-              <i class="fas fa-comments"></i>
-            </a>
+            <div class="d-flex gap-2 pt-2 border-top mt-auto">
+              <button type="button" class="btn btn-warning text-dark fw-bold flex-grow-1 shadow-xs" data-bs-toggle="modal" data-bs-target="#directOrderModal{{ item.id }}">
+                <i class="fas fa-paper-plane me-1"></i> Send Buy Request
+              </button>
+              <a href="{{ url_for('chat.start_chat', target_user_id=item.farmer.id) }}" class="btn btn-outline-primary" title="Chat with Farmer">
+                <i class="fas fa-comments"></i>
+              </a>
+            </div>
           </div>
         </div>
       </div>

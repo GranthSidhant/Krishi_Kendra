@@ -1,12 +1,16 @@
 /* ==========================================================================
-   KRISHI KENDRA - Core Design System & Stylesheet
-   Role-Aware: Green (Farmer), Warm Orange (Buyer), Slate Navy (Admin)
+   KRISHI KENDRA - Modern Agricultural Trade Design System
+   Google Fonts: Outfit & Plus Jakarta Sans
+   Themes: Forest Green (Farmer), Amber Orange (Buyer), Slate Navy (Admin)
    ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
   /* Brand Palettes */
   --primary-green: #1b5e20;
   --accent-green: #2e7d32;
+  --emerald-green: #10b981;
   --light-green: #e8f5e9;
   --border-green: #a5d6a7;
   
@@ -18,38 +22,92 @@
   --admin-navy: #1a237e;
   --admin-light: #e8eaf6;
   
-  --dark-slate: #1e293b;
+  --dark-slate: #0f172a;
   --medium-slate: #475569;
   --light-slate: #f8fafc;
+  --border-slate: #e2e8f0;
   --card-bg: #ffffff;
+  
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.12);
+  --shadow-glow-green: 0 8px 25px rgba(46, 125, 50, 0.25);
+  --shadow-glow-orange: 0 8px 25px rgba(230, 81, 0, 0.25);
+
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f4f6f8;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #f6f8fa;
   color: var(--dark-slate);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-title, .stat-value, .hero-title {
+  font-family: 'Outfit', sans-serif;
 }
 
 main {
   flex: 1;
 }
 
-/* Navbar */
+/* ==========================================================================
+   Global Top Navigation & Live Mandi Ticker
+   ========================================================================== */
+
+.mandi-ticker {
+  background: #090e17;
+  color: #f8fafc;
+  padding: 0.45rem 1rem;
+  font-size: 0.82rem;
+  overflow: hidden;
+  white-space: nowrap;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1020;
+}
+.mandi-ticker-badge {
+  flex-shrink: 0;
+  z-index: 10;
+  background: #090e17;
+  padding-right: 1rem;
+  box-shadow: 12px 0 18px -2px #090e17;
+}
+.mandi-ticker-track {
+  overflow: hidden;
+  flex: 1;
+  position: relative;
+  white-space: nowrap;
+}
+.ticker-wrap {
+  display: inline-block;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: tickerSlide 35s linear infinite;
+}
+.ticker-wrap:hover {
+  animation-play-state: paused;
+}
+@keyframes tickerSlide {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
 .navbar-krishi {
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: var(--shadow-sm);
-  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border-slate);
+  box-shadow: var(--shadow-xs);
+  padding: 0.65rem 1.25rem;
 }
 .brand-title {
   font-weight: 800;
@@ -61,96 +119,272 @@ main {
   color: var(--buyer-orange);
 }
 
-/* Role Themes */
-.theme-farmer {
-  --theme-primary: var(--primary-green);
-  --theme-accent: var(--accent-green);
-  --theme-light: var(--light-green);
-  --theme-border: var(--border-green);
+.nav-link-custom {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--medium-slate);
+  padding: 0.45rem 0.85rem !important;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.nav-link-custom:hover, .nav-link-custom.active {
+  color: var(--accent-green);
+  background: var(--light-green);
+}
+.theme-buyer .nav-link-custom:hover, .theme-buyer .nav-link-custom.active {
+  color: var(--buyer-accent);
+  background: var(--buyer-light);
 }
 
-.theme-buyer {
-  --theme-primary: var(--buyer-orange);
-  --theme-accent: var(--buyer-accent);
-  --theme-light: var(--buyer-light);
-  --theme-border: var(--buyer-border);
-}
+/* ==========================================================================
+   Hero Banners with Authentic Agricultural Photography
+   ========================================================================== */
 
-.theme-admin {
-  --theme-primary: var(--admin-navy);
-  --theme-accent: #283593;
-  --theme-light: var(--admin-light);
-  --theme-border: #9fa8da;
-}
-
-/* Header & Banner */
-.hero-section {
-  background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #388e3c 100%);
-  color: #ffffff;
-  padding: 4.5rem 1.5rem;
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-  box-shadow: var(--shadow-md);
+.farmer-hero-card {
   position: relative;
+  background: linear-gradient(135deg, rgba(27, 94, 32, 0.92) 0%, rgba(46, 125, 50, 0.88) 60%, rgba(56, 142, 60, 0.82) 100%),
+              url('https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 2rem;
+  box-shadow: var(--shadow-glow-green);
   overflow: hidden;
 }
 
-.hero-section::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-  border-radius: 50%;
+.buyer-hero-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(216, 67, 21, 0.92) 0%, rgba(230, 81, 0, 0.88) 60%, rgba(245, 124, 0, 0.82) 100%),
+              url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 2rem;
+  box-shadow: var(--shadow-glow-orange);
+  overflow: hidden;
 }
 
-/* Cards & Widgets */
+.landing-hero {
+  position: relative;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.88) 100%),
+              url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1800&q=80') center/cover no-repeat;
+  color: #ffffff;
+  padding: 5.5rem 1.5rem 4.5rem;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-avatar-box {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   Glassmorphism & Card Tokens
+   ========================================================================== */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+}
+
+.glass-stat-item {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1rem;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.glass-stat-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .k-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-slate);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.k-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #cbd5e1;
 }
 
-.k-card:hover {
+/* Stat & Metric Cards */
+.metric-card {
+  background: #ffffff;
+  border: 1px solid var(--border-slate);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.stat-card {
-  border-left: 5px solid var(--accent-green);
-}
-.stat-card-buyer {
-  border-left: 5px solid var(--buyer-orange);
-}
-.stat-card-admin {
-  border-left: 5px solid var(--admin-navy);
+.metric-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
 }
 
 .stat-value {
   font-size: 1.85rem;
   font-weight: 800;
+  line-height: 1.15;
   color: var(--dark-slate);
 }
 
-/* Large Farmer Buttons */
-.btn-farmer-action {
-  font-size: 1.05rem;
-  font-weight: 600;
-  padding: 1rem 1.25rem;
+/* ==========================================================================
+   Produce Cards & Produce Gallery
+   ========================================================================== */
+
+.produce-card {
+  background: #ffffff;
+  border: 1px solid var(--border-slate);
   border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.produce-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.produce-card-thumb {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.produce-card-body {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   Farmer Quick Actions Grid (Pastel Icons & Micro-Interactions)
+   ========================================================================== */
+
+.quick-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
+.quick-action-card {
+  background: #ffffff;
+  border: 1px solid var(--border-slate);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 110px;
+  text-align: center;
+  text-decoration: none !important;
+  color: var(--dark-slate);
+  box-shadow: var(--shadow-xs);
   transition: all 0.2s ease;
+  min-height: 125px;
+  justify-content: center;
 }
-.btn-farmer-action i {
-  font-size: 1.8rem;
+.quick-action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: #cbd5e1;
+  color: var(--primary-green);
+}
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 0.65rem;
+  transition: transform 0.2s ease;
+}
+.quick-action-card:hover .quick-action-icon {
+  transform: scale(1.12);
+}
+
+/* Soft Pastel Background Palette */
+.bg-soft-green   { background: #e8f5e9; color: #2e7d32; }
+.bg-soft-teal    { background: #e0f2f1; color: #00796b; }
+.bg-soft-blue    { background: #e3f2fd; color: #1565c0; }
+.bg-soft-pink    { background: #fce4ec; color: #c2185b; }
+.bg-soft-orange  { background: #fff3e0; color: #e65100; }
+.bg-soft-cyan    { background: #e0f7fa; color: #00838f; }
+.bg-soft-emerald { background: #d1fae5; color: #065f46; }
+.bg-soft-purple  { background: #f3e8ff; color: #6b21a8; }
+.bg-soft-slate   { background: #f1f5f9; color: #334155; }
+
+/* ==========================================================================
+   Today at a Glance & Status Pill Badges
+   ========================================================================== */
+
+.glance-pill-card {
+  background: #ffffff;
+  border: 1px solid var(--border-slate);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  transition: transform 0.2s ease;
+}
+.glance-pill-card:hover {
+  transform: translateY(-2px);
+}
+.glance-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 /* Badges */
@@ -163,6 +397,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  font-size: 0.78rem;
 }
 .badge-verified-buyer {
   background: linear-gradient(135deg, #e65100, #d84315);
@@ -173,46 +408,152 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  font-size: 0.78rem;
 }
 
-/* Mandi Ticker */
-.mandi-ticker {
-  background: #0f172a;
-  color: #f8fafc;
-  padding: 0.5rem 1rem;
-  font-size: 0.88rem;
-  overflow: hidden;
-  white-space: nowrap;
-  border-bottom: 1px solid #1e293b;
+/* ==========================================================================
+   Mobile Bottom Navigation Bar & Floating Voice Trigger
+   ========================================================================== */
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid var(--border-slate);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  padding: 0.4rem 0.5rem;
+  z-index: 1040;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none !important;
+  color: var(--medium-slate);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  min-width: 58px;
+}
+.mobile-nav-item i {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+.mobile-nav-item.active {
+  color: var(--primary-green);
+  background: var(--light-green);
+}
+.theme-buyer .mobile-nav-item.active {
+  color: var(--buyer-accent);
+  background: var(--buyer-light);
+}
+
+.voice-assistant-fab {
+  position: fixed;
+  bottom: 4.5rem;
+  right: 1.5rem;
+  height: 52px;
+  padding: 0 1.25rem;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #1b5e20, #047857);
+  color: #ffffff;
   display: flex;
   align-items: center;
-  position: relative;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 6px 22px rgba(4, 120, 87, 0.4);
+  cursor: pointer;
+  z-index: 1050;
+  border: 2px solid #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none !important;
 }
-.mandi-ticker-badge {
-  flex-shrink: 0;
-  z-index: 10;
-  background: #0f172a;
-  padding-right: 1.25rem;
-  box-shadow: 15px 0 20px -2px #0f172a;
+.voice-assistant-fab:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 28px rgba(4, 120, 87, 0.6);
+  color: #ffffff;
 }
-.mandi-ticker-track {
-  overflow: hidden;
-  flex: 1;
-  position: relative;
-  white-space: nowrap;
+.voice-assistant-fab.listening {
+  animation: pulseMic 1.5s infinite;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
 }
-.ticker-wrap {
-  display: inline-block;
-  white-space: nowrap;
-  padding-left: 100%;
-  animation: tickerSlide 32s linear infinite;
+@keyframes pulseMic {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+  70% { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
-.ticker-wrap:hover {
-  animation-play-state: paused;
+
+/* ==========================================================================
+   Responsive Smartphone Optimizations
+   ========================================================================== */
+
+@media (max-width: 991px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  body {
+    padding-bottom: 70px;
+  }
+  .voice-assistant-fab {
+    bottom: 4.75rem;
+    right: 1rem;
+    padding: 0 1rem;
+    font-size: 0.82rem;
+    height: 46px;
+  }
 }
-@keyframes tickerSlide {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-100%); }
+
+@media (max-width: 768px) {
+  .farmer-hero-card, .buyer-hero-card {
+    padding: 1.5rem 1.25rem;
+  }
+  .hero-avatar-box {
+    width: 58px;
+    height: 58px;
+    font-size: 1.5rem;
+  }
+  .quick-action-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+  }
+  .quick-action-card {
+    padding: 0.85rem 0.4rem;
+    min-height: 105px;
+  }
+  .quick-action-card span {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+  .quick-action-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.15rem;
+    margin-bottom: 0.45rem;
+  }
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-action-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .farmer-hero-card .btn, .buyer-hero-card .btn {
+    font-size: 0.82rem;
+    padding: 0.4rem 0.75rem;
+  }
 }
 
 /* Visiting Card Component */
@@ -252,7 +593,7 @@ main {
   height: 600px;
   background: #ffffff;
   border-radius: var(--radius-md);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-slate);
   overflow: hidden;
 }
 .chat-messages {
@@ -282,168 +623,9 @@ main {
 .msg-received {
   align-self: flex-start;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-slate);
   color: var(--dark-slate);
   border-bottom-left-radius: 2px;
 }
 
-/* Floating Voice Assistant Trigger */
-.voice-assistant-fab {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2e7d32, #15803d);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
-  cursor: pointer;
-  z-index: 1050;
-  border: 2px solid #ffffff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.voice-assistant-fab:hover {
-  transform: scale(1.08);
-  box-shadow: 0 8px 25px rgba(46, 125, 50, 0.6);
-}
-.voice-assistant-fab.listening {
-  animation: pulseMic 1.5s infinite;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-}
-@keyframes pulseMic {
-  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
-  70% { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-}
-
-/* Responsive Weather Dropdown for Smartphones */
-@media (max-width: 768px) {
-  #weatherWidgetDropdown .dropdown-menu {
-    position: fixed !important;
-    top: 66px !important;
-    left: 12px !important;
-    right: 12px !important;
-    width: auto !important;
-    min-width: unset !important;
-    max-width: calc(100vw - 24px) !important;
-    transform: none !important;
-    z-index: 1080 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25) !important;
-  }
-  .voice-assistant-fab {
-    bottom: 1.25rem;
-    right: 1.25rem;
-    width: 52px;
-    height: 52px;
-  }
-}
-
-/* Kisan Saarthi Conversational UI */
-.kisan-saarthi-modal .modal-header {
-  border-bottom: none;
-}
-.chat-msg-user {
-  justify-content: flex-end;
-}
-.chat-msg-user .chat-bubble {
-  background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
-  border: 1px solid #bae6fd;
-  border-bottom-right-radius: 4px !important;
-}
-.chat-msg-ai .chat-bubble {
-  border-bottom-left-radius: 4px !important;
-}
-.btn-xs {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.6rem;
-}
-.status-indicator-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  display: inline-block;
-  transition: background-color 0.3s ease;
-}
-.status-indicator-dot.recording {
-  background: #ef4444;
-  animation: dotPulse 1s infinite alternate;
-}
-.status-indicator-dot.speaking {
-  background: #3b82f6;
-  animation: dotPulse 0.8s infinite alternate;
-}
-@keyframes dotPulse {
-  from { opacity: 0.4; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1.2); }
-}
-
-/* Audio Waveform Animation */
-.audio-waves {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 18px;
-}
-.audio-waves span {
-  width: 3px;
-  height: 100%;
-  background: #10b981;
-  border-radius: 3px;
-  animation: waveAnim 1s ease-in-out infinite;
-}
-.audio-waves span:nth-child(1) { animation-delay: 0.1s; }
-.audio-waves span:nth-child(2) { animation-delay: 0.25s; }
-.audio-waves span:nth-child(3) { animation-delay: 0.4s; }
-.audio-waves span:nth-child(4) { animation-delay: 0.25s; }
-.audio-waves span:nth-child(5) { animation-delay: 0.1s; }
-
-@keyframes waveAnim {
-  0%, 100% { height: 4px; }
-  50% { height: 18px; }
-}
-
-/* Print Styles for Visiting Card */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  .visiting-card-container, .visiting-card-container * {
-    visibility: visible;
-  }
-  .visiting-card-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  .no-print {
-    display: none !important;
-  }
-}
-
-/* Interactive Map & Hover Utilities */
-.hover-primary {
-  transition: color 0.15s ease-in-out, opacity 0.15s ease-in-out;
-}
-.hover-primary:hover {
-  color: var(--primary-green) !important;
-  text-decoration: underline !important;
-}
-.btn-xs {
-  padding: 0.15rem 0.4rem;
-  font-size: 0.72rem;
-  border-radius: 4px;
-}
-.custom-map-pin {
-  transition: transform 0.2s ease-in-out;
-}
-.custom-map-pin:hover {
-  transform: scale(1.15);
-}
 

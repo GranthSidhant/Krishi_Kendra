@@ -3,76 +3,92 @@
 {% block content %}
 <div class="container-fluid px-lg-4">
 
-  <!-- Hero Banner -->
-  <div class="hero-section mb-5 text-center text-md-start">
-    <div class="row align-items-center">
+  <!-- Landing Hero Section -->
+  <div class="landing-hero mb-5">
+    <div class="row align-items-center g-4">
       <div class="col-lg-7">
-        <span class="badge bg-light text-success fw-bold px-3 py-2 rounded-pill mb-3">
+        <span class="badge bg-white bg-opacity-20 text-white fw-bold px-3 py-2 rounded-pill mb-3 border border-white border-opacity-30">
           <i class="fas fa-award text-warning me-1"></i> <span data-i18n="hero_sih_badge">SIH 2026 Problem SIH26033 Solution</span>
         </span>
-        <h1 class="display-4 fw-extrabold mb-3" data-i18n="hero_title">
+        <h1 class="display-4 fw-extrabold mb-3 text-white">
           Better Markets. Direct Connections. Smarter Agricultural Trade.
         </h1>
-        <p class="lead mb-4 text-white-50" data-i18n="hero_desc">
+        <p class="lead mb-4 text-white text-opacity-85 fs-6" style="max-width: 620px;">
           Eliminating exploitative middlemen across the farm-to-fork chain. Connecting farmers directly with bulk & retail buyers with live APMC Mandi price discovery, smart counter-negotiation, and tracked fulfilment.
         </p>
-        <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+        <div class="d-flex flex-wrap gap-3 justify-content-start">
           {% if current_user %}
             {% if current_user.role == 'farmer' %}
-              <a href="{{ url_for('farmer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
-                <i class="fas fa-th-large me-2"></i> <span data-i18n="btn_farmer_dash">Farmer Dashboard</span>
+              <a href="{{ url_for('farmer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
+                <i class="fas fa-th-large me-2"></i> <span>Farmer Dashboard</span>
               </a>
-              <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
-                <i class="fas fa-plus-circle me-2"></i> <span data-i18n="btn_list_crop">List New Crop</span>
+              <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3 rounded-3 bg-dark bg-opacity-25">
+                <i class="fas fa-plus-circle me-2"></i> <span>List New Crop</span>
               </a>
             {% elif current_user.role == 'buyer' %}
-              <a href="{{ url_for('buyer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
-                <i class="fas fa-th-large me-2"></i> <span data-i18n="btn_buyer_dash">Buyer Dashboard</span>
+              <a href="{{ url_for('buyer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
+                <i class="fas fa-th-large me-2"></i> <span>Buyer Dashboard</span>
               </a>
-              <a href="{{ url_for('marketplace.index') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
-                <i class="fas fa-shopping-basket me-2"></i> <span data-i18n="btn_explore_market">Explore Marketplace</span>
+              <a href="{{ url_for('buyer.browse') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3 rounded-3 bg-dark bg-opacity-25">
+                <i class="fas fa-search me-2"></i> <span>Browse Produce</span>
               </a>
             {% elif current_user.role == 'admin' %}
-              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
-                <i class="fas fa-shield-alt me-2"></i> <span data-i18n="btn_admin_portal">Admin Portal</span>
+              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
+                <i class="fas fa-shield-alt me-2"></i> <span>Admin Portal</span>
               </a>
             {% endif %}
           {% else %}
-            <a href="{{ url_for('auth.register', role='farmer') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow">
+            <a href="{{ url_for('auth.register', role='farmer') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
               <i class="fas fa-tractor me-2"></i> <span data-i18n="btn_i_am_farmer">I am a Farmer (किसान)</span>
             </a>
-            <a href="{{ url_for('auth.register', role='buyer') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
+            <a href="{{ url_for('auth.register', role='buyer') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3 rounded-3 bg-dark bg-opacity-25 border-white">
               <i class="fas fa-shopping-basket me-2"></i> <span data-i18n="btn_i_am_buyer">I am a Buyer (खरीदार)</span>
             </a>
           {% endif %}
         </div>
       </div>
-      <div class="col-lg-5 mt-4 mt-lg-0 text-center">
-        <div class="p-4 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-25 shadow-lg">
-          <h4 class="fw-bold mb-3"><i class="fas fa-chart-line text-warning me-2"></i> <span data-i18n="impact_title">Real-Time Platform Impact</span></h4>
+
+      <!-- Real-Time Platform Impact Glassmorphism Box -->
+      <div class="col-lg-5">
+        <div class="glass-card p-4 shadow-lg">
+          <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-white">
+            <i class="fas fa-chart-line text-warning"></i> <span data-i18n="impact_title">Real-Time Platform Impact</span>
+          </h5>
           <div class="row g-3">
             <div class="col-6">
-              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
-                <div class="fs-2 fw-bold text-warning">{{ stats.farmers }}+</div>
-                <div class="small" data-i18n="stat_farmers">Registered Farmers</div>
+              <div class="glass-stat-item">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="fas fa-users text-warning fs-5"></i>
+                  <div class="fs-3 fw-extrabold text-white">{{ stats.farmers if stats else 150 }}+</div>
+                </div>
+                <div class="small text-white text-opacity-75" data-i18n="stat_farmers">Registered Farmers</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
-                <div class="fs-2 fw-bold text-info">{{ stats.buyers }}+</div>
-                <div class="small" data-i18n="stat_buyers">Direct Buyers</div>
+              <div class="glass-stat-item">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="fas fa-shopping-cart text-info fs-5"></i>
+                  <div class="fs-3 fw-extrabold text-white">{{ stats.buyers if stats else 80 }}+</div>
+                </div>
+                <div class="small text-white text-opacity-75" data-i18n="stat_buyers">Direct Buyers</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
-                <div class="fs-2 fw-bold text-success">{{ stats.mandis_covered }}+</div>
-                <div class="small" data-i18n="stat_mandis">APMC Mandis Linked</div>
+              <div class="glass-stat-item">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="fas fa-university text-success fs-5"></i>
+                  <div class="fs-3 fw-extrabold text-white">{{ stats.mandis_covered if stats else 45 }}+</div>
+                </div>
+                <div class="small text-white text-opacity-75" data-i18n="stat_mandis">APMC Mandis Linked</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="p-3 bg-dark bg-opacity-25 rounded-3">
-                <div class="fs-2 fw-bold text-danger">{{ stats.cold_storages }}+</div>
-                <div class="small" data-i18n="stat_cold_storages">Cold Storages</div>
+              <div class="glass-stat-item">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="fas fa-snowflake text-danger fs-5"></i>
+                  <div class="fs-3 fw-extrabold text-white">{{ stats.cold_storages if stats else 12 }}+</div>
+                </div>
+                <div class="small text-white text-opacity-75" data-i18n="stat_cold_storages">Cold Storages</div>
               </div>
             </div>
           </div>
