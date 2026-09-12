@@ -1,18 +1,142 @@
 {% extends "base.html" %}
 
-{% block title %}Live APMC Mandi Rates - Krishi Kendra{% endblock %}
+{% block title %}Live APMC Mandi Rates & AI Price Forecast - Krishi Kendra{% endblock %}
+
+{% block extra_css %}
+<style>
+  .forecast-crop-btn {
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .forecast-crop-btn.active {
+    background-color: var(--primary-green) !important;
+    color: #fff !important;
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 3px 8px rgba(27, 94, 32, 0.25);
+  }
+  .decision-roi-box {
+    border-left: 4px solid var(--primary-green);
+    background: #f8fafc;
+    border-radius: 12px;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-lg-4 py-3">
 
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-      <h3 class="fw-bold text-success mb-1"><i class="fas fa-chart-line me-2"></i> Today's APMC Mandi Rates Ticker</h3>
-      <p class="text-muted small mb-0">Transparent price discovery powered by official Mandi benchmarks across India</p>
+      <h3 class="fw-bold text-success mb-1"><i class="fas fa-chart-line me-2"></i> Today's APMC Mandi Rates & AI Price Forecast</h3>
+      <p class="text-muted small mb-0">Transparent price discovery, 7-day future price forecasting, and cold storage ROI decision advisory</p>
     </div>
-    <span class="badge bg-success-subtle text-success border border-success p-2">
-      <i class="fas fa-sync-alt me-1"></i> Updated Daily (Agmarknet Sync)
-    </span>
+    <div class="d-flex gap-2 align-items-center">
+      <span class="badge bg-success-subtle text-success border border-success p-2">
+        <i class="fas fa-sync-alt me-1"></i> Agmarknet Daily Sync
+      </span>
+      <a href="{{ url_for('cold_storage.index') }}" class="btn btn-sm btn-info text-white fw-bold shadow-xs">
+        <i class="fas fa-snowflake me-1"></i> Find Cold Storage
+      </a>
+    </div>
+  </div>
+
+  <!-- AI 7-Day APMC Price Forecasting & Cold Storage Decision Hub -->
+  <div class="k-card p-4 mb-4 border-top border-4 border-success shadow-sm">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3 pb-2 border-bottom">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-success px-2.5 py-1 rounded-pill"><i class="fas fa-robot me-1"></i> AI Forecast Engine</span>
+          <span class="badge bg-info-subtle text-info border px-2 py-0.5 rounded-pill small">Weather & Arrival Adjusted</span>
+        </div>
+        <h5 class="fw-bold text-dark mb-0"><i class="fas fa-chart-area text-success me-2"></i> 7-Day Price Trajectory & Cold Storage Decision Advisor</h5>
+      </div>
+      
+      <!-- Quick Crop Buttons -->
+      <div class="d-flex flex-wrap gap-1.5" id="forecastCropSelector">
+        <button type="button" class="btn btn-sm btn-outline-success forecast-crop-btn active" onclick="loadPriceForecast('Onion', 'Nashik', this)">
+          🧅 Red Onion
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success forecast-crop-btn" onclick="loadPriceForecast('Tomato', 'Nashik', this)">
+          🍅 Tomato
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success forecast-crop-btn" onclick="loadPriceForecast('Potato', 'Agra', this)">
+          🥔 Potato
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success forecast-crop-btn" onclick="loadPriceForecast('Wheat', 'Nashik', this)">
+          🌾 Wheat
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success forecast-crop-btn" onclick="loadPriceForecast('Soybean', 'Nagpur', this)">
+          🌱 Soybean
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success forecast-crop-btn" onclick="loadPriceForecast('Garlic', 'Ahmedabad', this)">
+          🧄 Garlic
+        </button>
+      </div>
+    </div>
+
+    <!-- Chart & Decision Grid -->
+    <div class="row g-4 align-items-center">
+      <!-- 7-Day Line Chart Canvas -->
+      <div class="col-lg-7">
+        <div class="d-flex justify-content-between align-items-center mb-2 small">
+          <span class="text-muted fw-semibold" id="chartMarketLabel"><i class="fas fa-store text-success me-1"></i> Lasalgaon / Nashik APMC Benchmark</span>
+          <span class="badge bg-light text-dark border" id="chartSpotPriceBadge">Spot Price: ₹1,850/Qtl</span>
+        </div>
+        <div style="position: relative; height: 260px; width: 100%;">
+          <canvas id="priceForecastChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Strategy & Cold Storage ROI Decision Card -->
+      <div class="col-lg-5">
+        <div class="p-3 decision-roi-box border">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="text-muted small d-block">AI Strategy Recommendation:</span>
+              <h6 class="fw-bold mb-0 text-dark" id="decisionTitle">🟢 Hold Produce & Store in Cold Storage</h6>
+            </div>
+            <span class="badge bg-success px-2 py-1" id="decisionActionBadge">HOLD & STORE</span>
+          </div>
+
+          <!-- Trend & Price Projection -->
+          <div class="p-2.5 bg-white rounded border mb-2.5 small">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Current Mandi Benchmark:</span>
+              <strong class="text-dark" id="roiCurrentPrice">₹1,850 / Qtl</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">7-10 Day Projected Price:</span>
+              <strong class="text-success fs-6" id="roiProjectedPrice">₹2,150 / Qtl (+16.2%)</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-1 text-danger">
+              <span>Cold Storage Fee (10 days):</span>
+              <strong id="roiStorageCost">-₹8.50 / Qtl</strong>
+            </div>
+            <div class="d-flex justify-content-between pt-1 border-top mt-1">
+              <span class="fw-bold text-dark">Estimated Net Extra Profit:</span>
+              <strong class="text-success fw-bold fs-6" id="roiNetGain">+₹291.50 / Quintal</strong>
+            </div>
+          </div>
+
+          <!-- Advisory Rationale -->
+          <p class="small text-muted mb-3" id="decisionAdvisory">
+            Supply is projected to tighten over the next week due to seasonal transition. Storing in cold storage yields +₹291/Qtl net profit over spot selling.
+          </p>
+
+          <!-- Action Deep-Link Button -->
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('cold_storage.index') }}" class="btn btn-sm btn-info text-white fw-bold flex-grow-1" id="decisionActionBtn">
+              <i class="fas fa-snowflake me-1"></i> Book Nearby Cold Storage
+            </a>
+            <a href="{{ url_for('farmer.profit_calculator') }}" class="btn btn-sm btn-outline-success fw-semibold" title="Calculate full crop cultivation profit">
+              <i class="fas fa-calculator"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Filter Card -->
@@ -110,3 +234,181 @@
 
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN for Responsive Time-Series Visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let priceForecastChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load default forecast for Onion / Nashik
+  loadPriceForecast('Onion', 'Nashik', document.querySelector('.forecast-crop-btn.active'));
+});
+
+function loadPriceForecast(commodity, district, btnElement) {
+  if (btnElement) {
+    document.querySelectorAll('.forecast-crop-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+  }
+
+  fetch(`/api/mandi/forecast?commodity=${encodeURIComponent(commodity)}&district=${encodeURIComponent(district)}`)
+    .then(res => res.json())
+    .then(data => {
+      renderForecastUI(data);
+    })
+    .catch(err => console.error('Forecast fetch error:', err));
+}
+
+function renderForecastUI(data) {
+  if (!data || !data.success) return;
+
+  // 1. Update Market Labels & Spot Price
+  const marketLabel = document.getElementById('chartMarketLabel');
+  const spotBadge = document.getElementById('chartSpotPriceBadge');
+  if (marketLabel) marketLabel.innerHTML = `<i class="fas fa-store text-success me-1"></i> ${data.market_name} • ${data.commodity}`;
+  if (spotBadge) spotBadge.textContent = `Spot Benchmark: ₹${data.current_price_qtl}/Qtl (₹${data.current_rate_kg}/kg)`;
+
+  // 2. Update Strategy Decision Card
+  const titleEl = document.getElementById('decisionTitle');
+  const badgeEl = document.getElementById('decisionActionBadge');
+  const curPriceEl = document.getElementById('roiCurrentPrice');
+  const projPriceEl = document.getElementById('roiProjectedPrice');
+  const storageCostEl = document.getElementById('roiStorageCost');
+  const netGainEl = document.getElementById('roiNetGain');
+  const advisoryEl = document.getElementById('decisionAdvisory');
+  const actionBtn = document.getElementById('decisionActionBtn');
+
+  const roi = data.roi_breakdown || {};
+
+  if (titleEl) titleEl.textContent = data.recommendation_title;
+  if (badgeEl) {
+    badgeEl.textContent = data.action_badge;
+    badgeEl.className = `badge bg-${data.badge_class || 'success'} px-2 py-1`;
+  }
+
+  if (curPriceEl) curPriceEl.textContent = `₹${data.current_price_qtl} / Qtl`;
+  if (projPriceEl) {
+    const sign = data.price_change_pct >= 0 ? '+' : '';
+    projPriceEl.textContent = `₹${roi.projected_10day_price || data.forecast_modal[data.forecast_modal.length - 1]} / Qtl (${sign}${data.price_change_pct}%)`;
+    projPriceEl.className = data.price_change_pct >= 0 ? 'text-success fs-6' : 'text-danger fs-6';
+  }
+
+  if (storageCostEl) storageCostEl.textContent = `-₹${roi.total_storage_cost_qtl || 8.50} / Qtl`;
+  
+  if (netGainEl) {
+    if (roi.storage_recommended) {
+      netGainEl.textContent = `+₹${roi.net_gain_qtl} / Quintal`;
+      netGainEl.className = 'text-success fw-bold fs-6';
+    } else if (data.price_change_pct < 0) {
+      netGainEl.textContent = `Avoid ${data.price_change_pct}% Loss via Spot Sale`;
+      netGainEl.className = 'text-danger fw-bold fs-6';
+    } else {
+      netGainEl.textContent = `Stable Spot Margin`;
+      netGainEl.className = 'text-dark fw-bold fs-6';
+    }
+  }
+
+  if (advisoryEl) advisoryEl.textContent = data.advisory;
+
+  if (actionBtn) {
+    if (roi.storage_recommended) {
+      actionBtn.className = 'btn btn-sm btn-info text-white fw-bold flex-grow-1';
+      actionBtn.innerHTML = '<i class="fas fa-snowflake me-1"></i> Book Nearby Cold Storage';
+      actionBtn.href = '/cold-storage/';
+    } else {
+      actionBtn.className = 'btn btn-sm btn-success fw-bold flex-grow-1';
+      actionBtn.innerHTML = '<i class="fas fa-plus-circle me-1"></i> List Produce for Sale';
+      actionBtn.href = '/farmer/inventory/add';
+    }
+  }
+
+  // 3. Render / Update Chart.js Instance
+  const ctx = document.getElementById('priceForecastChart');
+  if (!ctx) return;
+
+  if (priceForecastChartInstance) {
+    priceForecastChartInstance.destroy();
+  }
+
+  const isUp = data.price_change_pct >= 0;
+  const primaryColor = isUp ? '#1b5e20' : '#d32f2f';
+  const fillBg = isUp ? 'rgba(46, 125, 50, 0.12)' : 'rgba(211, 47, 47, 0.12)';
+
+  priceForecastChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.days_labels,
+      datasets: [
+        {
+          label: 'Projected Modal Price (₹/Qtl)',
+          data: data.forecast_modal,
+          borderColor: primaryColor,
+          backgroundColor: fillBg,
+          fill: true,
+          tension: 0.35,
+          borderWidth: 3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: primaryColor
+        },
+        {
+          label: 'Upper Bound (Max Mandi Price)',
+          data: data.forecast_max,
+          borderColor: 'rgba(100, 116, 139, 0.35)',
+          borderDash: [5, 5],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: 'Lower Bound (Min Mandi Price)',
+          data: data.forecast_min,
+          borderColor: 'rgba(100, 116, 139, 0.35)',
+          borderDash: [5, 5],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            boxWidth: 12,
+            font: { size: 11, family: 'Inter' }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return ` ${context.dataset.label}: ₹${context.raw}/Qtl (₹${(context.raw/100).toFixed(2)}/kg)`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          ticks: {
+            callback: function(val) { return `₹${val}`; },
+            font: { size: 11 }
+          },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        x: {
+          ticks: { font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}
+

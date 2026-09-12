@@ -324,12 +324,35 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     } else {
       bubble.innerHTML = `
-        <div>${escapeHtml(msg.text)}</div>
-        <small class="text-muted d-block text-end mt-1" style="font-size:0.72rem;">${msg.created_at}</small>
+        <div class="msg-text-content" id="msgText_${msg.id}">${escapeHtml(msg.text)}</div>
+        <div class="d-flex justify-content-between align-items-center mt-1.5 pt-1 border-top border-light-subtle" style="font-size:0.72rem;">
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-xs p-0 text-muted opacity-75 hover-primary" onclick="translateMessage(${msg.id})" title="Translate text">
+              <i class="fas fa-language text-primary"></i> <span id="translateBtnLabel_${msg.id}">Translate</span>
+            </button>
+            <button type="button" class="btn btn-xs p-0 text-muted opacity-75 hover-primary" onclick="speakMessage(${msg.id})" title="Listen to message">
+              <i class="fas fa-volume-up text-secondary"></i>
+            </button>
+          </div>
+          <small class="text-muted">${msg.created_at}</small>
+        </div>
+        <div class="translated-box p-2 mt-1 rounded bg-white text-dark small border d-none" id="translatedBox_${msg.id}">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge bg-primary-subtle text-primary" style="font-size:0.68rem;" id="transBadge_${msg.id}">Translated</span>
+            <button type="button" class="btn btn-xs p-0 text-muted" onclick="speakTranslated(${msg.id})" title="Listen to translation"><i class="fas fa-volume-up text-primary"></i></button>
+          </div>
+          <div id="transText_${msg.id}" class="fw-semibold text-dark"></div>
+        </div>
       `;
     }
 
     chatMessages.appendChild(bubble);
+
+    // Auto translate if toggle is active
+    const autoToggle = document.getElementById('autoTranslateToggle');
+    if (autoToggle && autoToggle.checked && !isMe) {
+      setTimeout(() => translateMessage(msg.id), 250);
+    }
   }
 
   function escapeHtml(string) {
@@ -338,4 +361,80 @@ document.addEventListener('DOMContentLoaded', () => {
     div.innerText = string;
     return div.innerHTML;
   }
+
+  // 5. Global In-Chat Translation & Speech Handlers
+  window.translateMessage = function(msgId) {
+    const textEl = document.getElementById(`msgText_${msgId}`);
+    if (!textEl) return;
+    const text = textEl.innerText.trim();
+    if (!text) return;
+
+    const langSelect = document.getElementById('chatTargetLangSelect');
+    const targetLang = langSelect ? langSelect.value : 'hi';
+    const btnLabel = document.getElementById(`translateBtnLabel_${msgId}`);
+    const box = document.getElementById(`translatedBox_${msgId}`);
+    const resultText = document.getElementById(`transText_${msgId}`);
+    const badge = document.getElementById(`transBadge_${msgId}`);
+
+    if (btnLabel) btnLabel.textContent = 'Translating...';
+
+    fetch('/api/chat/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text, target_lang: targetLang })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (btnLabel) btnLabel.textContent = 'Translate';
+        if (data.success && box && resultText) {
+          resultText.textContent = data.translated_text;
+          if (badge) badge.textContent = `Translated to ${data.target_lang_name || targetLang.toUpperCase()}`;
+          box.classList.remove('d-none');
+          scrollToBottom();
+        }
+      })
+      .catch(err => {
+        if (btnLabel) btnLabel.textContent = 'Translate';
+        console.error('Translate error:', err);
+      });
+  };
+
+  window.speakMessage = function(msgId) {
+    const textEl = document.getElementById(`msgText_${msgId}`);
+    if (!textEl || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(textEl.innerText.trim());
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  window.speakTranslated = function(msgId) {
+    const transEl = document.getElementById(`transText_${msgId}`);
+    if (!transEl || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const langSelect = document.getElementById('chatTargetLangSelect');
+    const targetLang = langSelect ? langSelect.value : 'hi';
+
+    const utterance = new SpeechSynthesisUtterance(transEl.innerText.trim());
+    utterance.lang = targetLang === 'hi' ? 'hi-IN' : (targetLang === 'mr' ? 'mr-IN' : (targetLang === 'ta' ? 'ta-IN' : (targetLang === 'te' ? 'te-IN' : 'en-IN')));
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Auto-translate toggle event
+  const autoTranslateToggle = document.getElementById('autoTranslateToggle');
+  if (autoTranslateToggle) {
+    autoTranslateToggle.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        // Translate all received messages in DOM
+        const receivedBubbles = chatMessages.querySelectorAll('.msg-received[data-msg-id]');
+        receivedBubbles.forEach(b => {
+          const id = b.getAttribute('data-msg-id');
+          if (id) translateMessage(parseInt(id));
+        });
+      }
+    });
+  }
 });
+

@@ -48,6 +48,30 @@
       </div>
     </div>
 
+    <!-- Multi-Lingual Translation Toolbar -->
+    <div class="p-2 px-3 bg-white border-bottom small d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fw-bold text-dark"><i class="fas fa-language text-primary me-1"></i> Translate Chat To:</span>
+        <select id="chatTargetLangSelect" class="form-select form-select-sm py-0.5 px-2 fw-semibold" style="width: auto; font-size: 0.8rem;">
+          <option value="hi" {% if user.preferred_language == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+          <option value="mr" {% if user.preferred_language == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
+          <option value="en" {% if user.preferred_language == 'en' %}selected{% endif %}>English</option>
+          <option value="ta">தமிழ் (Tamil)</option>
+          <option value="te">తెలుగు (Telugu)</option>
+          <option value="gu">ગુજરાતી (Gujarati)</option>
+          <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+          <option value="bn">বাংলা (Bengali)</option>
+        </select>
+      </div>
+
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="autoTranslateToggle">
+        <label class="form-check-label text-dark fw-semibold small" for="autoTranslateToggle">
+          <i class="fas fa-bolt text-warning me-1"></i> Auto-Translate Incoming
+        </label>
+      </div>
+    </div>
+
     <!-- Active Linked Transaction Context Banner (if any) -->
     {% if linked_order %}
       <div class="p-2 px-3 bg-success-subtle text-dark border-bottom small d-flex justify-content-between align-items-center">
@@ -77,10 +101,11 @@
             <div class="d-flex align-items-center gap-2 mb-1">
               <span class="badge bg-primary rounded-pill"><i class="fas fa-phone-alt"></i> Contact Shared</span>
             </div>
-            <div class="fw-semibold">{{ msg.message_text }}</div>
+            <div class="fw-semibold msg-text-content" id="msgText_{{ msg.id }}">{{ msg.message_text }}</div>
             <div class="mt-2">
               <a href="tel:{{ meta.phone }}" class="btn btn-sm btn-success px-3"><i class="fas fa-phone-volume me-1"></i> Call {{ meta.phone }}</a>
             </div>
+            <small class="text-muted d-block text-end mt-1" style="font-size: 0.72rem;">{{ msg.created_at.strftime('%I:%M %p') }}</small>
 
           {% elif msg.message_type == 'voice_note' %}
             {% set meta = msg.get_metadata() %}
@@ -92,6 +117,7 @@
               <source src="{{ meta.audio_url }}" type="audio/webm">
               Your browser does not support audio playback.
             </audio>
+            <small class="text-muted d-block text-end mt-1" style="font-size: 0.72rem;">{{ msg.created_at.strftime('%I:%M %p') }}</small>
 
           {% elif msg.message_type in ['counter_card', 'offer_card'] %}
             {% set meta = msg.get_metadata() %}
@@ -116,7 +142,7 @@
                   <strong class="text-dark">₹{{ meta.total_amount }}</strong>
                 </div>
                 {% if meta.notes %}
-                  <div class="col-12 text-muted fst-italic">"{{ meta.notes }}"</div>
+                  <div class="col-12 text-muted fst-italic msg-text-content" id="msgText_{{ msg.id }}">"{{ meta.notes }}"</div>
                 {% endif %}
               </div>
 
@@ -145,11 +171,51 @@
               {% endif %}
             </div>
 
+            <!-- Translate Offer Notes if present -->
+            {% if meta.notes %}
+              <div class="d-flex justify-content-between align-items-center mt-1 pt-1" style="font-size:0.72rem;">
+                <button type="button" class="btn btn-xs p-0 text-muted" onclick="translateMessage({{ msg.id }})" title="Translate Notes">
+                  <i class="fas fa-language text-primary"></i> <span id="translateBtnLabel_{{ msg.id }}">Translate Note</span>
+                </button>
+                <small class="text-muted">{{ msg.created_at.strftime('%I:%M %p') }}</small>
+              </div>
+              <div class="translated-box p-2 mt-1 rounded bg-white text-dark small border d-none" id="translatedBox_{{ msg.id }}">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="badge bg-primary-subtle text-primary" style="font-size:0.68rem;" id="transBadge_{{ msg.id }}">Translated</span>
+                  <button type="button" class="btn btn-xs p-0 text-muted" onclick="speakTranslated({{ msg.id }})"><i class="fas fa-volume-up text-primary"></i></button>
+                </div>
+                <div id="transText_{{ msg.id }}" class="fw-semibold"></div>
+              </div>
+            {% else %}
+              <small class="text-muted d-block text-end mt-1" style="font-size: 0.72rem;">{{ msg.created_at.strftime('%I:%M %p') }}</small>
+            {% endif %}
+
           {% else %}
-            <div>{{ msg.message_text }}</div>
+            <!-- Standard Text Message -->
+            <div class="msg-text-content" id="msgText_{{ msg.id }}">{{ msg.message_text }}</div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-1.5 pt-1 border-top border-light-subtle" style="font-size:0.72rem;">
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-xs p-0 text-muted opacity-75 hover-primary" onclick="translateMessage({{ msg.id }})" title="Translate text">
+                  <i class="fas fa-language text-primary"></i> <span id="translateBtnLabel_{{ msg.id }}">Translate</span>
+                </button>
+                <button type="button" class="btn btn-xs p-0 text-muted opacity-75 hover-primary" onclick="speakMessage({{ msg.id }})" title="Listen to message">
+                  <i class="fas fa-volume-up text-secondary"></i>
+                </button>
+              </div>
+              <small class="text-muted">{{ msg.created_at.strftime('%I:%M %p') }}</small>
+            </div>
+
+            <!-- Dynamic Translated Result Box -->
+            <div class="translated-box p-2 mt-1 rounded bg-white text-dark small border d-none" id="translatedBox_{{ msg.id }}">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="badge bg-primary-subtle text-primary" style="font-size:0.68rem;" id="transBadge_{{ msg.id }}">Translated</span>
+                <button type="button" class="btn btn-xs p-0 text-muted" onclick="speakTranslated({{ msg.id }})" title="Listen to translation"><i class="fas fa-volume-up text-primary"></i></button>
+              </div>
+              <div id="transText_{{ msg.id }}" class="fw-semibold text-dark"></div>
+            </div>
           {% endif %}
           
-          <small class="text-muted d-block text-end mt-1" style="font-size: 0.72rem;">{{ msg.created_at.strftime('%I:%M %p') }}</small>
         </div>
       {% endfor %}
     </div>

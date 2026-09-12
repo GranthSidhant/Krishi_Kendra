@@ -226,3 +226,36 @@ def crop_doctor_sample(sample_key):
     report = CropDoctorService.get_sample_diagnosis(sample_key)
     return jsonify(report)
 
+
+# ----------------------------------------------------
+# Real-Time In-Chat Multi-Lingual Translation API
+# ----------------------------------------------------
+from app.services.translation_service import TranslationService
+
+@api_bp.route('/chat/translate', methods=['POST'])
+def chat_translate():
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    text = data.get('text', '').strip()
+    target_lang = data.get('target_lang', 'hi').strip()
+
+    if not text:
+        return jsonify({'success': False, 'error': 'No text provided for translation.'}), 400
+
+    result = TranslationService.translate_text(text, target_lang=target_lang)
+    return jsonify(result)
+
+
+# ----------------------------------------------------
+# APMC Mandi 7-Day Price Forecasting & Storage Advisory
+# ----------------------------------------------------
+from app.services.price_forecast_service import PriceForecastService
+
+@api_bp.route('/mandi/forecast')
+def mandi_forecast():
+    commodity = request.args.get('commodity', 'Wheat').strip()
+    district = request.args.get('district', 'Nashik').strip()
+    forecast_data = PriceForecastService.get_forecast(commodity=commodity, district=district)
+    return jsonify(forecast_data)
+
+
+
