@@ -120,7 +120,14 @@ def assign_transport(order_id):
 @orders_bp.route('/<int:order_id>/verify-pickup-otp', methods=['POST'])
 @login_required
 def verify_pickup_otp(order_id):
+    user = g.user
     order = Order.query.get_or_404(order_id)
+
+    # Farmers hold the secret Pickup OTP; only the buyer, transporter, or admin verifies it
+    if user.id == order.farmer_id and user.role != 'admin':
+        flash('As the farmer/seller, please provide your Pickup OTP to the driver at loading rather than verifying it yourself.', 'warning')
+        return redirect(url_for('orders.view_order', order_id=order.id))
+
     entered_otp = request.form.get('pickup_otp', '').strip()
 
     result = LogisticsService.verify_pickup_otp(order.id, entered_otp)
@@ -135,7 +142,14 @@ def verify_pickup_otp(order_id):
 @orders_bp.route('/<int:order_id>/verify-delivery-otp', methods=['POST'])
 @login_required
 def verify_delivery_otp(order_id):
+    user = g.user
     order = Order.query.get_or_404(order_id)
+
+    # Buyers hold the secret Delivery OTP; only the farmer, transporter, or admin verifies it upon delivery handover
+    if user.id == order.buyer_id and user.role != 'admin':
+        flash('As the buyer, please share your Delivery OTP with the driver/farmer after inspection rather than verifying it yourself.', 'warning')
+        return redirect(url_for('orders.view_order', order_id=order.id))
+
     entered_otp = request.form.get('delivery_otp', '').strip()
 
     result = LogisticsService.verify_delivery_otp(order.id, entered_otp)

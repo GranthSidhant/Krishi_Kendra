@@ -244,30 +244,40 @@
           <div class="mb-3">
             
             <!-- Step A: Farm-Gate Pickup OTP -->
-            <div class="border rounded-3 p-3 mb-2 bg-white">
+            <div class="border rounded-3 p-3 mb-3 bg-white">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="small fw-bold text-dark"><i class="fas fa-box-open text-primary me-1"></i> 1. Farm-Gate Loading OTP</span>
                 {% if delivery.pickup_verified_at %}
-                  <span class="badge bg-success"><i class="fas fa-check"></i> Verified</span>
+                  <span class="badge bg-success"><i class="fas fa-check"></i> Verified & Loaded</span>
                 {% else %}
                   <span class="badge bg-warning text-dark">Pending Pickup</span>
                 {% endif %}
               </div>
               
-              {% if user.id == order.farmer_id and not delivery.pickup_verified_at %}
-                <div class="p-2 bg-primary-subtle text-primary rounded text-center my-2">
-                  <div class="small">Provide this OTP to Driver at farm-gate:</div>
-                  <div class="fs-4 fw-bold letter-spacing-2">{{ delivery.pickup_otp }}</div>
-                </div>
-              {% endif %}
+              {% if user.id == order.farmer_id %}
+                {# Farmer View: Holds & Shows the Secret Pickup OTP #}
+                {% if not delivery.pickup_verified_at %}
+                  <div class="p-3 bg-primary-subtle text-primary border border-primary-subtle rounded-3 text-center my-2">
+                    <div class="small fw-semibold mb-1"><i class="fas fa-key me-1"></i> Your Farm-Gate Loading OTP</div>
+                    <div class="fs-2 fw-bold font-monospace letter-spacing-2 text-primary">{{ delivery.pickup_otp }}</div>
+                    <div class="small text-muted mt-1">Provide this 6-digit code to the transporter/driver when they arrive and finish loading your produce.</div>
+                  </div>
+                  <div class="small text-muted text-center"><i class="fas fa-hourglass-half me-1"></i> Awaiting transporter / buyer pickup confirmation</div>
+                {% else %}
+                  <small class="text-success fw-semibold d-block mt-1"><i class="fas fa-check-circle me-1"></i> Farm-gate pickup verified on {{ delivery.pickup_verified_at.strftime('%d %b, %I:%M %p') }}</small>
+                {% endif %}
 
-              {% if not delivery.pickup_verified_at %}
-                <form method="POST" action="{{ url_for('orders.verify_pickup_otp', order_id=order.id) }}" class="d-flex gap-2 mt-2">
-                  <input type="text" name="pickup_otp" class="form-control form-control-sm" placeholder="Enter 6-digit Pickup OTP" required maxlength="6">
-                  <button type="submit" class="btn btn-sm btn-primary text-nowrap">Verify Pickup</button>
-                </form>
               {% else %}
-                <small class="text-muted d-block mt-1">Verified on {{ delivery.pickup_verified_at.strftime('%d %b, %I:%M %p') }}</small>
+                {# Buyer / Admin View: Verifies Pickup OTP received from Farmer #}
+                {% if not delivery.pickup_verified_at %}
+                  <div class="small text-muted my-2">Enter the 6-digit Loading OTP provided by the farmer once produce is loaded at farm-gate:</div>
+                  <form method="POST" action="{{ url_for('orders.verify_pickup_otp', order_id=order.id) }}" class="d-flex gap-2">
+                    <input type="text" name="pickup_otp" class="form-control form-control-sm font-monospace" placeholder="Enter 6-digit OTP from Farmer" required maxlength="6" pattern="[0-9]{6}">
+                    <button type="submit" class="btn btn-sm btn-primary text-nowrap"><i class="fas fa-truck-moving me-1"></i> Verify Pickup</button>
+                  </form>
+                {% else %}
+                  <small class="text-success fw-semibold d-block mt-1"><i class="fas fa-check-circle me-1"></i> Pickup verified on {{ delivery.pickup_verified_at.strftime('%d %b, %I:%M %p') }}</small>
+                {% endif %}
               {% endif %}
             </div>
 
@@ -278,24 +288,38 @@
                 {% if delivery.delivery_verified_at or order.status in ['delivered', 'completed'] %}
                   <span class="badge bg-success"><i class="fas fa-check"></i> Delivered & Settled</span>
                 {% else %}
-                  <span class="badge bg-secondary">Awaiting Arrival</span>
+                  <span class="badge bg-secondary">Awaiting Delivery</span>
                 {% endif %}
               </div>
 
-              {% if user.id == order.buyer_id and not delivery.delivery_verified_at %}
-                <div class="p-2 bg-success-subtle text-success rounded text-center my-2">
-                  <div class="small">Give this OTP to Driver ONLY after weighing produce:</div>
-                  <div class="fs-4 fw-bold letter-spacing-2">{{ delivery.delivery_otp }}</div>
-                </div>
-              {% endif %}
+              {% if user.id == order.buyer_id %}
+                {# Buyer View: Holds & Shows the Secret Delivery OTP upon produce inspection #}
+                {% if not delivery.delivery_verified_at and order.status != 'delivered' %}
+                  <div class="p-3 bg-success-subtle text-success border border-success-subtle rounded-3 text-center my-2">
+                    <div class="small fw-semibold mb-1"><i class="fas fa-shield-alt me-1"></i> Your Destination Delivery OTP</div>
+                    <div class="fs-2 fw-bold font-monospace letter-spacing-2 text-success">{{ delivery.delivery_otp }}</div>
+                    <div class="small text-muted mt-1">Provide this 6-digit OTP to the driver <strong>ONLY AFTER</strong> you inspect and weigh the delivered produce.</div>
+                  </div>
+                  <div class="small text-muted text-center"><i class="fas fa-lock me-1"></i> Providing this OTP completes delivery and releases escrow funds to the farmer.</div>
+                {% else %}
+                  <small class="text-success fw-semibold d-block mt-1"><i class="fas fa-check-circle me-1"></i> Delivery inspected & payout settled on {{ delivery.delivery_verified_at.strftime('%d %b, %I:%M %p') if delivery.delivery_verified_at else order.updated_at.strftime('%d %b, %I:%M %p') }}</small>
+                {% endif %}
 
-              {% if not delivery.delivery_verified_at and order.status != 'delivered' %}
-                <form method="POST" action="{{ url_for('orders.verify_delivery_otp', order_id=order.id) }}" class="d-flex gap-2 mt-2">
-                  <input type="text" name="delivery_otp" class="form-control form-control-sm" placeholder="Enter 6-digit Delivery OTP" required maxlength="6">
-                  <button type="submit" class="btn btn-sm btn-success text-nowrap">Confirm & Release</button>
-                </form>
               {% else %}
-                <small class="text-muted d-block mt-1">Payment settled on {{ delivery.delivery_verified_at.strftime('%d %b, %I:%M %p') if delivery.delivery_verified_at else order.updated_at.strftime('%d %b, %I:%M %p') }}</small>
+                {# Farmer / Admin View: Enters Delivery OTP received from Buyer #}
+                {% if not delivery.delivery_verified_at and order.status != 'delivered' %}
+                  {% if order.status in ['in_transit', 'transport_assigned'] %}
+                    <div class="small text-muted my-2">Enter the 6-digit Delivery OTP provided by the buyer upon produce inspection to unlock instant payout:</div>
+                    <form method="POST" action="{{ url_for('orders.verify_delivery_otp', order_id=order.id) }}" class="d-flex gap-2">
+                      <input type="text" name="delivery_otp" class="form-control form-control-sm font-monospace" placeholder="Enter 6-digit OTP from Buyer" required maxlength="6" pattern="[0-9]{6}">
+                      <button type="submit" class="btn btn-sm btn-success text-nowrap"><i class="fas fa-check-double me-1"></i> Confirm & Release</button>
+                    </form>
+                  {% else %}
+                    <div class="small text-muted my-2"><i class="fas fa-info-circle me-1"></i> Delivery verification available once produce is picked up and in transit.</div>
+                  {% endif %}
+                {% else %}
+                  <small class="text-success fw-semibold d-block mt-1"><i class="fas fa-check-circle me-1"></i> Delivery confirmed & payment settled on {{ delivery.delivery_verified_at.strftime('%d %b, %I:%M %p') if delivery.delivery_verified_at else order.updated_at.strftime('%d %b, %I:%M %p') }}</small>
+                {% endif %}
               {% endif %}
             </div>
 

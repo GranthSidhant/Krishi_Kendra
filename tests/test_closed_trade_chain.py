@@ -165,10 +165,22 @@ def test_full_closed_loop_trade_chain(app_and_client):
         assert order.delivery.vehicle_category == 'cold_reefer'
         assert order.delivery.estimated_cost > 0
 
-    # 5. Farm-gate Loading: Farmer / Driver enters Pickup OTP -> Order moves to 'in_transit'
+    # 5. Farm-gate Loading: Farmer holds Pickup OTP; Buyer / Transporter enters Pickup OTP -> Order moves to 'in_transit'
+    # Farmer attempting to verify own pickup OTP is rejected with friendly notice
     with client.session_transaction() as sess:
         sess['user_id'] = farmer_id
         sess['role'] = 'farmer'
+
+    resp_farmer_self = client.post(f'/orders/{order_id}/verify-pickup-otp', data={'pickup_otp': pickup_otp}, follow_redirects=True)
+    assert resp_farmer_self.status_code == 200
+    with app.app_context():
+        order = Order.query.get(order_id)
+        assert order.delivery.pickup_verified_at is None
+
+    # Buyer / Transporter enters Pickup OTP provided by the farmer
+    with client.session_transaction() as sess:
+        sess['user_id'] = buyer_id
+        sess['role'] = 'buyer'
 
     # Test wrong OTP rejected
     resp = client.post(f'/orders/{order_id}/verify-pickup-otp', data={'pickup_otp': '000000'}, follow_redirects=True)
@@ -177,7 +189,7 @@ def test_full_closed_loop_trade_chain(app_and_client):
         order = Order.query.get(order_id)
         assert order.delivery.pickup_verified_at is None
 
-    # Correct Pickup OTP
+    # Correct Pickup OTP verified by Buyer/Transporter
     resp = client.post(f'/orders/{order_id}/verify-pickup-otp', data={'pickup_otp': pickup_otp}, follow_redirects=True)
     assert resp.status_code == 200
 
@@ -186,10 +198,22 @@ def test_full_closed_loop_trade_chain(app_and_client):
         assert order.status == 'in_transit'
         assert order.delivery.pickup_verified_at is not None
 
-    # 6. Destination Arrival: Buyer inspects produce & Enters Delivery OTP -> Releases Escrow Payout
+    # 6. Destination Arrival: Buyer holds Delivery OTP; Farmer / Driver enters Delivery OTP upon inspection -> Releases Escrow Payout
+    # Buyer attempting to verify own delivery OTP is rejected with friendly notice
     with client.session_transaction() as sess:
         sess['user_id'] = buyer_id
         sess['role'] = 'buyer'
+
+    resp_buyer_self = client.post(f'/orders/{order_id}/verify-delivery-otp', data={'delivery_otp': delivery_otp}, follow_redirects=True)
+    assert resp_buyer_self.status_code == 200
+    with app.app_context():
+        order = Order.query.get(order_id)
+        assert order.status == 'in_transit'
+
+    # Farmer / Transporter enters Delivery OTP given by Buyer
+    with client.session_transaction() as sess:
+        sess['user_id'] = farmer_id
+        sess['role'] = 'farmer'
 
     resp = client.post(f'/orders/{order_id}/verify-delivery-otp', data={'delivery_otp': delivery_otp}, follow_redirects=True)
     assert resp.status_code == 200
@@ -203,6 +227,10 @@ def test_full_closed_loop_trade_chain(app_and_client):
         assert order.payout_released_at is not None
 
     # 7. Post-Trade Mutual Rating: Buyer rates Farmer & Farmer rates Buyer
+    with client.session_transaction() as sess:
+        sess['user_id'] = buyer_id
+        sess['role'] = 'buyer'
+
     resp_rate_buyer = client.post(f'/orders/{order_id}/rate', data={'rating': 5, 'review': 'Fresh Grade A onions, highly recommended!'}, follow_redirects=True)
     assert resp_rate_buyer.status_code == 200
 
