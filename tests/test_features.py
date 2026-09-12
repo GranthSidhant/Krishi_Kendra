@@ -429,6 +429,29 @@ def test_favicon_route(client):
     assert b'<svg' in res_svg.data
 
 
+def test_crop_image_resolution_and_sona_masoori(app):
+    """Test Sona Masoori resolution and fallback consistency"""
+    from app.models import get_crop_image, Inventory, Product
+    
+    # 1. Sona Masoori Rice matches authentic rice image
+    img_sona = get_crop_image('Sona Masoori Rice')
+    assert 'unsplash.com' in img_sona
+    
+    img_sona_short = get_crop_image('Sona Masoori')
+    assert 'unsplash.com' in img_sona_short
+
+    # 2. Unknown or empty produce names fall back cleanly to default_crop.svg
+    img_unknown = get_crop_image('Rare Hybrid Exotic Grain 99')
+    assert img_unknown == '/static/img/default_crop.svg'
+    
+    img_empty = get_crop_image('')
+    assert img_empty == '/static/img/default_crop.svg'
+
+    img_default_jpg = get_crop_image('crop_default.jpg')
+    assert img_default_jpg == '/static/img/default_crop.svg'
+
+
+
 
 
 

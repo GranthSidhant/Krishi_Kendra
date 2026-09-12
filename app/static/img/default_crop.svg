@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="farmSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ecfdf5" />
+      <stop offset="100%" stop-color="#d1fae5" />
+    </linearGradient>
+    <linearGradient id="fieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16a34a" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+    <linearGradient id="wheatGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#064e3b" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background Sky / Sun -->
+  <rect width="600" height="400" fill="url(#farmSky)" />
+  <circle cx="480" cy="110" r="60" fill="#fef08a" opacity="0.6" />
+
+  <!-- Rolling Farm Hills -->
+  <path d="M0 240 Q150 180 300 230 T600 220 L600 400 L0 400 Z" fill="#86efac" opacity="0.5" />
+  <path d="M0 280 Q200 220 400 270 T600 260 L600 400 L0 400 Z" fill="url(#fieldGrad)" />
+
+  <!-- Center Decorative Shield Card -->
+  <g filter="url(#cardShadow)" transform="translate(210, 80)">
+    <rect width="180" height="180" rx="36" fill="#ffffff" stroke="#10b981" stroke-width="3" />
+    
+    <!-- Sprout and Grain Motif -->
+    <!-- Left Leaf -->
+    <path d="M90 140 C90 140 45 115 45 70 C45 45 65 35 90 50 C90 75 90 115 90 140 Z" fill="#16a34a" />
+    <!-- Right Leaf -->
+    <path d="M90 140 C90 140 135 115 135 70 C135 45 115 35 90 50 C90 75 90 115 90 140 Z" fill="#22c55e" />
+    <!-- Center Wheat Sprout -->
+    <line x1="90" y1="145" x2="90" y2="40" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" />
+    <circle cx="90" cy="30" r="8" fill="url(#wheatGrad)" />
+  </g>
+
+  <!-- Clean Agricultural Badge Label -->
+  <rect x="180" y="285" width="240" height="40" rx="20" fill="#064e3b" opacity="0.9" />
+  <text x="300" y="310" fill="#ffffff" font-family="Inter, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle" letter-spacing="0.5">
+    KRISHI KENDRA PRODUCE
+  </text>
+  <text x="300" y="348" fill="#15803d" font-family="Inter, -apple-system, sans-serif" font-size="13" font-weight="600" text-anchor="middle">
+    Direct Verified Farm Harvest
+  </text>
+</svg>

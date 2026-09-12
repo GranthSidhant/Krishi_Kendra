@@ -222,6 +222,7 @@ def seed_all_sample_data(app):
             (farmer_users[1].id, 'Mustard Seed (Sarson)', 'Oilseeds & Cash Crops', 4500.0, 'kg', 53.0, 'Grade A (High Oil)', 'Ludhiana', 'Punjab', 'Black mustard seeds with >42% natural oil content.'),
 
             # Farmer 3 (Ravi Kumar Reddy - Guntur, AP)
+            (farmer_users[2].id, 'Sona Masoori Rice', 'Cereals & Grains', 9000.0, 'kg', 35.5, 'Grade A (Aged 1-Year)', 'Guntur', 'Andhra Pradesh', 'Authentic aged Sona Masoori raw rice, lightweight, aromatic, and premium cooking quality.'),
             (farmer_users[2].id, 'Guntur Dry Red Chilli', 'Spices & Herbs', 4000.0, 'kg', 180.0, 'Export Quality', 'Guntur', 'Andhra Pradesh', 'Sun-dried Teja & S17 Guntur Red Chillies with deep red colour and high pungency.'),
             (farmer_users[2].id, 'Raw Shankar Cotton', 'Oilseeds & Cash Crops', 50.0, 'quintal', 7100.0, 'Grade A (29mm staple)', 'Guntur', 'Andhra Pradesh', 'Long staple white Shankar-6 cotton with low trash content.'),
             (farmer_users[2].id, 'Salem Turmeric Finger', 'Spices & Herbs', 3500.0, 'kg', 135.0, 'Certified Organic', 'Guntur', 'Andhra Pradesh', 'High curcumin (>5.2%) double-polished turmeric fingers.'),
