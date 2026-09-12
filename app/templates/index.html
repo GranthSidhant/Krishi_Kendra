@@ -7,13 +7,14 @@
   <div class="landing-hero mb-5">
     <div class="row align-items-center g-4">
       <div class="col-lg-7">
-        <span class="badge bg-white bg-opacity-20 text-white fw-bold px-3 py-2 rounded-pill mb-3 border border-white border-opacity-30">
-          <i class="fas fa-award text-warning me-1"></i> <span data-i18n="hero_sih_badge">SIH 2026 Problem SIH26033 Solution</span>
-        </span>
-        <h1 class="display-4 fw-extrabold mb-3 text-white">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-3" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.35); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+          <i class="fas fa-award text-warning"></i>
+          <span class="text-white fw-bold small" data-i18n="hero_sih_badge">SIH 2026 Problem SIH26033 Solution</span>
+        </div>
+        <h1 class="display-4 fw-extrabold mb-3 text-white" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
           Better Markets. Direct Connections. Smarter Agricultural Trade.
         </h1>
-        <p class="lead mb-4 text-white text-opacity-85 fs-6" style="max-width: 620px;">
+        <p class="lead mb-4 text-white text-opacity-90 fs-6" style="max-width: 620px; text-shadow: 0 1px 6px rgba(0,0,0,0.4);">
           Eliminating exploitative middlemen across the farm-to-fork chain. Connecting farmers directly with bulk & retail buyers with live APMC Mandi price discovery, smart counter-negotiation, and tracked fulfilment.
         </p>
         <div class="d-flex flex-wrap gap-3 justify-content-start">
@@ -22,15 +23,15 @@
               <a href="{{ url_for('farmer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
                 <i class="fas fa-th-large me-2"></i> <span>Farmer Dashboard</span>
               </a>
-              <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3 rounded-3 bg-dark bg-opacity-25">
-                <i class="fas fa-plus-circle me-2"></i> <span>List New Crop</span>
+              <a href="{{ url_for('farmer.add_produce') }}" class="btn btn-light btn-lg fw-bold px-4 py-3 rounded-3 text-dark shadow-sm">
+                <i class="fas fa-plus-circle me-2 text-success"></i> <span>List New Crop</span>
               </a>
             {% elif current_user.role == 'buyer' %}
               <a href="{{ url_for('buyer.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
                 <i class="fas fa-th-large me-2"></i> <span>Buyer Dashboard</span>
               </a>
-              <a href="{{ url_for('buyer.browse') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3 rounded-3 bg-dark bg-opacity-25">
-                <i class="fas fa-search me-2"></i> <span>Browse Produce</span>
+              <a href="{{ url_for('buyer.browse') }}" class="btn btn-light btn-lg fw-bold px-4 py-3 rounded-3 text-dark shadow-sm">
+                <i class="fas fa-search me-2 text-warning"></i> <span>Browse Produce</span>
               </a>
             {% elif current_user.role == 'admin' %}
               <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
@@ -41,8 +42,8 @@
             <a href="{{ url_for('auth.register', role='farmer') }}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow text-dark rounded-3">
               <i class="fas fa-tractor me-2"></i> <span data-i18n="btn_i_am_farmer">I am a Farmer (किसान)</span>
             </a>
-            <a href="{{ url_for('auth.register', role='buyer') }}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3 rounded-3 bg-dark bg-opacity-25 border-white">
-              <i class="fas fa-shopping-basket me-2"></i> <span data-i18n="btn_i_am_buyer">I am a Buyer (खरीदार)</span>
+            <a href="{{ url_for('auth.register', role='buyer') }}" class="btn btn-light btn-lg fw-bold px-4 py-3 rounded-3 text-dark shadow-sm">
+              <i class="fas fa-shopping-basket me-2 text-warning"></i> <span data-i18n="btn_i_am_buyer">I am a Buyer (खरीदार)</span>
             </a>
           {% endif %}
         </div>
@@ -184,21 +185,22 @@
       <div class="row g-3">
         {% for crop in featured_crops %}
         <div class="col-md-4 col-sm-6">
-          <div class="k-card p-3 h-100 d-flex flex-column justify-content-between">
-            <div>
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="fw-bold mb-0 text-success">{{ crop.name }}</h6>
-                <span class="badge bg-light text-dark border">{{ crop.category.name if crop.category else 'Crops' }}</span>
-              </div>
-              <div class="text-muted small mb-2">{{ crop.hindi_name }}</div>
-              <div class="bg-light p-2 rounded small mb-3">
-                <span class="text-muted" data-i18n="mandi_benchmark">Mandi Benchmark:</span>
-                <div class="fw-bold text-dark fs-6">₹{{ crop.estimated_mandi_rate }}/{{ crop.default_unit }}</div>
-              </div>
+          <div class="produce-card h-100">
+            <div class="position-relative">
+              <img src="{{ crop.display_image }}" class="produce-card-thumb" style="height: 135px;" alt="{{ crop.name }}" loading="lazy">
+              <span class="badge bg-dark bg-opacity-75 text-white position-absolute top-0 end-0 m-2">{{ crop.category.name if crop.category else 'Crops' }}</span>
             </div>
-            <a href="{{ url_for('buyer.browse', q=crop.name) }}" class="btn btn-sm btn-success w-100">
-              <i class="fas fa-search me-1"></i> <span data-i18n="btn_find_farmers">Find Farmers</span>
-            </a>
+            <div class="produce-card-body p-3">
+              <h6 class="fw-bold mb-0 text-dark">{{ crop.name }}</h6>
+              <div class="text-muted small mb-2">{{ crop.hindi_name }}</div>
+              <div class="bg-light p-2 rounded-3 small mb-3 border">
+                <span class="text-muted small" data-i18n="mandi_benchmark">Mandi Benchmark:</span>
+                <div class="fw-bold text-success fs-6">₹{{ crop.estimated_mandi_rate }}/{{ crop.default_unit }}</div>
+              </div>
+              <a href="{{ url_for('buyer.browse', q=crop.name) }}" class="btn btn-sm btn-success w-100 fw-bold mt-auto shadow-xs">
+                <i class="fas fa-search me-1"></i> <span data-i18n="btn_find_farmers">Find Farmers</span>
+              </a>
+            </div>
           </div>
         </div>
         {% endfor %}

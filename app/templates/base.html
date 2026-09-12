@@ -86,62 +86,91 @@
       </div>
 
       <div class="collapse navbar-collapse" id="navbarKrishiContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 align-items-lg-center">
           <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'main.index' %}active fw-bold{% endif %}" href="{{ url_for('main.index') }}"><i class="fas fa-home me-1"></i> <span data-i18n="nav_home">Home</span></a>
+            <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" href="{{ url_for('main.index') }}"><i class="fas fa-home me-1"></i> <span data-i18n="nav_home">Home</span></a>
           </li>
 
           {% if current_user %}
             {% if current_user.role == 'farmer' %}
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'farmer.dashboard' %}active text-success fw-bold{% endif %}" href="{{ url_for('farmer.dashboard') }}"><i class="fas fa-tachometer-alt me-1"></i> <span data-i18n="nav_dashboard">Dashboard</span></a>
+                <a class="nav-link {% if request.endpoint == 'farmer.dashboard' %}active{% endif %}" href="{{ url_for('farmer.dashboard') }}"><i class="fas fa-th-large me-1"></i> <span data-i18n="nav_dashboard">Dashboard</span></a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'farmer.inventory' or request.endpoint == 'farmer.add_produce' %}active text-success fw-bold{% endif %}" href="{{ url_for('farmer.inventory') }}"><i class="fas fa-boxes me-1"></i> <span data-i18n="nav_inventory">My Inventory</span></a>
+                <a class="nav-link {% if request.endpoint == 'farmer.inventory' or request.endpoint == 'farmer.add_produce' %}active{% endif %}" href="{{ url_for('farmer.inventory') }}"><i class="fas fa-boxes me-1"></i> <span data-i18n="nav_inventory">My Produce</span></a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'farmer.orders' %}active text-success fw-bold{% endif %}" href="{{ url_for('farmer.orders') }}"><i class="fas fa-handshake me-1"></i> <span data-i18n="nav_orders">Orders</span></a>
+                <a class="nav-link {% if request.endpoint == 'farmer.orders' %}active{% endif %}" href="{{ url_for('farmer.orders') }}"><i class="fas fa-handshake me-1"></i> <span data-i18n="nav_orders">Orders</span></a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link {% if 'marketplace.' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('marketplace.index') }}"><i class="fas fa-store me-1"></i> <span data-i18n="nav_marketplace">Farm Supplies</span></a>
+              </li>
+              
+              <!-- Farmer More Tools Dropdown -->
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-tools me-1"></i> <span>Services & Tools</span>
+                </a>
+                <ul class="dropdown-menu shadow">
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.crop_doctor') }}"><i class="fas fa-microscope me-2 text-muted"></i> <span>AI Crop Doctor</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-2 text-muted"></i> <span>Buyer Demands (Pre-Orders)</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.profit_calculator') }}"><i class="fas fa-calculator me-2 text-muted"></i> <span>Crop Profit Calculator</span></a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="{{ url_for('farmer.mandi_rates') }}"><i class="fas fa-chart-line me-2 text-muted"></i> <span>APMC Mandi Rates</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-2 text-muted"></i> <span data-i18n="nav_cold_storage">Cold Storage Network</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-2 text-muted"></i> <span data-i18n="nav_schemes">Govt Schemes & Subsidies</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-2 text-muted"></i> <span data-i18n="nav_requests">My Service Requests</span></a></li>
+                </ul>
+              </li>
+
             {% elif current_user.role == 'buyer' %}
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'buyer.dashboard' %}active text-warning fw-bold{% endif %}" href="{{ url_for('buyer.dashboard') }}"><i class="fas fa-tachometer-alt me-1"></i> <span data-i18n="nav_dashboard">Dashboard</span></a>
+                <a class="nav-link {% if request.endpoint == 'buyer.dashboard' %}active{% endif %}" href="{{ url_for('buyer.dashboard') }}"><i class="fas fa-th-large me-1"></i> <span data-i18n="nav_dashboard">Dashboard</span></a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'buyer.browse' %}active text-warning fw-bold{% endif %}" href="{{ url_for('buyer.browse') }}"><i class="fas fa-search me-1"></i> Browse Produce</a>
+                <a class="nav-link {% if request.endpoint == 'buyer.browse' %}active{% endif %}" href="{{ url_for('buyer.browse') }}"><i class="fas fa-search me-1"></i> <span>Browse Produce</span></a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'buyer.orders' %}active text-warning fw-bold{% endif %}" href="{{ url_for('buyer.orders') }}"><i class="fas fa-shopping-cart me-1"></i> My Orders</a>
+                <a class="nav-link {% if request.endpoint == 'buyer.orders' %}active{% endif %}" href="{{ url_for('buyer.orders') }}"><i class="fas fa-shopping-bag me-1"></i> <span>My Orders</span></a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'buyer.post_requirement' %}active{% endif %}" href="{{ url_for('buyer.post_requirement') }}"><i class="fas fa-bullhorn me-1"></i> <span>Post Requirement</span></a>
+              </li>
+              
+              <!-- Buyer More Tools Dropdown -->
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-layer-group me-1"></i> <span>Explore</span>
+                </a>
+                <ul class="dropdown-menu shadow">
+                  <li><a class="dropdown-item" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-2 text-muted"></i> <span data-i18n="nav_cold_storage">Cold Storage Network</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('marketplace.index') }}"><i class="fas fa-store me-2 text-muted"></i> <span data-i18n="nav_marketplace">Farm Supplies</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-2 text-muted"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-2 text-muted"></i> <span data-i18n="nav_requests">My Service Requests</span></a></li>
+                </ul>
+              </li>
+
             {% elif current_user.role == 'admin' %}
               <li class="nav-item">
-                <a class="nav-link {% if 'admin.' in (request.endpoint or '') %}active text-primary fw-bold{% endif %}" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-shield-alt me-1"></i> Admin Portal</a>
+                <a class="nav-link {% if 'admin.' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-shield-alt me-1"></i> Admin Portal</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.moderation_list') }}"><i class="fas fa-flag me-1"></i> Moderation Hub</a>
               </li>
             {% endif %}
-          {% endif %}
 
-          <li class="nav-item">
-            <a class="nav-link {% if 'cold_storage.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-1"></i> <span data-i18n="nav_cold_storage">Cold Storage</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if 'marketplace.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('marketplace.index') }}"><i class="fas fa-store me-1"></i> <span data-i18n="nav_marketplace">Farm Supplies</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if 'schemes.' in (request.endpoint or '') %}active fw-bold{% endif %}" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-1"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a>
-          </li>
-          {% if current_user and current_user.role == 'farmer' %}
+          {% else %}
             <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'farmer.crop_doctor' %}active fw-bold text-success{% endif %}" href="{{ url_for('farmer.crop_doctor') }}"><i class="fas fa-microscope me-1 text-success"></i> <span>Crop Doctor</span></a>
+              <a class="nav-link" href="{{ url_for('buyer.browse') }}"><i class="fas fa-search me-1"></i> <span>Browse Produce</span></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'farmer.browse_requirements' %}active fw-bold text-warning{% endif %}" href="{{ url_for('farmer.browse_requirements') }}"><i class="fas fa-bullhorn me-1 text-warning"></i> <span>Buyer Demands</span></a>
+              <a class="nav-link" href="{{ url_for('cold_storage.index') }}"><i class="fas fa-snowflake me-1"></i> <span data-i18n="nav_cold_storage">Cold Storage</span></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'farmer.profit_calculator' %}active fw-bold text-success{% endif %}" href="{{ url_for('farmer.profit_calculator') }}"><i class="fas fa-calculator me-1 text-success"></i> <span>Profit Calc</span></a>
+              <a class="nav-link" href="{{ url_for('marketplace.index') }}"><i class="fas fa-store me-1"></i> <span data-i18n="nav_marketplace">Farm Supplies</span></a>
             </li>
-          {% endif %}
-          {% if current_user %}
             <li class="nav-item">
-              <a class="nav-link {% if 'requests.' in (request.endpoint or '') %}active fw-bold text-success{% endif %}" href="{{ url_for('requests.index') }}"><i class="fas fa-clipboard-list me-1"></i> <span data-i18n="nav_requests">My Requests</span></a>
+              <a class="nav-link" href="{{ url_for('schemes.index') }}"><i class="fas fa-landmark me-1"></i> <span data-i18n="nav_schemes">Govt Schemes</span></a>
             </li>
           {% endif %}
         </ul>

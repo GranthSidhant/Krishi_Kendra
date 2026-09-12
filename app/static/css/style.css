@@ -41,6 +41,11 @@
   --radius-xl: 28px;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: #f6f8fa;
@@ -107,11 +112,12 @@ main {
   background: #ffffff;
   border-bottom: 1px solid var(--border-slate);
   box-shadow: var(--shadow-xs);
-  padding: 0.65rem 1.25rem;
+  padding: 0.55rem 1rem;
+  max-width: 100%;
 }
 .brand-title {
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.28rem;
   color: var(--primary-green);
   letter-spacing: -0.5px;
 }
@@ -119,24 +125,47 @@ main {
   color: var(--buyer-orange);
 }
 
-.nav-link-custom {
+.navbar-nav .nav-link {
   font-weight: 600;
-  font-size: 0.92rem;
-  color: var(--medium-slate);
-  padding: 0.45rem 0.85rem !important;
+  font-size: 0.88rem;
+  color: #334155 !important;
+  padding: 0.4rem 0.65rem !important;
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  display: flex;
+  transition: all 0.15s ease;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
-.nav-link-custom:hover, .nav-link-custom.active {
-  color: var(--accent-green);
+.navbar-nav .nav-link i {
+  color: #64748b;
+  transition: color 0.15s ease;
+}
+.navbar-nav .nav-link:hover, .navbar-nav .nav-link.active {
+  color: var(--primary-green) !important;
   background: var(--light-green);
 }
-.theme-buyer .nav-link-custom:hover, .theme-buyer .nav-link-custom.active {
-  color: var(--buyer-accent);
+.navbar-nav .nav-link:hover i, .navbar-nav .nav-link.active i {
+  color: var(--primary-green) !important;
+}
+
+.theme-buyer .navbar-nav .nav-link:hover, .theme-buyer .navbar-nav .nav-link.active {
+  color: var(--buyer-accent) !important;
   background: var(--buyer-light);
+}
+.theme-buyer .navbar-nav .nav-link:hover i, .theme-buyer .navbar-nav .nav-link.active i {
+  color: var(--buyer-accent) !important;
+}
+
+/* Dropdown alignment constraint to prevent horizontal screen overflow */
+.dropdown-menu-end {
+  right: 0 !important;
+  left: auto !important;
+  max-width: min(360px, 95vw);
+}
+.dropdown-menu {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-slate);
+  box-shadow: var(--shadow-md);
 }
 
 /* ==========================================================================
