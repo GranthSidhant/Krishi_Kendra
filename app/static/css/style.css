@@ -135,6 +135,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  white-space: nowrap;
 }
 .navbar-nav .nav-link i {
   color: #64748b;
@@ -166,6 +167,18 @@ main {
   border-radius: var(--radius-md);
   border: 1px solid var(--border-slate);
   box-shadow: var(--shadow-md);
+  padding: 0.5rem;
+}
+.dropdown-item {
+  font-size: 0.86rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  transition: all 0.15s ease;
+}
+.dropdown-item:hover, .dropdown-item.active {
+  background-color: var(--light-green);
+  color: var(--primary-green) !important;
 }
 
 /* ==========================================================================
