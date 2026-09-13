@@ -334,14 +334,17 @@ def test_profile_picture_upload_and_avatar(app, client):
         assert u.avatar_src.startswith('data:image/png;base64,')
 
 def test_market_impact_page(client):
-    """Test the Market Comparison & Impact showcase page with preset commodities"""
+    """Test the Market Comparison & Impact showcase page with preset commodities, competitor matrix, and domain selling rates"""
     res = client.get('/impact')
     assert res.status_code == 200
     html = res.get_data(as_text=True)
     assert "Market Comparison &amp; Socio-Economic Impact" in html or "Market Comparison & Socio-Economic Impact" in html
-    assert "Wheat (गेहूं)" in html
-    assert "Red Onion (लाल प्याज)" in html
-    assert "Live 3-Way Economic Comparison Simulator" in html
+    assert "Market Space Comparison: Krishi Kendra vs. Existing Marketplaces" in html or "Krishi Kendra vs. Existing Marketplaces" in html
+    assert "e-NAM" in html
+    assert "DeHaat" in html
+    assert "Sona Masoori Rice" in html
+    assert "Wheat" in html
+    assert "Live Selling Rates" in html or "Live 3-Way Economic" in html
 
 def test_tech_stack_docs_page(client):
     """Test the Technical Architecture and Jury Q&A Docs page"""

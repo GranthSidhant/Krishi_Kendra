@@ -41,9 +41,27 @@ def market_impact():
     # Preset commodities with real-world economic benchmarks
     preset_commodities = [
         {
+            'id': 'rice_sona_masoori',
+            'name': 'Sona Masoori Rice (सोना मसूरी)',
+            'icon': '🌾',
+            'category': 'grains',
+            'base_rate': 3650,
+            'msp': 2300,
+            'unit': 'Quintal',
+            'traditional_cut_pct': 10.5,
+            'traditional_handling': 65,
+            'traditional_spoilage_pct': 2.0,
+            'aggregator_cut_pct': 8.5,
+            'aggregator_handling': 45,
+            'aggregator_spoilage_pct': 1.2,
+            'krishi_handling': 20,
+            'krishi_spoilage_pct': 0.5
+        },
+        {
             'id': 'wheat',
             'name': 'Wheat (गेहूं)',
             'icon': '🌾',
+            'category': 'grains',
             'base_rate': 2650,
             'msp': 2275,
             'unit': 'Quintal',
@@ -60,6 +78,7 @@ def market_impact():
             'id': 'onion',
             'name': 'Red Onion (लाल प्याज)',
             'icon': '🧅',
+            'category': 'vegetables',
             'base_rate': 2100,
             'msp': None,
             'unit': 'Quintal',
@@ -76,6 +95,7 @@ def market_impact():
             'id': 'tomato',
             'name': 'Tomato (टमाटर)',
             'icon': '🍅',
+            'category': 'vegetables',
             'base_rate': 2400,
             'msp': None,
             'unit': 'Quintal',
@@ -92,6 +112,7 @@ def market_impact():
             'id': 'rice',
             'name': 'Basmati Rice (बासमती चावल)',
             'icon': '🍚',
+            'category': 'grains',
             'base_rate': 4800,
             'msp': 2300,
             'unit': 'Quintal',
@@ -108,6 +129,7 @@ def market_impact():
             'id': 'potato',
             'name': 'Potato (आलू)',
             'icon': '🥔',
+            'category': 'vegetables',
             'base_rate': 1650,
             'msp': None,
             'unit': 'Quintal',
@@ -124,6 +146,7 @@ def market_impact():
             'id': 'soybean',
             'name': 'Soybean (सोयाबीन)',
             'icon': '🌱',
+            'category': 'cash_crops',
             'base_rate': 4600,
             'msp': 4892,
             'unit': 'Quintal',
@@ -140,6 +163,7 @@ def market_impact():
             'id': 'cotton',
             'name': 'Cotton (कपास)',
             'icon': '☁️',
+            'category': 'cash_crops',
             'base_rate': 7100,
             'msp': 7121,
             'unit': 'Quintal',
@@ -156,6 +180,7 @@ def market_impact():
             'id': 'mustard',
             'name': 'Mustard Seed (सरसों)',
             'icon': '🌼',
+            'category': 'cash_crops',
             'base_rate': 5450,
             'msp': 5650,
             'unit': 'Quintal',
@@ -172,7 +197,7 @@ def market_impact():
     
     # Try fetching live mandi updates to enhance presets
     for item in preset_commodities:
-        mandi_match = MandiRate.query.filter(MandiRate.commodity.ilike(f"%{item['id']}%")).first()
+        mandi_match = MandiRate.query.filter(MandiRate.commodity.ilike(f"%{item['id'].replace('rice_sona_masoori', 'rice')}%")).first()
         if mandi_match and mandi_match.modal_price:
             item['base_rate'] = round(mandi_match.modal_price, 2)
             item['market_name'] = mandi_match.market_name
