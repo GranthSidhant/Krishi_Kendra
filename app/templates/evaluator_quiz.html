@@ -4,70 +4,170 @@
 
 {% block extra_css %}
 <style>
+  /* ===================================================
+     RESPONSIVE CSS FOR SIH EVALUATOR QUIZ & DEFENSE
+     =================================================== */
   .quiz-hero {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #064e3b 100%);
     color: #ffffff;
-    border-radius: 20px;
+    border-radius: 16px;
     border: 1px solid rgba(16, 185, 129, 0.2);
   }
+  @media (min-width: 768px) {
+    .quiz-hero {
+      border-radius: 20px;
+    }
+  }
+
   .eval-card {
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid #e2e8f0;
     background: #ffffff;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .eval-card:hover {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  @media (min-width: 768px) {
+    .eval-card {
+      border-radius: 16px;
+    }
+    .eval-card:hover {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  /* Horizontal Scrollable Tabs on Mobile */
+  .nav-tabs-custom {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .nav-tabs-custom::-webkit-scrollbar {
+    display: none;
   }
   .nav-tabs-custom .nav-link {
     color: #64748b;
     font-weight: 700;
-    border-radius: 10px 10px 0 0;
-    padding: 12px 20px;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    white-space: nowrap;
     border: none;
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  @media (min-width: 768px) {
+    .nav-tabs-custom .nav-link {
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      border-radius: 10px 10px 0 0;
+    }
   }
   .nav-tabs-custom .nav-link.active {
     color: #10b981;
     background-color: transparent;
     border-bottom: 3px solid #10b981;
   }
+
+  /* Question Picker Pills */
   .question-pill {
     cursor: pointer;
     transition: all 0.2s ease;
     border: 1.5px solid #e2e8f0;
     background: #f8fafc;
-    border-radius: 12px;
+    border-radius: 10px;
+    padding: 10px 12px;
   }
   .question-pill:hover {
     border-color: #10b981;
     background: #f0fdf4;
-    transform: translateY(-2px);
   }
   .question-pill.active {
     border-color: #10b981;
     background: #ecfdf5;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
   }
+
+  /* Mobile Question Chips Strip */
+  .mobile-q-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .mobile-q-strip::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-q-chip {
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    transition: all 0.2s ease;
+  }
+  .mobile-q-chip.active {
+    border-color: #10b981;
+    background: #ecfdf5;
+    color: #065f46;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  }
+
+  /* MCQ Options */
   .mcq-option-btn {
     text-align: left;
     border-radius: 12px;
     border: 1.5px solid #e2e8f0;
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: #ffffff;
     font-weight: 500;
     transition: all 0.2s ease;
     width: 100%;
     cursor: pointer;
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.88rem;
+    line-height: 1.4;
   }
-  .mcq-option-btn:hover:not(:disabled) {
-    border-color: #3b82f6;
-    background: #f8fafc;
-    transform: translateX(4px);
+  @media (min-width: 768px) {
+    .mcq-option-btn {
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      gap: 12px;
+    }
+    .mcq-option-btn:hover:not(:disabled) {
+      border-color: #3b82f6;
+      background: #f8fafc;
+      transform: translateX(4px);
+    }
+  }
+  .mcq-option-btn .opt-badge {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+    background: #f1f5f9;
+    color: #1e293b;
+    margin-top: 1px;
+  }
+  .mcq-option-btn .opt-text {
+    flex: 1;
+    word-break: break-word;
   }
   .mcq-option-btn.selected-correct {
     border-color: #10b981 !important;
@@ -75,39 +175,63 @@
     color: #065f46 !important;
     font-weight: 700;
   }
+  .mcq-option-btn.selected-correct .opt-badge {
+    background: #10b981;
+    color: #ffffff;
+  }
   .mcq-option-btn.selected-wrong {
     border-color: #ef4444 !important;
     background-color: #fef2f2 !important;
     color: #991b1b !important;
     font-weight: 700;
   }
+  .mcq-option-btn.selected-wrong .opt-badge {
+    background: #ef4444;
+    color: #ffffff;
+  }
   .mcq-option-btn.reveal-correct {
     border-color: #10b981 !important;
     background-color: #f0fdf4 !important;
     color: #065f46 !important;
   }
+  .mcq-option-btn.reveal-correct .opt-badge {
+    background: #10b981;
+    color: #ffffff;
+  }
+
+  /* Score Circle */
   .match-score-circle {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 800;
+    flex-shrink: 0;
   }
+  @media (min-width: 768px) {
+    .match-score-circle {
+      width: 80px;
+      height: 80px;
+      font-size: 1.5rem;
+    }
+  }
+
   .code-pill {
     background: #1e293b;
     color: #38bdf8;
     padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
-    font-size: 0.85em;
+    font-size: 0.82em;
+    word-break: break-word;
   }
   .concept-tag {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    padding: 4px 8px;
+    padding: 3px 7px;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
@@ -123,17 +247,20 @@
     color: #64748b;
     border: 1px dashed #cbd5e1;
   }
+
+  /* Flashcards */
   .flashcard {
-    min-height: 220px;
+    min-height: 250px;
     perspective: 1000px;
     cursor: pointer;
+    touch-action: manipulation;
   }
   .flashcard-inner {
     position: relative;
     width: 100%;
     height: 100%;
     text-align: center;
-    transition: transform 0.6s;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
   }
   .flashcard.flipped .flashcard-inner {
@@ -145,12 +272,22 @@
     height: 100%;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    box-sizing: border-box;
+  }
+  @media (min-width: 768px) {
+    .flashcard {
+      min-height: 230px;
+    }
+    .flashcard-front, .flashcard-back {
+      border-radius: 16px;
+      padding: 20px;
+    }
   }
   .flashcard-front {
     background: #ffffff;
@@ -163,33 +300,48 @@
     transform: rotateY(180deg);
     border: 2px solid #10b981;
   }
+
+  /* Math Box Responsive Scroll */
+  .math-formula-box {
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-lg-5 py-4">
+<div class="container-fluid px-3 px-sm-4 px-lg-5 py-3 py-md-4">
 
   <!-- ==================== HERO HEADER ==================== -->
-  <div class="quiz-hero p-4 p-md-5 mb-4 shadow-sm">
-    <div class="row align-items-center g-4">
+  <div class="quiz-hero p-3.5 p-sm-4 p-md-5 mb-4 shadow-sm">
+    <div class="row align-items-center g-3">
       <div class="col-lg-8">
-        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-success bg-opacity-25 text-white border border-success border-opacity-25 mb-3">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-success bg-opacity-25 text-white border border-success border-opacity-25 mb-2.5">
           <i class="fas fa-graduation-cap text-warning"></i>
-          <span class="small fw-bold">Smart India Hackathon (SIH 2026) Round 3 Jury Defense Center</span>
+          <span class="small fw-bold">SIH 2026 Round 3 Jury Defense Center</span>
         </div>
-        <h1 class="fw-extrabold text-white display-6 mb-2">
+        <h2 class="fw-extrabold text-white mb-2 fs-3 fs-md-2">
           Jury Evaluator Simulator, AI/ML Prediction Models & Defense Quiz
-        </h1>
-        <p class="text-white text-opacity-80 lead fs-6 mb-0">
+        </h2>
+        <p class="text-white text-opacity-80 small mb-0" style="max-width: 780px; line-height: 1.5;">
           Prepare for tough judge grilling with our interactive Question Evaluator (type/speak your pitch and get an instant match score against the winning 10/10 model answer), deep dive into our AI/ML math & prediction equations, and test yourself with 12 curated MCQs.
         </p>
       </div>
       <div class="col-lg-4 text-lg-end">
-        <div class="d-flex flex-column flex-sm-row justify-content-lg-end gap-2">
-          <a href="{{ url_for('main.tech_stack_docs') }}" class="btn btn-warning fw-bold shadow-sm">
+        <div class="d-flex flex-wrap flex-lg-column justify-content-start justify-content-lg-end gap-2">
+          <a href="{{ url_for('main.tech_stack_docs') }}" class="btn btn-warning btn-sm fw-bold shadow-sm">
             <i class="fas fa-layer-group me-1"></i> Tech Stack Docs
           </a>
-          <a href="{{ url_for('main.market_impact') }}" class="btn btn-outline-light shadow-sm">
+          <a href="{{ url_for('main.market_impact') }}" class="btn btn-outline-light btn-sm shadow-sm">
             <i class="fas fa-balance-scale me-1"></i> Market Comparison
           </a>
         </div>
@@ -198,25 +350,25 @@
   </div>
 
   <!-- ==================== NAVIGATION TABS ==================== -->
-  <ul class="nav nav-tabs nav-tabs-custom mb-4 border-bottom" id="evaluatorTabs" role="tablist">
+  <ul class="nav nav-tabs nav-tabs-custom mb-3 mb-md-4" id="evaluatorTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="tab-evaluator-btn" data-bs-toggle="tab" data-bs-target="#tab-evaluator" type="button" role="tab">
-        <i class="fas fa-user-tie text-success me-1.5"></i> 1. Interactive Judge Q&A & Answer Matcher
+        <i class="fas fa-user-tie text-success me-1"></i> 1. Interactive Judge Q&A Matcher
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="tab-mcq-btn" data-bs-toggle="tab" data-bs-target="#tab-mcq" type="button" role="tab">
-        <i class="fas fa-tasks text-primary me-1.5"></i> 2. 12-Question Architecture & Economics MCQ Quiz
+        <i class="fas fa-tasks text-primary me-1"></i> 2. 12-Question MCQ Quiz
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="tab-aiml-btn" data-bs-toggle="tab" data-bs-target="#tab-aiml" type="button" role="tab">
-        <i class="fas fa-brain text-danger me-1.5"></i> 3. AI & ML Prediction Transparency Guide (Models & Math)
+        <i class="fas fa-brain text-danger me-1"></i> 3. AI/ML Math Blueprint
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="tab-flashcards-btn" data-bs-toggle="tab" data-bs-target="#tab-flashcards" type="button" role="tab">
-        <i class="fas fa-bolt text-warning me-1.5"></i> 4. 15-Second Rapid Fire Flashcards
+        <i class="fas fa-bolt text-warning me-1"></i> 4. Rapid Pitch Cards
       </button>
     </li>
   </ul>
@@ -228,10 +380,30 @@
     <!-- TAB 1: INTERACTIVE JUDGE Q&A & ANSWER MATCHER -->
     <!-- ============================================================ -->
     <div class="tab-pane fade show active" id="tab-evaluator" role="tabpanel">
-      <div class="row g-4">
+      
+      <!-- Mobile Quick Question Strip (Screens < 992px) -->
+      <div class="d-lg-none mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1.5">
+          <label class="form-label fw-bold small text-dark mb-0">
+            <i class="fas fa-list text-primary me-1"></i> Choose Question (<span id="mobileQCounter">1 of 8</span>):
+          </label>
+          <div class="d-flex gap-1">
+            <button class="btn btn-xs btn-light border" onclick="prevQuestion()" title="Previous Question"><i class="fas fa-chevron-left"></i></button>
+            <button class="btn btn-xs btn-light border" onclick="nextQuestion()" title="Next Question"><i class="fas fa-chevron-right"></i></button>
+            <button class="btn btn-xs btn-outline-dark rounded-pill fw-semibold" onclick="pickRandomQuestion()">
+              <i class="fas fa-random me-1"></i> Random
+            </button>
+          </div>
+        </div>
+        <div class="mobile-q-strip" id="mobileQStripContainer">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <div class="row g-3 g-md-4">
         
-        <!-- Left: Question Picker Sidebar -->
-        <div class="col-lg-4">
+        <!-- Left: Question Picker Sidebar (Desktop >= 992px) -->
+        <div class="col-lg-4 d-none d-lg-block">
           <div class="eval-card p-3 shadow-sm h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h6 class="fw-bold text-dark mb-0"><i class="fas fa-list text-primary me-1"></i> Select Judge Question:</h6>
@@ -247,28 +419,28 @@
         </div>
 
         <!-- Right: Interactive Evaluator Workspace -->
-        <div class="col-lg-8">
-          <div class="eval-card p-4 shadow-sm">
+        <div class="col-12 col-lg-8">
+          <div class="eval-card p-3 p-sm-4 shadow-sm">
             
             <!-- Judge Speech Bubble Header -->
-            <div class="p-3.5 bg-dark text-white rounded-4 border mb-4 position-relative">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <div class="d-flex align-items-center gap-2">
+            <div class="p-3 p-sm-3.5 bg-dark text-white rounded-3 rounded-sm-4 border mb-3 mb-sm-4 position-relative">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="d-flex align-items-center gap-1.5 flex-wrap">
                   <span class="badge bg-danger text-white fw-bold"><i class="fas fa-gavel me-1"></i> SIH Judge Question</span>
                   <span class="badge bg-secondary text-white" id="judgeCategoryBadge">AI/ML & Mathematics</span>
                 </div>
-                <button class="btn btn-sm btn-outline-warning text-warning" onclick="speakJudgeQuestion()" title="Listen to judge question">
+                <button class="btn btn-xs btn-outline-warning text-warning" onclick="speakJudgeQuestion()" title="Listen to judge question">
                   <i class="fas fa-volume-up me-1"></i> Read Out
                 </button>
               </div>
-              <h5 class="fw-bold text-white mb-0" id="currentJudgeQuestionText">
+              <h5 class="fw-bold text-white mb-0 fs-6 fs-sm-5" id="currentJudgeQuestionText">
                 "How exactly does your AI & ML price prediction work? What models and mathematical formulas are you using?"
               </h5>
             </div>
 
             <!-- Team Answer Input Box -->
             <div class="mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
                 <label class="form-label fw-bold small text-dark mb-0">
                   <i class="fas fa-keyboard text-success me-1"></i> Type Your Team's Pitch Response (or speak):
                 </label>
@@ -282,15 +454,15 @@
               <textarea id="userAnswerInput" class="form-control" rows="4" placeholder="Draft your answer here to test how well it covers key concepts (e.g., mention models, equations, ACID safety, Escrow OTP, Agmarknet anchor, etc.)..."></textarea>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="d-flex flex-wrap gap-2 mb-4">
-              <button class="btn btn-success fw-bold px-4 py-2 shadow-xs" onclick="evaluateAnswer()">
-                <i class="fas fa-check-double me-1.5"></i> Evaluate My Answer & Reveal Benchmark
+            <!-- Action Buttons (Responsive flex layout) -->
+            <div class="d-flex flex-column flex-sm-row gap-2 mb-3 mb-sm-4">
+              <button class="btn btn-success fw-bold px-3 py-2 shadow-xs flex-grow-1" onclick="evaluateAnswer()">
+                <i class="fas fa-check-double me-1.5"></i> Evaluate My Answer & Match
               </button>
-              <button class="btn btn-outline-secondary fw-semibold px-3" onclick="revealBenchmarkDirectly()">
-                <i class="fas fa-eye me-1"></i> Reveal Model Answer Direct
+              <button class="btn btn-outline-secondary fw-semibold px-3 py-2" onclick="revealBenchmarkDirectly()">
+                <i class="fas fa-eye me-1"></i> Reveal Model Answer
               </button>
-              <button class="btn btn-light border fw-semibold px-3" onclick="clearAnswerInput()">
+              <button class="btn btn-light border fw-semibold px-3 py-2" onclick="clearAnswerInput()">
                 <i class="fas fa-eraser me-1"></i> Clear
               </button>
             </div>
@@ -299,19 +471,17 @@
             <div id="evaluationResultPanel" class="d-none">
               
               <!-- Match Score Card -->
-              <div class="p-3.5 rounded-4 border mb-4 bg-light">
-                <div class="row align-items-center g-3">
-                  <div class="col-auto">
-                    <div class="match-score-circle shadow-xs" id="matchScoreCircle">
-                      0%
-                    </div>
+              <div class="p-3 p-sm-3.5 rounded-3 rounded-sm-4 border mb-3 mb-sm-4 bg-light">
+                <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
+                  <div class="match-score-circle shadow-xs" id="matchScoreCircle">
+                    0%
                   </div>
-                  <div class="col">
-                    <div class="fw-bold fs-5 text-dark mb-1" id="matchFeedbackTitle">Good Start!</div>
+                  <div class="flex-grow-1 text-center text-sm-start">
+                    <div class="fw-bold fs-6 fs-sm-5 text-dark mb-1" id="matchFeedbackTitle">Good Start!</div>
                     <p class="small text-muted mb-2" id="matchFeedbackDescription">
-                      See below for key technical concepts matched versus concepts missed in your draft.
+                      Key technical concepts matched vs missed in your draft:
                     </p>
-                    <div class="d-flex flex-wrap gap-1.5" id="conceptTagsContainer">
+                    <div class="d-flex flex-wrap justify-content-center justify-content-sm-start gap-1.5" id="conceptTagsContainer">
                       <!-- Concept tags injected here -->
                     </div>
                   </div>
@@ -319,28 +489,28 @@
               </div>
 
               <!-- Winning 10/10 Judge Pitch Answer -->
-              <div class="p-4 bg-success bg-opacity-10 border border-success rounded-4 mb-4">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-success text-white fw-bold"><i class="fas fa-trophy me-1"></i> 10/10 Benchmark Pitch Answer</span>
-                    <small class="text-success fw-bold">Say This in Front of the Jury</small>
+              <div class="p-3 p-sm-4 bg-success bg-opacity-10 border border-success rounded-3 rounded-sm-4 mb-3 mb-sm-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                  <div class="d-flex align-items-center gap-1.5">
+                    <span class="badge bg-success text-white fw-bold"><i class="fas fa-trophy me-1"></i> 10/10 Benchmark Pitch</span>
+                    <small class="text-success fw-bold d-none d-sm-inline">Say This to the Jury</small>
                   </div>
-                  <button class="btn btn-sm btn-outline-success fw-semibold" onclick="speakBenchmarkAnswer()">
+                  <button class="btn btn-xs btn-outline-success fw-semibold" onclick="speakBenchmarkAnswer()">
                     <i class="fas fa-volume-up me-1"></i> Listen
                   </button>
                 </div>
-                <div class="text-dark fs-6" id="benchmarkAnswerText" style="line-height: 1.65; white-space: pre-line;">
+                <div class="text-dark small" id="benchmarkAnswerText" style="line-height: 1.6; white-space: pre-line; word-break: break-word;">
                   <!-- Benchmark text -->
                 </div>
               </div>
 
               <!-- Judge Trap & Follow-Up Grilling Alert -->
-              <div class="p-3.5 bg-warning bg-opacity-15 border border-warning rounded-4">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <span class="badge bg-warning text-dark fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Judge Follow-Up Trap</span>
-                  <h6 class="fw-bold text-dark mb-0">What the Evaluator Will Ask Right After This:</h6>
+              <div class="p-3 p-sm-3.5 bg-warning bg-opacity-15 border border-warning rounded-3 rounded-sm-4">
+                <div class="d-flex align-items-center gap-2 mb-1.5">
+                  <span class="badge bg-warning text-dark fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Follow-Up Trap</span>
+                  <h6 class="fw-bold text-dark mb-0 small">What the Evaluator Will Ask Next:</h6>
                 </div>
-                <p class="small text-dark mb-2" id="judgeTrapQuestion">
+                <p class="small text-dark mb-2 fw-semibold" id="judgeTrapQuestion">
                   "What happens if Agmarknet API goes down during a live mandi trading day?"
                 </p>
                 <div class="p-2.5 bg-white rounded-3 border small text-muted" id="judgeTrapDefense">
@@ -360,31 +530,31 @@
     <!-- TAB 2: 12-QUESTION MCQ QUIZ -->
     <!-- ============================================================ -->
     <div class="tab-pane fade" id="tab-mcq" role="tabpanel">
-      <div class="eval-card p-4 p-md-5 shadow-sm max-w-900 mx-auto" style="max-width: 920px;">
+      <div class="eval-card p-3 p-sm-4 p-md-5 shadow-sm max-w-900 mx-auto" style="max-width: 920px;">
         
         <!-- Quiz Header & Score Bar -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 border-bottom pb-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3 mb-sm-4 flex-wrap">
           <div>
-            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-primary bg-opacity-10 text-primary mb-1">
-              <i class="fas fa-clipboard-check"></i>
-              <span class="small fw-bold">Architecture, AI & Economic Knowledge Test</span>
+            <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-0.5 rounded-pill bg-primary bg-opacity-10 text-primary mb-1">
+              <i class="fas fa-clipboard-check small"></i>
+              <span class="small fw-bold" style="font-size: 0.75rem;">Architecture & Economics Test</span>
             </div>
-            <h4 class="fw-bold text-dark mb-0">Round 3 Defense Mock Examination (12 MCQs)</h4>
+            <h5 class="fw-bold text-dark mb-0 fs-6 fs-sm-5">Round 3 Defense Mock Examination (12 MCQs)</h5>
           </div>
 
-          <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center gap-2.5">
             <div class="text-end">
-              <small class="text-muted fw-bold d-block text-uppercase" style="font-size: 0.7rem;">Live Score</small>
-              <div class="fs-4 fw-extrabold text-success"><span id="mcqScoreDisplay">0</span> / 12</div>
+              <small class="text-muted fw-bold d-block text-uppercase" style="font-size: 0.65rem;">Score</small>
+              <div class="fs-5 fw-extrabold text-success"><span id="mcqScoreDisplay">0</span> / 12</div>
             </div>
-            <button class="btn btn-sm btn-outline-danger" onclick="resetMcqQuiz()">
-              <i class="fas fa-redo me-1"></i> Reset Quiz
+            <button class="btn btn-xs btn-outline-danger" onclick="resetMcqQuiz()">
+              <i class="fas fa-redo me-1"></i> Reset
             </button>
           </div>
         </div>
 
         <!-- Progress Bar -->
-        <div class="progress mb-4" style="height: 8px; border-radius: 9999px;">
+        <div class="progress mb-3 mb-sm-4" style="height: 6px; border-radius: 9999px;">
           <div class="progress-bar bg-success" role="progressbar" id="mcqProgressBar" style="width: 0%"></div>
         </div>
 
@@ -393,19 +563,19 @@
           <!-- Populated by JavaScript -->
         </div>
 
-        <!-- Quiz Completion Summary Modal / Card -->
-        <div id="quizCompletionSummary" class="d-none mt-4 p-4 rounded-4 bg-dark text-white text-center">
-          <div class="fs-1 mb-2" id="quizCompletionEmoji">🏆</div>
-          <h4 class="fw-bold text-white mb-1" id="quizCompletionTitle">Outstanding Defense Readiness!</h4>
+        <!-- Quiz Completion Summary Card -->
+        <div id="quizCompletionSummary" class="d-none mt-3 p-3.5 p-sm-4 rounded-4 bg-dark text-white text-center">
+          <div class="fs-2 mb-1" id="quizCompletionEmoji">🏆</div>
+          <h5 class="fw-bold text-white mb-1" id="quizCompletionTitle">Outstanding Defense Readiness!</h5>
           <p class="text-white text-opacity-75 small mb-3" id="quizCompletionSubtitle">
             You scored 12 out of 12! Your team is fully equipped to defend the technical architecture and financial models in front of the SIH jury.
           </p>
-          <div class="d-flex justify-content-center gap-2">
-            <button class="btn btn-success fw-bold px-4" onclick="resetMcqQuiz()">
+          <div class="d-flex flex-wrap justify-content-center gap-2">
+            <button class="btn btn-sm btn-success fw-bold px-3" onclick="resetMcqQuiz()">
               <i class="fas fa-redo me-1"></i> Retake Quiz
             </button>
-            <a href="{{ url_for('main.tech_stack_docs') }}" class="btn btn-warning fw-bold px-4">
-              <i class="fas fa-book-open me-1"></i> Review Tech Stack Docs
+            <a href="{{ url_for('main.tech_stack_docs') }}" class="btn btn-sm btn-warning fw-bold px-3">
+              <i class="fas fa-book-open me-1"></i> Review Tech Docs
             </a>
           </div>
         </div>
@@ -417,78 +587,78 @@
     <!-- TAB 3: AI/ML PREDICTION TRANSPARENCY GUIDE -->
     <!-- ============================================================ -->
     <div class="tab-pane fade" id="tab-aiml" role="tabpanel">
-      <div class="eval-card p-4 p-md-5 shadow-sm">
+      <div class="eval-card p-3 p-sm-4 p-md-5 shadow-sm">
         
-        <div class="border-bottom pb-3 mb-4">
+        <div class="border-bottom pb-3 mb-3 mb-sm-4">
           <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-danger bg-opacity-10 text-danger mb-2">
             <i class="fas fa-brain"></i>
             <span class="small fw-bold">Mathematical & Algorithmic Blueprint</span>
           </div>
-          <h3 class="fw-extrabold text-dark mb-1">
+          <h4 class="fw-extrabold text-dark mb-1 fs-5 fs-sm-4">
             Complete Mathematical Formulations & ML Pipeline Transparency
-          </h3>
+          </h4>
           <p class="text-muted small mb-0">
             Every formula, parameter, model checkpoint, and data source used in Krishi Kendra explained with complete scientific transparency.
           </p>
         </div>
 
         <!-- Pipeline 1: Price Forecasting & Storage ROI -->
-        <div class="p-4 bg-light rounded-4 border mb-4">
+        <div class="p-3 p-sm-4 bg-light rounded-3 rounded-sm-4 border mb-3 mb-sm-4">
           <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
             <div>
               <span class="badge bg-primary text-white fw-bold mb-1">Engine 1: Time-Series & Microeconomic Optimization</span>
-              <h5 class="fw-bold text-dark mb-0">7-Day APMC Price Trajectory & Cold Storage Payoff Optimization</h5>
+              <h5 class="fw-bold text-dark mb-0 fs-6 fs-sm-5">7-Day APMC Price Trajectory & Cold Storage Payoff Optimization</h5>
             </div>
-            <span class="code-pill">app/services/price_forecast_service.py</span>
+            <span class="code-pill">price_forecast_service.py</span>
           </div>
 
-          <div class="row g-4 mb-3">
-            <div class="col-lg-6">
-              <h6 class="fw-bold text-dark"><i class="fas fa-calculator text-primary me-1"></i> 1. Momentum & Volatility Trajectory Formula</h6>
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-lg-6">
+              <h6 class="fw-bold text-dark small"><i class="fas fa-calculator text-primary me-1"></i> 1. Momentum & Volatility Trajectory Formula</h6>
               <p class="small text-muted mb-2">
                 Daily projected price $\hat{P}_t$ for day $t \in [1, 7]$ is computed using directional drift momentum calibrated by commodity-specific standard deviation $\sigma_i$:
               </p>
-              <div class="bg-dark text-white p-3 rounded-3 font-monospace small mb-2">
-                $$\hat{P}_t = P_{\text{modal}} \times \left(1 + \mu \cdot t\right) + \mathcal{N}(0, \sigma_i \cdot \sqrt{t})$$<br><br>
-                <span class="text-info">Confidence Interval Bounds:</span><br>
-                P_min(t) = \hat{P}_t \times (1.0 - \sigma_i)<br>
-                P_max(t) = \hat{P}_t \times (1.0 + \sigma_i)
-              </div>
-              <small class="text-muted">
+              <div class="math-formula-box mb-2">
+$$\hat{P}_t = P_{\text{modal}} \times \left(1 + \mu \cdot t\right) + \mathcal{N}(0, \sigma_i \cdot \sqrt{t})$$
+
+Confidence Interval Bounds:
+P_min(t) = \hat{P}_t \times (1.0 - \sigma_i)
+P_max(t) = \hat{P}_t \times (1.0 + \sigma_i)</div>
+              <small class="text-muted d-block">
                 Where $\mu = +1.8\%$ (Upward trend), $-1.5\%$ (Downward trend), or $+0.8\%$ (Stable).
               </small>
             </div>
 
-            <div class="col-lg-6">
-              <h6 class="fw-bold text-dark"><i class="fas fa-snowflake text-info me-1"></i> 2. Cold Storage Arbitrage Decision Rule</h6>
+            <div class="col-12 col-lg-6">
+              <h6 class="fw-bold text-dark small"><i class="fas fa-snowflake text-info me-1"></i> 2. Cold Storage Arbitrage Decision Rule</h6>
               <p class="small text-muted mb-2">
                 Computes net profitability of holding produce for 10 days in cold storage versus immediate distress sale at current mandi rate:
               </p>
-              <div class="bg-dark text-white p-3 rounded-3 font-monospace small mb-2">
-                $$\Delta R_{\text{net}} = (\hat{P}_{t=10} - P_{\text{current}}) - (C_{\text{storage}} \times 10) - (P_{\text{current}} \times \delta_{\text{decay}})$$<br><br>
-                <span class="text-warning">Decision Threshold:</span><br>
-                IF (Net Gain / Current Price &ge; 5.0%) AND (Storage Potential == TRUE):<br>
-                &nbsp;&nbsp;&rarr; 🟢 "HOLD & STORE (Cold Storage Recommended)"<br>
-                ELSE:<br>
-                &nbsp;&nbsp;&rarr; 🟠 "SELL NOW (Direct Farm-Gate Handover)"
-              </div>
+              <div class="math-formula-box mb-2">
+$$\Delta R_{\text{net}} = (\hat{P}_{t=10} - P_{\text{current}}) - (C_{\text{storage}} \times 10) - (P_{\text{current}} \times \delta_{\text{decay}})$$
+
+Decision Threshold:
+IF (Net Gain / Current Price >= 5.0%) AND (Storage Potential == TRUE):
+   -> 🟢 "HOLD & STORE (Cold Storage Recommended)"
+ELSE:
+   -> 🟠 "SELL NOW (Direct Farm-Gate Handover)"</div>
             </div>
           </div>
         </div>
 
         <!-- Pipeline 2: Computer Vision Plant Pathology -->
-        <div class="p-4 bg-light rounded-4 border mb-4">
+        <div class="p-3 p-sm-4 bg-light rounded-3 rounded-sm-4 border mb-3 mb-sm-4">
           <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
             <div>
               <span class="badge bg-success text-white fw-bold mb-1">Engine 2: Multimodal Computer Vision</span>
-              <h5 class="fw-bold text-dark mb-0">Google Gemini 3.6 / 3.5 Flash Multimodal Vision Leaf Diagnostics</h5>
+              <h5 class="fw-bold text-dark mb-0 fs-6 fs-sm-5">Google Gemini 3.6 / 3.5 Flash Multimodal Vision Leaf Diagnostics</h5>
             </div>
-            <span class="code-pill">app/services/crop_doctor_service.py</span>
+            <span class="code-pill">crop_doctor_service.py</span>
           </div>
 
-          <div class="row g-4">
-            <div class="col-lg-6">
-              <h6 class="fw-bold text-dark"><i class="fas fa-microscope text-success me-1"></i> Visual Reasoning & Pathology Pipeline</h6>
+          <div class="row g-3">
+            <div class="col-12 col-lg-6">
+              <h6 class="fw-bold text-dark small"><i class="fas fa-microscope text-success me-1"></i> Visual Reasoning & Pathology Pipeline</h6>
               <ul class="small text-muted ps-3 mb-0">
                 <li class="mb-1.5"><strong>Foundation Checkpoint:</strong> <span class="code-pill">models/gemini-3.6-flash</span> conditioned on agricultural pathology priors (PlantVillage, ICAR Indian Crop Disease Atlas).</li>
                 <li class="mb-1.5"><strong>Zero-Shot Leaf Segmentation:</strong> Identifies necrotic chlorosis, target-board concentric rings (Early Blight), powdery mildew spores, and pest boring damage.</li>
@@ -496,8 +666,8 @@
               </ul>
             </div>
 
-            <div class="col-lg-6">
-              <h6 class="fw-bold text-dark"><i class="fas fa-prescription-bottle-alt text-danger me-1"></i> Dual-Sided Remedial Prescription Schema</h6>
+            <div class="col-12 col-lg-6">
+              <h6 class="fw-bold text-dark small"><i class="fas fa-prescription-bottle-alt text-danger me-1"></i> Dual-Sided Remedial Prescription Schema</h6>
               <ul class="small text-muted ps-3 mb-0">
                 <li class="mb-1.5"><strong>Bio-Organic Remedy:</strong> Neem oil spray @ 5ml/L water, *Trichoderma viride* soil drenching, wood ash barrier.</li>
                 <li class="mb-1.5"><strong>Chemical Intervention:</strong> Mancozeb 75% WP @ 2g/L or Copper Oxychloride 50% WP with exact safety pre-harvest intervals.</li>
@@ -508,26 +678,26 @@
         </div>
 
         <!-- Pipeline 3: Multi-Lingual Speech & Chat Translation -->
-        <div class="p-4 bg-light rounded-4 border">
+        <div class="p-3 p-sm-4 bg-light rounded-3 rounded-sm-4 border">
           <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
             <div>
               <span class="badge bg-warning text-dark fw-bold mb-1">Engine 3: Vernacular Speech & NLP Slot-Filling</span>
-              <h5 class="fw-bold text-dark mb-0">Multi-Lingual Voice Intent & Real-Time In-Chat Regional Translation</h5>
+              <h5 class="fw-bold text-dark mb-0 fs-6 fs-sm-5">Multi-Lingual Voice Intent & Real-Time In-Chat Regional Translation</h5>
             </div>
-            <span class="code-pill">app/services/translation_service.py & ai_voice_service.py</span>
+            <span class="code-pill">translation_service.py</span>
           </div>
 
-          <div class="row g-4">
-            <div class="col-lg-6">
-              <h6 class="fw-bold text-dark"><i class="fas fa-comments text-primary me-1"></i> In-Chat Translation & Content Safety</h6>
-              <p class="small text-muted mb-2">
+          <div class="row g-3">
+            <div class="col-12 col-lg-6">
+              <h6 class="fw-bold text-dark small"><i class="fas fa-comments text-primary me-1"></i> In-Chat Translation & Content Safety</h6>
+              <p class="small text-muted mb-0">
                 Multi-tier architecture with sub-5ms in-memory cache, curated agricultural trading dictionary, Google Gemini Flash translation across 10 Indian languages (Hindi, Marathi, Telugu, Tamil, Gujarati, Punjabi, Bengali, Kannada, Malayalam, English), and strict <span class="code-pill">contains_spam()</span> safety verification.
               </p>
             </div>
 
-            <div class="col-lg-6">
-              <h6 class="fw-bold text-dark"><i class="fas fa-microphone-alt text-success me-1"></i> Speech-to-Intent Slot Filling</h6>
-              <p class="small text-muted mb-2">
+            <div class="col-12 col-lg-6">
+              <h6 class="fw-bold text-dark small"><i class="fas fa-microphone-alt text-success me-1"></i> Speech-to-Intent Slot Filling</h6>
+              <p class="small text-muted mb-0">
                 Extracts structured parameters from unscripted farmer speech (e.g., <em>"50 quintal gehu bechna hai 2600 rate pe"</em>) &rarr; Extracted Intent: <span class="code-pill">{crop: "Wheat", quantity: 50, unit: "Quintal", price: 2600}</span> &rarr; deep links directly to Listing Form with pre-filled inputs.
               </p>
             </div>
@@ -541,20 +711,20 @@
     <!-- TAB 4: 15-SECOND RAPID FIRE FLASHCARDS -->
     <!-- ============================================================ -->
     <div class="tab-pane fade" id="tab-flashcards" role="tabpanel">
-      <div class="eval-card p-4 p-md-5 shadow-sm">
+      <div class="eval-card p-3 p-sm-4 p-md-5 shadow-sm">
         
-        <div class="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="border-bottom pb-3 mb-3 mb-sm-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
-            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-warning bg-opacity-15 text-dark mb-1">
-              <i class="fas fa-bolt text-warning"></i>
-              <span class="small fw-bold">15-Second High-Impact Pitch Soundbites</span>
+            <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-0.5 rounded-pill bg-warning bg-opacity-15 text-dark mb-1">
+              <i class="fas fa-bolt text-warning small"></i>
+              <span class="small fw-bold" style="font-size: 0.75rem;">15-Second Pitch Soundbites</span>
             </div>
-            <h4 class="fw-bold text-dark mb-0">Click Any Flashcard to Reveal the Winning Jury Defense Script</h4>
+            <h5 class="fw-bold text-dark mb-0 fs-6 fs-sm-5">Tap Any Flashcard to Reveal Jury Pitch Script</h5>
           </div>
-          <small class="text-muted">Click card to flip</small>
+          <small class="text-muted">Tap card to flip</small>
         </div>
 
-        <div class="row g-4" id="flashcardsGrid">
+        <div class="row g-3 g-md-4" id="flashcardsGrid">
           <!-- Populated by JavaScript -->
         </div>
 
@@ -576,6 +746,7 @@
       id: "q1_aiml",
       category: "AI/ML & Mathematics",
       badgeClass: "bg-danger",
+      shortTitle: "AI/ML Price Prediction",
       question: "How exactly does your AI & ML price prediction work? What models and mathematical formulas are you using?",
       keyConcepts: ["Ensemble Time-Series", "Exponential Momentum Drift", "Commodity Volatility (sigma)", "Agmarknet Modal Anchor", "Cold Storage Payoff Equation", "MSP Floor Clamp"],
       keywords: ["time-series", "momentum", "volatility", "agmarknet", "cold storage", "msp", "drift", "formula", "roi", "modal", "gemini"],
@@ -587,7 +758,7 @@
    Net Gain = (Projected Price at t=10) - (Current Price) - (Daily Storage Fee × 10) - (Spoilage Decay).
    If Net Gain exceeds 5%, the system triggers a 'HOLD & STORE' advisory; otherwise, it advises 'SELL NOW'.
 
-3. Multimodal Pathology Vision: Powered by Google Gemini 3.6 Flash at T=0.1, analyzing leaf symptoms to predict pathogen taxonomy, severity, and exact chemical/bio dilution dosages with 90%+ confidence.”`,
+3. Multimodal Pathology Vision: Powered by Google Gemini 3.6 Flash at T=0.1, analyzing leaf photos to predict pathogen taxonomy, severity, and exact chemical/bio dilution dosages with 90%+ confidence.”`,
       trapQuestion: "What if the government Agmarknet API goes down or has network lag during peak market hours?",
       trapDefense: "We maintain an in-memory and local PostgreSQL price cache with a 24-hour TTL and fallback to district 7-day moving averages, ensuring 100% platform uptime even during government server outages."
     },
@@ -595,6 +766,7 @@
       id: "q2_database",
       category: "Database & Security",
       badgeClass: "bg-primary",
+      shortTitle: "SQL vs NoSQL / ACID",
       question: "Why didn't you use MongoDB or NoSQL? Why did you choose Relational PostgreSQL with SQLAlchemy ORM?",
       keyConcepts: ["ACID Compliance", "Escrow Financial Safety", "Foreign Key Integrity", "Race Condition Prevention", "Structured Entity Schemas"],
       keywords: ["acid", "relational", "postgresql", "sql", "foreign key", "escrow", "consistency", "atomicity", "orm", "nosql", "race condition"],
@@ -612,6 +784,7 @@
       id: "q3_escrow",
       category: "Fintech & Escrow Protocol",
       badgeClass: "bg-success",
+      shortTitle: "Escrow & 0% Fraud",
       question: "How does your Escrow mechanism guarantee 0% payment fraud and instant settlement without physical bank delays?",
       keyConcepts: ["100% Upfront Lock", "Dual OTP Handover", "Pickup OTP", "Delivery OTP", "Direct UPI/Bank Payout", "No 45-Day Credit Risk"],
       keywords: ["escrow", "upfront", "dual otp", "pickup", "delivery", "instant", "payout", "upi", "fraud", "0%", "lock"],
@@ -631,6 +804,7 @@
       id: "q4_market",
       category: "Economics & Competitors",
       badgeClass: "bg-warning",
+      shortTitle: "e-NAM & DeHaat Differences",
       question: "How does Krishi Kendra differentiate from government portals like e-NAM and startups like DeHaat or Ninjacart?",
       keyConcepts: ["0% Farmer Commission", "Farm-Gate Direct Pickup", "Live In-Chat Translation", "Interactive Counter-Offers", "Integrated AI Vision"],
       keywords: ["0%", "commission", "e-nam", "dehaat", "ninjacart", "farm-gate", "translation", "counter-offer", "crop doctor", "middlemen"],
@@ -650,6 +824,7 @@
       id: "q5_vernacular",
       category: "NLP & Accessibility",
       badgeClass: "bg-info",
+      shortTitle: "Voice & Dialects",
       question: "How do you solve accessibility for illiterate or non-English speaking marginal farmers?",
       keyConcepts: ["Web Speech API", "Speech-to-Intent Slot Filling", "Google Gemini Vernacular Engine", "10 Regional Languages", "VLE/FPO Village Hubs"],
       keywords: ["speech", "voice", "vernacular", "hindi", "marathi", "telugu", "tamil", "intent", "slot filling", "illiterate", "vle", "fpo"],
@@ -667,6 +842,7 @@
       id: "q6_crop_doctor",
       category: "Computer Vision & Diagnostics",
       badgeClass: "bg-success",
+      shortTitle: "AI Crop Doctor Vision",
       question: "How does your AI Crop Doctor diagnose leaf diseases, and how do you ensure the chemical prescription is safe?",
       keyConcepts: ["Google Gemini 3.6 Flash Vision", "PlantVillage & ICAR Dataset Prior", "Deterministic T=0.1 Temperature", "Dual Organic & Chemical Dilution", "Action Urgency Countdown"],
       keywords: ["crop doctor", "vision", "pathology", "gemini", "leaf", "disease", "organic", "chemical", "dosage", "dilution", "prescription"],
@@ -684,6 +860,7 @@
       id: "q7_frontend",
       category: "Frontend & Performance",
       badgeClass: "bg-secondary",
+      shortTitle: "Vanilla CSS & Speed",
       question: "Why did you use Vanilla CSS instead of Tailwind CSS or Bootstrap utility bloat?",
       keyConcepts: ["Sub-30KB CSS Bundle", "Sub-Second Load on 2G/3G", "Native CSS Custom Properties", "Zero Node.js Build Dependency", "Hardware Accelerated UI"],
       keywords: ["vanilla css", "performance", "2g", "3g", "bundle", "speed", "tokens", "lightweight", "bloat", "tailwind"],
@@ -701,6 +878,7 @@
       id: "q8_quality",
       category: "Logistics & Quality Control",
       badgeClass: "bg-danger",
+      shortTitle: "Quality Verification",
       question: "How do you verify produce quality without sending an expensive physical team to every village?",
       keyConcepts: ["AGMARK/FAQ Standards", "Dual OTP Transporter Verification", "Multimodal Leaf/Grain Photos", "Community VLE/FPO Aggregation", "Dispute Escrow Reserve"],
       keywords: ["quality", "agmark", "faq", "verification", "transporter", "otp", "dispute", "vle", "fpo", "grading"],
@@ -723,10 +901,10 @@
     {
       question: "1. Which database architecture is used in Krishi Kendra to guarantee strict ACID compliance for financial Escrow transactions?",
       options: [
-        "A) MongoDB Document Database",
-        "B) Relational PostgreSQL / SQLite with SQLAlchemy ORM",
-        "C) Apache Cassandra NoSQL Cluster",
-        "D) Firebase Realtime Database"
+        "MongoDB Document Database",
+        "Relational PostgreSQL / SQLite with SQLAlchemy ORM",
+        "Apache Cassandra NoSQL Cluster",
+        "Firebase Realtime Database"
       ],
       correctIndex: 1,
       explanation: "Relational PostgreSQL with SQLAlchemy ORM provides ACID transactions (Atomicity, Consistency, Isolation, Durability) ensuring financial Escrow funds cannot be debited without an exact matching credit."
@@ -734,10 +912,10 @@
     {
       question: "2. What is the mathematical decision formula used by our Cold Storage ROI Optimization Engine?",
       options: [
-        "A) Net Gain = (Projected Price at t=10) - (Current Price) - (Daily Storage Fee × 10) - (Spoilage Decay)",
-        "B) Net Gain = (Mandi Price × Inflation) + Government Subsidy",
-        "C) Net Gain = (Current Price / 10) - Transport Cost",
-        "D) Net Gain = (MSP - Market Price) × Total Acreage"
+        "Net Gain = (Projected Price at t=10) - (Current Price) - (Daily Storage Fee × 10) - (Spoilage Decay)",
+        "Net Gain = (Mandi Price × Inflation) + Government Subsidy",
+        "Net Gain = (Current Price / 10) - Transport Cost",
+        "Net Gain = (MSP - Market Price) × Total Acreage"
       ],
       correctIndex: 0,
       explanation: "The algorithm calculates exact 10-day price arbitrage minus cold storage rental and decay loss, triggering 'HOLD & STORE' if the net gain exceeds 5%."
@@ -745,10 +923,10 @@
     {
       question: "3. What model powers the AI Crop Doctor's multi-modal visual leaf pathology scanner?",
       options: [
-        "A) GPT-2 Text Generator",
-        "B) Google Gemini 3.6 / 3.5 Flash Multimodal Vision (T=0.1)",
-        "C) Static YOLOv3 Bounding Box Script",
-        "D) OpenCV Haar Cascade Face Detector"
+        "GPT-2 Text Generator",
+        "Google Gemini 3.6 / 3.5 Flash Multimodal Vision (T=0.1)",
+        "Static YOLOv3 Bounding Box Script",
+        "OpenCV Haar Cascade Face Detector"
       ],
       correctIndex: 1,
       explanation: "Google Gemini 3.6/3.5 Flash Multimodal Vision evaluates leaf pathology patterns, providing disease identification, severity scoring, and dual organic/chemical treatment dilution."
@@ -756,10 +934,10 @@
     {
       question: "4. How much commission or listing take-rate does Krishi Kendra charge farmers?",
       options: [
-        "A) 12% to 15% per sale",
-        "B) 0% (Completely Free for Farmers)",
-        "C) ₹500 monthly subscription fee",
-        "D) 5% Mandi Cess"
+        "12% to 15% per sale",
+        "0% (Completely Free for Farmers)",
+        "₹500 monthly subscription fee",
+        "5% Mandi Cess"
       ],
       correctIndex: 1,
       explanation: "Krishi Kendra charges farmers 0% commission. Monetization comes from a lean 1.5% institutional buyer escrow fee, saving buyers 12-18% while giving farmers 100% of their earnings."
@@ -767,10 +945,10 @@
     {
       question: "5. Which security event triggers the instant release of Escrow funds directly into the farmer's bank account?",
       options: [
-        "A) Manual bank manager authorization after 30 days",
-        "B) Delivery OTP entry upon produce arrival and weighing at buyer's destination",
-        "C) Crop harvest announcement on WhatsApp",
-        "D) Physical submission of paper receipts at the APMC yard"
+        "Manual bank manager authorization after 30 days",
+        "Delivery OTP entry upon produce arrival and weighing at buyer's destination",
+        "Crop harvest announcement on WhatsApp",
+        "Physical submission of paper receipts at the APMC yard"
       ],
       correctIndex: 1,
       explanation: "The Delivery OTP entered by the buyer upon destination handover immediately executes the Escrow payout webhook directly to the farmer's UPI/bank account."
@@ -778,10 +956,10 @@
     {
       question: "6. What is the typical middleman and brokerage leakage in traditional APMC Mandis compared to Krishi Kendra?",
       options: [
-        "A) 0% in traditional mandis vs 20% on Krishi Kendra",
-        "B) 11% to 16% in traditional mandis vs < 1.5% on Krishi Kendra",
-        "C) 50% on all platforms equally",
-        "D) Traditional mandis do not take commissions"
+        "0% in traditional mandis vs 20% on Krishi Kendra",
+        "11% to 16% in traditional mandis vs < 1.5% on Krishi Kendra",
+        "50% on all platforms equally",
+        "Traditional mandis do not take commissions"
       ],
       correctIndex: 1,
       explanation: "Traditional APMC mandis impose 11%-16% in Arhatiya brokerage, multi-hop handling, and weighing cuts, whereas Krishi Kendra delivers 95%-98% net value directly to the farmer."
@@ -789,10 +967,10 @@
     {
       question: "7. Which browser API powers the voice input and audio readout without heavy third-party bundles?",
       options: [
-        "A) Native Web Speech API (SpeechRecognition & SpeechSynthesis)",
-        "B) Adobe Flash Audio Plugin",
-        "C) External Python Server Audio Relay",
-        "D) WebAssembly C++ FFmpeg Player"
+        "Native Web Speech API (SpeechRecognition & SpeechSynthesis)",
+        "Adobe Flash Audio Plugin",
+        "External Python Server Audio Relay",
+        "WebAssembly C++ FFmpeg Player"
       ],
       correctIndex: 0,
       explanation: "The native HTML5 Web Speech API provides lightweight, hardware-accelerated speech-to-text and text-to-speech directly in the client browser."
@@ -800,10 +978,10 @@
     {
       question: "8. Why is Vanilla CSS utilized for the frontend architecture instead of Tailwind or Bootstrap utility bloat?",
       options: [
-        "A) Because Python cannot render CSS frameworks",
-        "B) To achieve a sub-30KB CSS bundle and sub-second load times on rural 2G/3G networks",
-        "C) Because CSS frameworks are banned by government guidelines",
-        "D) Because Vanilla CSS does not support colors"
+        "Because Python cannot render CSS frameworks",
+        "To achieve a sub-30KB CSS bundle and sub-second load times on rural 2G/3G networks",
+        "Because CSS frameworks are banned by government guidelines",
+        "Because Vanilla CSS does not support colors"
       ],
       correctIndex: 1,
       explanation: "Vanilla CSS eliminates build overhead and megabytes of unused utility classes, ensuring lightning-fast performance even on low-end smartphones in rural India."
@@ -811,10 +989,10 @@
     {
       question: "9. How does the 4-Tier Price Engine protect farmers against predatory low buyer bids on statutory crops?",
       options: [
-        "A) By banning all buyers automatically",
-        "B) Minimum Support Price (MSP) Statutory Safeguard enforcing a strict floor boundary",
-        "C) Setting a fixed price for all commodities nationwide",
-        "D) Charging a penalty to the farmer"
+        "By banning all buyers automatically",
+        "Minimum Support Price (MSP) Statutory Safeguard enforcing a strict floor boundary",
+        "Setting a fixed price for all commodities nationwide",
+        "Charging a penalty to the farmer"
       ],
       correctIndex: 1,
       explanation: "Tier 2 MSP Statutory Safeguard clamps the price corridor for statutory crops (Wheat, Paddy, Mustard, Cotton), flagging exploitative buyer bids below official MSP."
@@ -822,10 +1000,10 @@
     {
       question: "10. How does Krishi Kendra resolve language barriers during live price bargaining between different states?",
       options: [
-        "A) Both users must speak English",
-        "B) Real-time multi-lingual in-chat translation across 10 Indian regional languages",
-        "C) Hiring a human translator on the phone",
-        "D) Disabling chat for interstate trades"
+        "Both users must speak English",
+        "Real-time multi-lingual in-chat translation across 10 Indian regional languages",
+        "Hiring a human translator on the phone",
+        "Disabling chat for interstate trades"
       ],
       correctIndex: 1,
       explanation: "Our TranslationService translates chat messages in real time across Hindi, Marathi, Telugu, Tamil, Gujarati, Punjabi, Bengali, Kannada, Malayalam, and English."
@@ -833,10 +1011,10 @@
     {
       question: "11. What is the role of Village Level Entrepreneurs (VLEs) and FPOs in our adoption strategy?",
       options: [
-        "A) Acting as new middlemen taking 20% commission",
-        "B) Providing digital listing assistance and freight pooling for marginal farmers without smartphones",
-        "C) Replacing government agricultural officers",
-        "D) Enforcing crop production quotas"
+        "Acting as new middlemen taking 20% commission",
+        "Providing digital listing assistance and freight pooling for marginal farmers without smartphones",
+        "Replacing government agricultural officers",
+        "Enforcing crop production quotas"
       ],
       correctIndex: 1,
       explanation: "VLEs and FPOs act as community digital access points (CSC model), helping marginal farmers list crops and pooling transport for up to 40% freight savings."
@@ -844,10 +1022,10 @@
     {
       question: "12. What average procurement cost savings do bulk buyers achieve on Krishi Kendra compared to wholesale mandi procurement?",
       options: [
-        "A) 0% savings",
-        "B) 12% to 18% savings due to direct farm-gate disintermediation",
-        "C) Buyers pay 50% more on Krishi Kendra",
-        "D) 5% loss"
+        "0% savings",
+        "12% to 18% savings due to direct farm-gate disintermediation",
+        "Buyers pay 50% more on Krishi Kendra",
+        "5% loss"
       ],
       correctIndex: 1,
       explanation: "By eliminating 3 layers of village aggregators and wholesale commission agents, buyers save 12%-18% while farmers simultaneously earn +18% to +35% more."
@@ -903,6 +1081,7 @@
 
   function initEvaluator() {
     renderQuestionList();
+    renderMobileQStrip();
     loadQuestion(0);
     renderMCQs();
     renderFlashcards();
@@ -919,15 +1098,16 @@
 
   function renderQuestionList() {
     const container = document.getElementById('questionListContainer');
+    if (!container) return;
     container.innerHTML = '';
     questionsData.forEach((q, idx) => {
       const div = document.createElement('div');
-      div.className = `question-pill p-3 ${idx === currentQuestionIndex ? 'active' : ''}`;
+      div.className = `question-pill ${idx === currentQuestionIndex ? 'active' : ''}`;
       div.id = `qPill-${idx}`;
       div.onclick = () => loadQuestion(idx);
       div.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-1">
-          <span class="badge ${q.badgeClass} text-white" style="font-size: 0.68rem;">${q.category}</span>
+          <span class="badge ${q.badgeClass} text-white" style="font-size: 0.65rem;">${q.category}</span>
           <small class="text-muted fw-bold">#${idx + 1}</small>
         </div>
         <div class="fw-bold small text-dark line-clamp-2">${q.question}</div>
@@ -936,11 +1116,37 @@
     });
   }
 
+  function renderMobileQStrip() {
+    const container = document.getElementById('mobileQStripContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    questionsData.forEach((q, idx) => {
+      const chip = document.createElement('div');
+      chip.className = `mobile-q-chip ${idx === currentQuestionIndex ? 'active' : ''}`;
+      chip.id = `mobileQChip-${idx}`;
+      chip.onclick = () => loadQuestion(idx);
+      chip.innerText = `#${idx + 1} ${q.shortTitle || q.category}`;
+      container.appendChild(chip);
+    });
+  }
+
   function loadQuestion(idx) {
     currentQuestionIndex = idx;
+    
+    // Desktop list update
     document.querySelectorAll('.question-pill').forEach(p => p.classList.remove('active'));
     const activePill = document.getElementById(`qPill-${idx}`);
     if (activePill) activePill.classList.add('active');
+
+    // Mobile strip update
+    document.querySelectorAll('.mobile-q-chip').forEach(c => c.classList.remove('active'));
+    const activeChip = document.getElementById(`mobileQChip-${idx}`);
+    if (activeChip) {
+      activeChip.classList.add('active');
+      activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+    const counter = document.getElementById('mobileQCounter');
+    if (counter) counter.innerText = `${idx + 1} of ${questionsData.length}`;
 
     const q = questionsData[idx];
     document.getElementById('judgeCategoryBadge').innerText = q.category;
@@ -954,6 +1160,16 @@
     document.getElementById('userAnswerInput').value = '';
     document.getElementById('wordCountLabel').innerText = '0 words';
     document.getElementById('evaluationResultPanel').classList.add('d-none');
+  }
+
+  function prevQuestion() {
+    const nextIdx = (currentQuestionIndex - 1 + questionsData.length) % questionsData.length;
+    loadQuestion(nextIdx);
+  }
+
+  function nextQuestion() {
+    const nextIdx = (currentQuestionIndex + 1) % questionsData.length;
+    loadQuestion(nextIdx);
   }
 
   function pickRandomQuestion() {
@@ -997,15 +1213,15 @@
     if (score >= 80) {
       scoreCircle.className = 'match-score-circle bg-success text-white shadow-xs';
       document.getElementById('matchFeedbackTitle').innerText = '🌟 Excellent Pitch Defense (10/10 Readiness)';
-      document.getElementById('matchFeedbackTitle').className = 'fw-bold fs-5 text-success mb-1';
+      document.getElementById('matchFeedbackTitle').className = 'fw-bold fs-6 fs-sm-5 text-success mb-1';
     } else if (score >= 45) {
       scoreCircle.className = 'match-score-circle bg-warning text-dark shadow-xs';
-      document.getElementById('matchFeedbackTitle').innerText = '👍 Solid Core, But Add Key Technical Details';
-      document.getElementById('matchFeedbackTitle').className = 'fw-bold fs-5 text-warning text-dark mb-1';
+      document.getElementById('matchFeedbackTitle').innerText = '👍 Solid Core, Add Technical Details';
+      document.getElementById('matchFeedbackTitle').className = 'fw-bold fs-6 fs-sm-5 text-warning text-dark mb-1';
     } else {
       scoreCircle.className = 'match-score-circle bg-danger text-white shadow-xs';
-      document.getElementById('matchFeedbackTitle').innerText = '⚠️ Needs More Technical Depth & Formulas';
-      document.getElementById('matchFeedbackTitle').className = 'fw-bold fs-5 text-danger mb-1';
+      document.getElementById('matchFeedbackTitle').innerText = '⚠️ Needs More Technical Depth';
+      document.getElementById('matchFeedbackTitle').className = 'fw-bold fs-6 fs-sm-5 text-danger mb-1';
     }
 
     document.getElementById('evaluationResultPanel').classList.remove('d-none');
@@ -1084,27 +1300,27 @@
 
     mcqsData.forEach((mcq, qIdx) => {
       const card = document.createElement('div');
-      card.className = 'p-4 rounded-4 border bg-white shadow-xs mb-4';
+      card.className = 'p-3 p-sm-4 rounded-3 rounded-sm-4 border bg-white shadow-xs mb-3 mb-sm-4';
       card.id = `mcqCard-${qIdx}`;
 
       let optionsHtml = '';
       mcq.options.forEach((opt, optIdx) => {
         optionsHtml += `
           <button type="button" class="mcq-option-btn mb-2" id="optBtn-${qIdx}-${optIdx}" onclick="selectMcqOption(${qIdx}, ${optIdx})">
-            <span class="step-pill bg-light text-dark fw-bold small" style="width: 28px; height: 28px; font-size: 0.8rem;">${['A','B','C','D'][optIdx]}</span>
-            <span>${opt}</span>
+            <span class="opt-badge">${['A','B','C','D'][optIdx]}</span>
+            <span class="opt-text">${opt}</span>
           </button>
         `;
       });
 
       card.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
           <span class="badge bg-dark text-white fw-bold">Question ${qIdx + 1} of ${mcqsData.length}</span>
           <span class="badge bg-secondary text-white d-none" id="mcqStatusBadge-${qIdx}"></span>
         </div>
-        <h6 class="fw-bold text-dark fs-6 mb-3">${mcq.question}</h6>
+        <h6 class="fw-bold text-dark fs-6 mb-2.5" style="line-height: 1.45;">${mcq.question}</h6>
         <div class="mb-2">${optionsHtml}</div>
-        <div class="p-3 bg-light rounded-3 border small text-dark d-none mt-3" id="mcqExp-${qIdx}">
+        <div class="p-2.5 p-sm-3 bg-light rounded-3 border small text-dark d-none mt-2.5" id="mcqExp-${qIdx}">
           <strong class="text-success"><i class="fas fa-info-circle me-1"></i> Technical Explanation:</strong><br>
           ${mcq.explanation}
         </div>
@@ -1206,20 +1422,20 @@
 
     flashcardsData.forEach((card, idx) => {
       const col = document.createElement('div');
-      col.className = 'col-md-6 col-lg-4';
+      col.className = 'col-12 col-md-6 col-lg-4';
       col.innerHTML = `
         <div class="flashcard" onclick="this.classList.toggle('flipped')">
           <div class="flashcard-inner">
             <div class="flashcard-front">
-              <span class="badge bg-primary bg-opacity-10 text-primary fw-bold mb-2">${card.tag}</span>
-              <h6 class="fw-bold text-dark mb-2">${card.title}</h6>
-              <p class="small text-muted mb-0">${card.front}</p>
-              <small class="text-primary mt-3 fw-bold" style="font-size: 0.72rem;">🔄 Click to Flip for Answer</small>
+              <span class="badge bg-primary bg-opacity-10 text-primary fw-bold mb-2" style="font-size: 0.72rem;">${card.tag}</span>
+              <h6 class="fw-bold text-dark mb-2 fs-6">${card.title}</h6>
+              <p class="small text-muted mb-0" style="line-height: 1.45;">${card.front}</p>
+              <small class="text-primary mt-auto pt-2 fw-bold" style="font-size: 0.7rem;">🔄 Tap to Flip for Answer</small>
             </div>
             <div class="flashcard-back">
-              <span class="badge bg-success text-white fw-bold mb-2">10/10 Pitch Script</span>
-              <p class="small text-white text-opacity-95 mb-0" style="line-height: 1.5;">${card.back}</p>
-              <small class="text-warning mt-3 fw-bold" style="font-size: 0.72rem;">🔄 Click to Flip Back</small>
+              <span class="badge bg-success text-white fw-bold mb-2" style="font-size: 0.72rem;">10/10 Pitch Script</span>
+              <p class="small text-white text-opacity-95 mb-0" style="line-height: 1.45; font-size: 0.82rem;">${card.back}</p>
+              <small class="text-warning mt-auto pt-2 fw-bold" style="font-size: 0.7rem;">🔄 Tap to Flip Back</small>
             </div>
           </div>
         </div>
