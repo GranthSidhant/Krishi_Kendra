@@ -361,6 +361,22 @@ def test_tech_stack_docs_page(client):
     res_alias = client.get('/docs/architecture')
     assert res_alias.status_code == 200
 
+def test_evaluator_quiz_page(client):
+    """Test the SIH Evaluator Mock Defense and 12-Question Quiz page"""
+    res = client.get('/evaluator-quiz')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+    assert "Jury Evaluator Simulator" in html or "SIH 2026 Jury Evaluator" in html
+    assert "Interactive Judge Q&amp;A" in html or "Interactive Judge Q&A" in html
+    assert "12-Question" in html
+    assert "Price Trajectory &amp; Cold Storage" in html or "Price Trajectory & Cold Storage" in html
+    
+    # Test aliases
+    res_alias1 = client.get('/jury-defense')
+    assert res_alias1.status_code == 200
+    res_alias2 = client.get('/quiz')
+    assert res_alias2.status_code == 200
+
 
 def test_live_heartbeat_and_chat_badges(app, client):
     """Test live heartbeat API and unread chat counter badge isolation"""

@@ -210,6 +210,12 @@ def market_impact():
 def tech_stack_docs():
     return render_template('tech_stack_docs.html')
 
+@main_bp.route('/evaluator-quiz')
+@main_bp.route('/jury-defense')
+@main_bp.route('/quiz')
+def evaluator_quiz():
+    return render_template('evaluator_quiz.html')
+
 @main_bp.route('/set-language/<lang>')
 def set_language(lang):
     if lang in ['en', 'hi', 'mr', 'ta', 'te']:

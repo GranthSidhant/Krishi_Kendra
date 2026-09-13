@@ -79,11 +79,14 @@
       </div>
       <div class="col-lg-4 text-lg-end">
         <div class="d-flex flex-column flex-sm-row justify-content-lg-end gap-2">
+          <a href="{{ url_for('main.evaluator_quiz') }}" class="btn btn-success fw-bold shadow-sm">
+            <i class="fas fa-graduation-cap me-1"></i> Jury Defense & Quiz
+          </a>
           <a href="{{ url_for('main.market_impact') }}" class="btn btn-warning fw-bold shadow-sm">
             <i class="fas fa-balance-scale me-1"></i> Market Comparison
           </a>
           <button class="btn btn-outline-light shadow-sm" onclick="window.print()">
-            <i class="fas fa-print me-1"></i> Print / PDF Export
+            <i class="fas fa-print me-1"></i> Print / PDF
           </button>
         </div>
       </div>
@@ -319,7 +322,7 @@
         <h6 class="fw-bold text-warning mb-0"><i class="fas fa-bullhorn me-1"></i> 60-Second Answer: "How does Prediction work on Krishi Kendra?"</h6>
       </div>
       <p class="small text-white text-opacity-90 fst-italic mb-0" style="line-height: 1.6;">
-        "Distinguished Jury, Krishi Kendra deploys prediction at three critical levels: (1) <strong>Mandi Price & Storage ROI Prediction:</strong> Our Time-Series engine projects 7-day modal price trajectories with confidence intervals calibrated by crop volatility indexes (e.g. 5.5% for Tomato vs 1.2% for Wheat). It computes the exact net financial ROI of cold storage, advising farmers whether holding their crop for 10 days will yield extra profit after subtracting rental costs. (2) <strong>Multimodal Pathology Prediction:</strong> Powered by Google Gemini 2.5 Flash, our Crop Doctor analyzes leaf photos to predict pathogens, disease severity, and urgency windows with 90%+ confidence. (3) <strong>Deal Fairness Prediction:</strong> During negotiations, our algorithm analyzes buyer bids against live APMC rates, predicting the optimal counter-offer to prevent middleman exploitation."
+        "Distinguished Jury, Krishi Kendra deploys prediction at three critical levels: (1) <strong>Mandi Price & Storage ROI Prediction:</strong> Our Time-Series engine projects 7-day modal price trajectories with confidence intervals calibrated by crop volatility indexes (e.g. 5.5% for Tomato vs 1.2% for Wheat). It computes the exact net financial ROI of cold storage, advising farmers whether holding their crop for 10 days will yield extra profit after subtracting rental costs. (2) <strong>Multimodal Pathology Prediction:</strong> Powered by Google Gemini 3.6 Flash, our Crop Doctor analyzes leaf photos to predict pathogens, disease severity, and urgency windows with 90%+ confidence. (3) <strong>Deal Fairness Prediction:</strong> During negotiations, our algorithm analyzes buyer bids against live APMC rates, predicting the optimal counter-offer to prevent middleman exploitation."
       </p>
     </div>
 
@@ -328,7 +331,7 @@
       <h6 class="fw-bold text-dark mb-2"><i class="fas fa-project-diagram text-primary me-1"></i> Multi-Tier Prediction Flow Architecture:</h6>
       <pre class="bg-dark text-success p-3 rounded-3 small mb-0 font-monospace" style="overflow-x: auto; font-size: 0.78rem;">
 [ Live Agmarknet APMC Feeds ] ──► [ Volatility & Perishability Matrix ] ──► [ 7-Day Price Trajectory & Cold Storage ROI ]
-[ Farmer Crop Leaf Photos   ] ──► [ Google Gemini 2.5 Flash Vision     ] ──► [ Pathogen Name, Confidence %, Remedy & Dosage ]
+[ Farmer Crop Leaf Photos   ] ──► [ Google Gemini 3.6 Flash Vision     ] ──► [ Pathogen Name, Confidence %, Remedy & Dosage ]
 [ Buyer Offer Bids in Chat  ] ──► [ APMC Benchmark Comparison Engine   ] ──► [ Deal Fairness Rating & Counter-Offer Guidance ]</pre>
     </div>
 
@@ -365,7 +368,7 @@
         <div class="p-3 bg-light rounded-3 border h-100">
           <h6 class="fw-bold text-dark mb-2"><i class="fas fa-microscope text-success me-1"></i> 2. Multimodal AI Crop Pathology Prediction</h6>
           <p class="small text-muted mb-2">
-            Powered by Google Gemini 2.5 Flash in <span class="code-pill">app/services/crop_doctor_service.py</span>:
+            Powered by Google Gemini 3.6 Flash in <span class="code-pill">app/services/crop_doctor_service.py</span>:
           </p>
           <ul class="small text-muted ps-3 mb-3">
             <li class="mb-1.5"><strong>Visual Feature Extraction:</strong> Extracts pathology patterns (target-board concentric lesions for Early Blight, water-soaked chlorotic spots for Late Blight).</li>
