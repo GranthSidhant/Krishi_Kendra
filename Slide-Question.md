@@ -8,7 +8,7 @@ Here is the complete, presentation-ready content tailored specifically for your 
 
 ## 🖥️ Slide 2: Idea / Proposed Solution
 
-### 1. Problem
+### 1. Problems
 * **Exploitative Multi-Layer Intermediation:** The conventional agricultural supply chain involves 5 to 7 layers of intermediaries (village aggregators, commission agents / *arhtiyas*, APMC traders, secondary wholesalers, retailers).
 * **The Margin Squeeze:** Middlemen capture **65%–80%** of the consumer rupee, while smallholder farmers receive only **20%–35%**.
 * **Price Opacity & Distress Sales:** Farmers lack real-time market price intelligence and cold preservation access, forcing post-harvest distress sales at unfair prices.
