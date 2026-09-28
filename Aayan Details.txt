@@ -1,0 +1,9 @@
+## 👨‍💻 Author / Developer
+
+**Aayan Punera**  
+* **Role:** Full-Stack & AI Developer  
+* **Education:** Master of Computer Applications (MCA) in AI with Robotics Specialization, Bennett University  
+* **GitHub:** [your-github-username](https://github.com/your-github-username)  
+* **LinkedIn:** [your-linkedin-profile](https://linkedin.com/in/your-linkedin-profile)  
+
+Passionate software developer specializing in MERN-stack web development, Python, and applied artificial intelligence. Committed to building scalable, user-centric solutions for real-world civic and agricultural challenges.
